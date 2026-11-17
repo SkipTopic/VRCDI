@@ -33,17 +33,24 @@ import rikka.shizuku.Shizuku;
  */
 public class SettingsActivity extends Activity {
 
-    private static final String[] ITEMS = new String[]{
-            "上报时间设置",
-            "权限申请方式",
-            "设备表设置",
-            "应用表设置",
-            "CPU 映射表设置",
-            "主题",
-            "软件更新设置",
-            "关于VRCDI",
-            "退出"
-    };
+    private String[] buildItems() {
+        String weatherLabel = settings.getWeatherCityLabel();
+        String weatherItem = weatherLabel.isEmpty()
+                ? "天气城市设置"
+                : "天气城市设置（" + weatherLabel + "）";
+        return new String[]{
+                "上报时间设置",
+                weatherItem,
+                "权限申请方式",
+                "设备表设置",
+                "应用表设置",
+                "CPU 映射表设置",
+                "主题",
+                "软件更新设置",
+                "关于VRCDI",
+                "退出"
+        };
+    }
 
     private AppSettings settings;
 
@@ -66,7 +73,7 @@ public class SettingsActivity extends Activity {
         settings = new AppSettings(this);
 
         ListView list = new ListView(this);
-        list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ITEMS));
+        list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, buildItems()));
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -75,24 +82,27 @@ public class SettingsActivity extends Activity {
                         startActivity(new Intent(SettingsActivity.this, ReportIntervalActivity.class));
                         break;
                     case 1:
-                        showPrivilegeDialog();
+                        startActivity(new Intent(SettingsActivity.this, WeatherCityActivity.class));
                         break;
                     case 2:
-                        startActivity(new Intent(SettingsActivity.this, DeviceTableSettingsActivity.class));
+                        showPrivilegeDialog();
                         break;
                     case 3:
-                        startActivity(new Intent(SettingsActivity.this, AppTableSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, DeviceTableSettingsActivity.class));
                         break;
                     case 4:
-                        startActivity(new Intent(SettingsActivity.this, CpuMapSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, AppTableSettingsActivity.class));
                         break;
                     case 5:
-                        startActivity(new Intent(SettingsActivity.this, ThemeSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, CpuMapSettingsActivity.class));
                         break;
                     case 6:
-                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, ThemeSettingsActivity.class));
                         break;
                     case 7:
+                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        break;
+                    case 8:
                         showAboutDialog();
                         break;
                     default:

@@ -24,6 +24,8 @@ public class AppSettings {
     private static final String KEY_PORT = "target_port";
     private static final String KEY_INTERVAL = "interval_sec";
     private static final String KEY_SEND_ON_START = "send_on_start";
+    private static final String KEY_WEATHER_PROVINCE = "weather_province";
+    private static final String KEY_WEATHER_CITY = "weather_city";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
     private static final String KEY_SEND_IMMEDIATELY = "send_immediately";
@@ -105,6 +107,41 @@ public class AppSettings {
         sp.edit().putBoolean(KEY_SEND_ON_START, value).apply();
     }
 
+    // ---------------- 天气城市 ----------------
+
+    public String getWeatherProvince() {
+        String value = sp.getString(KEY_WEATHER_PROVINCE, "");
+        return value == null ? "" : value;
+    }
+
+    public String getWeatherCity() {
+        String value = sp.getString(KEY_WEATHER_CITY, "");
+        return value == null ? "" : value;
+    }
+
+    /** "江西省 上饶市"；未选择时返回空串 */
+    public String getWeatherCityLabel() {
+        String province = getWeatherProvince();
+        String city = getWeatherCity();
+        if (city.isEmpty()) return "";
+        if (province.isEmpty() || province.equals(city)) return city;
+        return province + " " + city;
+    }
+
+    public void setWeatherCity(String province, String city) {
+        sp.edit()
+                .putString(KEY_WEATHER_PROVINCE, province == null ? "" : province.trim())
+                .putString(KEY_WEATHER_CITY, city == null ? "" : city.trim())
+                .apply();
+    }
+
+    public void clearWeatherCity() {
+        sp.edit()
+                .remove(KEY_WEATHER_PROVINCE)
+                .remove(KEY_WEATHER_CITY)
+                .apply();
+    }
+
     public PrivilegeMode getPrivilegeMode() {
         return PrivilegeMode.fromKey(sp.getString(KEY_MODE, PrivilegeMode.SHIZUKU.key));
     }
@@ -176,10 +213,16 @@ public class AppSettings {
         sp.edit().putBoolean(KEY_NOTIFICATION_SOUND, value).apply();
     }
 
-    /** 已勾选的字段；首次运行默认全选 */
+    /** 已勾选的字段；首次运行默认全选（天气类除外，需要先选城市再手动勾选） */
     public Set<ReportField> getEnabledFields() {
         Set<String> stored = sp.getStringSet(KEY_FIELDS, null);
-        if (stored == null) return EnumSet.allOf(ReportField.class);
+        if (stored == null) {
+            Set<ReportField> defaults = EnumSet.allOf(ReportField.class);
+            for (ReportField field : ReportField.values()) {
+                if (field.isWeather()) defaults.remove(field);
+            }
+            return defaults;
+        }
         Set<ReportField> result = EnumSet.noneOf(ReportField.class);
         for (ReportField field : ReportField.values()) {
             if (stored.contains(field.key)) result.add(field);

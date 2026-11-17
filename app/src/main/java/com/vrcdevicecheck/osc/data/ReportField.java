@@ -21,6 +21,9 @@ public enum ReportField {
     GPU_USAGE("gpu_usage", "GPU 使用率"),
     RAM("ram", "RAM 占用/总量"),
     BATTERY("battery", "电量与充电状态"),
+    WEATHER("weather", "天气"),
+    TEMPERATURE("temperature", "气温"),
+    HUMIDITY("humidity", "湿度"),
     FOREGROUND_APP("foreground_app", "前台应用"),
     VRCHAT_FPS("vrchat_fps", "帧率");
 
@@ -37,5 +40,10 @@ public enum ReportField {
             if (field.key.equals(key)) return field;
         }
         return null;
+    }
+
+    /** 天气类字段需要先选城市，且共用同一行文本 */
+    public boolean isWeather() {
+        return this == WEATHER || this == TEMPERATURE || this == HUMIDITY;
     }
 }

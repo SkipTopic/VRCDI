@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.device.TestSnapshots;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
 
 import org.junit.Test;
 
@@ -103,5 +104,41 @@ public class ReportBuilderTest {
         String text = ReportBuilder.render(TestSnapshots.full(),
                 Arrays.asList(ReportField.GPU_NAME, ReportField.GPU_USAGE), false);
         assertEquals("GPU: Maleoon 910 12%", text);
+    }
+
+    private WeatherInfo weather() {
+        return new WeatherInfo("江西省 上饶市", 17.3f, 86,
+                "多云", "Partly cloudy", 0L, "Open-Meteo");
+    }
+
+    @Test
+    public void weatherLineCombinesConditionTemperatureAndHumidity() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                false, true, weather()).text;
+        assertEquals("天气: 多云 17.3℃ 湿度 86%", text);
+    }
+
+    @Test
+    public void weatherLineInAsciiMode() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                true, true, weather()).text;
+        assertEquals("Weather: Partly cloudy 17.3C Humidity 86%", text);
+    }
+
+    @Test
+    public void weatherLineOnlyIncludesSelectedParts() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.TEMPERATURE), false, true, weather()).text;
+        assertEquals("天气: 17.3℃", text);
+    }
+
+    @Test
+    public void weatherWithoutDataShowsPlaceholder() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE),
+                false, true, null).text;
+        assertEquals("天气: 不可用", text);
     }
 }

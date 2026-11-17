@@ -2,6 +2,7 @@ package com.vrcdevicecheck.osc.osc;
 
 import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -88,13 +89,21 @@ public final class ReportBuilder {
      */
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
                                boolean useProductName) {
+        return build(snapshot, fields, asciiOnly, useProductName, null);
+    }
+
+    /**
+     * @param weather 可为 null；为 null 时天气行显示「不可用」
+     */
+    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
+                               boolean useProductName, WeatherInfo weather) {
         List<ReportField> ordered = new ArrayList<>();
         for (ReportField field : ReportField.values()) {
             if (fields != null && fields.contains(field)) ordered.add(field);
         }
         if (ordered.isEmpty()) return new Report("", ordered, ordered, false);
 
-        List<Line> lines = buildLines(snapshot, ordered, asciiOnly, useProductName);
+        List<Line> lines = buildLines(snapshot, ordered, asciiOnly, useProductName, weather);
         while (lineText(lines).length() > CHATBOX_LIMIT && lines.size() > 1) {
             lines.remove(lines.size() - 1);
         }
@@ -125,11 +134,12 @@ public final class ReportBuilder {
 
     public static String render(DeviceSnapshot snapshot, List<ReportField> fields, boolean asciiOnly,
                                 boolean useProductName) {
-        return lineText(buildLines(snapshot, fields, asciiOnly, useProductName));
+        return lineText(buildLines(snapshot, fields, asciiOnly, useProductName, null));
     }
 
     private static List<Line> buildLines(DeviceSnapshot snapshot, List<ReportField> fields,
-                                         boolean asciiOnly, boolean useProductName) {
+                                         boolean asciiOnly, boolean useProductName,
+                                         WeatherInfo weather) {
         List<Line> lines = new ArrayList<>(6);
 
         // 第一行：品牌 + 型号（真实型号或产品名称）
@@ -208,6 +218,29 @@ public final class ReportBuilder {
             lines.add(new Line((asciiOnly ? "Battery: " : "电量: ") + battery, batteryFields));
         }
 
+        // 天气行：天气 / 气温 / 湿度共用一行，只拼用户勾选的项
+        List<ReportField> weatherFields = new ArrayList<>(3);
+        if (fields.contains(ReportField.WEATHER)) weatherFields.add(ReportField.WEATHER);
+        if (fields.contains(ReportField.TEMPERATURE)) weatherFields.add(ReportField.TEMPERATURE);
+        if (fields.contains(ReportField.HUMIDITY)) weatherFields.add(ReportField.HUMIDITY);
+        if (!weatherFields.isEmpty()) {
+            StringBuilder weatherText = new StringBuilder();
+            if (weather == null) {
+                append(weatherText, NA);
+            } else {
+                if (fields.contains(ReportField.WEATHER)) {
+                    append(weatherText, asciiOnly ? weather.conditionEn : weather.conditionZh);
+                }
+                if (fields.contains(ReportField.TEMPERATURE)) {
+                    append(weatherText, temp(weather.temperatureC, asciiOnly));
+                }
+                if (fields.contains(ReportField.HUMIDITY)) {
+                    append(weatherText, humidity(weather.humidityPct, asciiOnly));
+                }
+            }
+            lines.add(new Line((asciiOnly ? "Weather: " : "天气: ") + weatherText, weatherFields));
+        }
+
         // 前台应用行
         if (fields.contains(ReportField.FOREGROUND_APP)) {
             List<ReportField> appFields = new ArrayList<>(1);
@@ -260,6 +293,11 @@ public final class ReportBuilder {
     private static String pct(Float value) {
         if (value == null) return NA;
         return String.format(Locale.US, "%.0f%%", value);
+    }
+
+    private static String humidity(Integer value, boolean asciiOnly) {
+        if (value == null) return NA;
+        return String.format(Locale.US, asciiOnly ? "Humidity %d%%" : "湿度 %d%%", value);
     }
 
     private static String ramLine(Long usedMb, Long totalMb) {

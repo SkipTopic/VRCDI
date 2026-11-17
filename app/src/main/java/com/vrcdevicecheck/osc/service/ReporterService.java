@@ -16,6 +16,7 @@ import com.vrcdevicecheck.osc.MainActivity;
 import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.data.AppSettings;
 import com.vrcdevicecheck.osc.data.ModelDisplayMode;
+import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceInfoRepository;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.osc.OscEncoder;
@@ -23,6 +24,8 @@ import com.vrcdevicecheck.osc.osc.OscSender;
 import com.vrcdevicecheck.osc.osc.ReportBuilder;
 import com.vrcdevicecheck.osc.priv.PrivilegeController;
 import com.vrcdevicecheck.osc.priv.PrivilegedShell;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
+import com.vrcdevicecheck.osc.weather.WeatherRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,6 +34,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -306,11 +310,17 @@ public class ReporterService extends Service {
         latestSnapshot = result.snapshot;
         warning = result.warning;
 
+        Set<ReportField> enabledFields = settings.getEnabledFields();
+        WeatherInfo weather = WeatherRepository.isWeatherEnabled(enabledFields)
+                ? WeatherRepository.getForReport(this)
+                : null;
+
         ReportBuilder.Report report = ReportBuilder.build(
                 result.snapshot,
-                settings.getEnabledFields(),
+                enabledFields,
                 settings.isAsciiOnly(),
-                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME);
+                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
+                weather);
         latestReport = report;
 
         if (report.text.trim().isEmpty()) {
