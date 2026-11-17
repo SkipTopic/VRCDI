@@ -107,6 +107,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private CheckBox checkAscii;
     private CheckBox checkSendImmediately;
     private CheckBox checkNotificationSound;
+    private CheckBox checkHideUnavailable;
     private TextView textLocalIp;
     private TextView textLaunchArg;
     private TextView textPrivilegeMode;
@@ -325,6 +326,20 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         int pad = Math.round(getResources().getDisplayMetrics().density * 4);
         textWeatherHint.setPadding(0, pad, 0, pad);
         containerFields.addView(textWeatherHint);
+
+        checkHideUnavailable = new CheckBox(this);
+        checkHideUnavailable.setText("自动屏蔽不可用字段（节省 144 字符）");
+        checkHideUnavailable.setTextSize(13f);
+        checkHideUnavailable.setTextColor(getColor(R.color.text_secondary));
+        checkHideUnavailable.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!buttonView.isPressed()) return;
+                settings.setHideUnavailable(isChecked);
+                refreshPreview();
+            }
+        });
+        containerFields.addView(checkHideUnavailable);
     }
 
     /** 「设备型号」勾选框 + 右侧「上报型号类型」下拉菜单 */
@@ -406,8 +421,11 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             if (textWeatherHint != null) {
                 String weatherCity = settings.getWeatherCityLabel();
                 textWeatherHint.setText(weatherCity.isEmpty()
-                        ? "天气 / 气温 / 湿度：需先在「设置 → 天气城市设置」选择城市"
+                        ? "天气类字段需要先在「设置 → 天气城市设置」选择城市"
                         : "天气城市：" + weatherCity + "（每小时最多更新一次）");
+            }
+            if (checkHideUnavailable != null) {
+                checkHideUnavailable.setChecked(settings.isHideUnavailable());
             }
         } finally {
             applyingSettings = false;
@@ -894,7 +912,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 .show();
     }
 
-    private void refreshPreview() {        DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
+    private void refreshPreview() {
+        DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
         if (snapshot == null) snapshot = localSnapshot;
         if (snapshot == null) {
             textPreview.setText("尚未采集，点「重新采集」或启动上报");
@@ -908,7 +927,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 settings.getEnabledFields(),
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
-                cachedWeather);
+                cachedWeather,
+                settings.isHideUnavailable());
         textPreview.setText(report.text);
         textPreviewCount.setText(report.charCount() + "/" + ReportBuilder.CHATBOX_LIMIT);
         String hint = report.limitHint();
@@ -923,11 +943,18 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             if (field.isWeather()) weatherEnabled = true;
         }
         if (weatherEnabled && settings.getWeatherCity().isEmpty()) {
-            String extra = "天气、气温、湿度需要先选择城市：设置 → 天气城市设置。";
+            String extra = "天气类字段需要先选择城市：设置 → 天气城市设置。";
             hint = hint == null ? extra : hint + "\n" + extra;
         } else if (weatherEnabled && cachedWeather == null) {
             String extra = "天气数据还没取到：启动上报后会自动获取，同一城市每小时最多请求一次。";
             hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        if (settings.isHideUnavailable() && !report.hidden.isEmpty()) {
+            String extra = "已自动隐藏 " + report.hidden.size() + " 个不可用字段（不占 144 字符）";
+            hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        if (report.text.isEmpty() && !settings.getEnabledFields().isEmpty()) {
+            hint = "所选字段当前都不可用，已自动隐藏所有内容。";
         }
         if (hint == null) {
             textPreviewHint.setVisibility(View.GONE);

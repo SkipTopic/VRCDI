@@ -24,6 +24,10 @@ public enum ReportField {
     WEATHER("weather", "天气"),
     TEMPERATURE("temperature", "气温"),
     HUMIDITY("humidity", "湿度"),
+    PRESSURE("pressure", "气压"),
+    WIND("wind", "风向风速"),
+    UV("uv", "紫外线"),
+    SUNSET("sunset", "日落"),
     FOREGROUND_APP("foreground_app", "前台应用"),
     VRCHAT_FPS("vrchat_fps", "帧率");
 
@@ -42,8 +46,9 @@ public enum ReportField {
         return null;
     }
 
-    /** 天气类字段需要先选城市，且共用同一行文本 */
+    /** 天气类字段需要先选城市，且共用天气行 */
     public boolean isWeather() {
-        return this == WEATHER || this == TEMPERATURE || this == HUMIDITY;
+        return this == WEATHER || this == TEMPERATURE || this == HUMIDITY
+                || this == PRESSURE || this == WIND || this == UV || this == SUNSET;
     }
 }

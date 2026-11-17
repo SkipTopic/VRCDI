@@ -26,6 +26,7 @@ public class AppSettings {
     private static final String KEY_SEND_ON_START = "send_on_start";
     private static final String KEY_WEATHER_PROVINCE = "weather_province";
     private static final String KEY_WEATHER_CITY = "weather_city";
+    private static final String KEY_HIDE_UNAVAILABLE = "hide_unavailable";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
     private static final String KEY_SEND_IMMEDIATELY = "send_immediately";
@@ -140,6 +141,15 @@ public class AppSettings {
                 .remove(KEY_WEATHER_PROVINCE)
                 .remove(KEY_WEATHER_CITY)
                 .apply();
+    }
+
+    /** 上报时是否把读到「不可用」的字段整项删掉，节省 144 字符（默认开） */
+    public boolean isHideUnavailable() {
+        return sp.getBoolean(KEY_HIDE_UNAVAILABLE, true);
+    }
+
+    public void setHideUnavailable(boolean value) {
+        sp.edit().putBoolean(KEY_HIDE_UNAVAILABLE, value).apply();
     }
 
     public PrivilegeMode getPrivilegeMode() {

@@ -5,6 +5,8 @@ import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -20,30 +22,37 @@ import java.util.Set;
  *   GPU: Adreno 740 不可用 41.3℃ 不可用
  *   RAM: 3.9/5.5GB 71%
  *   电量: 45% 充电中
+ *   天气: 多云 17.3℃ 湿度 86%
+ *   气压 1018hPa 西南风 3.2m/s 紫外线 5 日落 17:14
  *   App: VRCDI（本应用）
  *
  * 硬约束：VRChat Chatbox 单条上限 144 字符（含换行）。超长时从最后一段开始整段丢弃，
  * 并把被丢掉的字段回传给界面如实提示，绝不静默截断。
+ *
+ * 「自动屏蔽不可用」开启时，值为「不可用」的字段不进入文本，也不占 144 字符；
+ * 这些字段记在 {@link Report#hidden}，与「超长被省略」的 {@link Report#dropped} 区分开。
  */
 public final class ReportBuilder {
 
     public static final int CHATBOX_LIMIT = 144;
     private static final String NA = "不可用";
 
-    private ReportBuilder() {
-    }
-
     /** 一次渲染结果 */
     public static final class Report {
         public final String text;
         public final List<ReportField> included;
+        /** 因超过 144 字符而被整行丢弃的字段 */
         public final List<ReportField> dropped;
+        /** 因值为「不可用」而被自动隐藏的字段（不占字符） */
+        public final List<ReportField> hidden;
         public final boolean hardTruncated;
 
-        Report(String text, List<ReportField> included, List<ReportField> dropped, boolean hardTruncated) {
+        Report(String text, List<ReportField> included, List<ReportField> dropped,
+               List<ReportField> hidden, boolean hardTruncated) {
             this.text = text;
             this.included = included;
             this.dropped = dropped;
+            this.hidden = hidden;
             this.hardTruncated = hardTruncated;
         }
 
@@ -55,7 +64,7 @@ public final class ReportBuilder {
             return hardTruncated || !dropped.isEmpty();
         }
 
-        /** 界面提示文案 */
+        /** 界面提示文案：只提示「超长被省略」，不把自动隐藏算进去 */
         public String limitHint() {
             if (hardTruncated) return "已超过 144 字符，末尾被强制截断";
             if (dropped.isEmpty()) return null;
@@ -79,31 +88,86 @@ public final class ReportBuilder {
         }
     }
 
-    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly) {
-        return build(snapshot, fields, asciiOnly, true);
+    /**
+     * 一行文本的构造器：值为不可用时，按开关决定是写「不可用」还是直接隐藏。
+     */
+    private static final class LineBuilder {
+        final StringBuilder text = new StringBuilder();
+        final List<ReportField> fields = new ArrayList<>(4);
+        final Set<ReportField> hidden;
+        final boolean hideUnavailable;
+
+        LineBuilder(Set<ReportField> hidden, boolean hideUnavailable) {
+            this.hidden = hidden;
+            this.hideUnavailable = hideUnavailable;
+        }
+
+        void add(ReportField field, String value) {
+            if (isAvailable(value)) {
+                append(text, value);
+                fields.add(field);
+            } else if (!hideUnavailable) {
+                append(text, NA);
+                fields.add(field);
+            } else {
+                hidden.add(field);
+            }
+        }
+
+        /** 带标签的不可用项，例如「气压 不可用」 */
+        void addUnavailable(ReportField field, String label) {
+            if (hideUnavailable) {
+                hidden.add(field);
+            } else {
+                append(text, label + NA);
+                fields.add(field);
+            }
+        }
+
+        /** 追加不属于独立字段的后缀，例如「充电中」 */
+        void suffix(String value) {
+            append(text, value);
+        }
+
+        boolean isEmpty() {
+            return fields.isEmpty();
+        }
     }
 
-    /**
-     * @param useProductName true 时「设备型号」用设备表里的产品名称（HUAWEI Pura 80），
-     *                       false 时用真实型号（HUAWEI HED-AL00）
-     */
+    private ReportBuilder() {
+    }
+
+    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly) {
+        return build(snapshot, fields, asciiOnly, true, null, false);
+    }
+
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
                                boolean useProductName) {
-        return build(snapshot, fields, asciiOnly, useProductName, null);
+        return build(snapshot, fields, asciiOnly, useProductName, null, false);
+    }
+
+    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
+                               boolean useProductName, WeatherInfo weather) {
+        return build(snapshot, fields, asciiOnly, useProductName, weather, false);
     }
 
     /**
-     * @param weather 可为 null；为 null 时天气行显示「不可用」
+     * @param weather         可为 null；为 null 时天气行显示「不可用」或被隐藏
+     * @param hideUnavailable true 时，任何读到「不可用」的字段都不进文本，节省 144 字符
      */
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
-                               boolean useProductName, WeatherInfo weather) {
+                               boolean useProductName, WeatherInfo weather, boolean hideUnavailable) {
         List<ReportField> ordered = new ArrayList<>();
         for (ReportField field : ReportField.values()) {
             if (fields != null && fields.contains(field)) ordered.add(field);
         }
-        if (ordered.isEmpty()) return new Report("", ordered, ordered, false);
+        if (ordered.isEmpty()) {
+            return new Report("", ordered, ordered, Collections.<ReportField>emptyList(), false);
+        }
 
-        List<Line> lines = buildLines(snapshot, ordered, asciiOnly, useProductName, weather);
+        Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
+        List<Line> lines = buildLines(snapshot, ordered, asciiOnly, useProductName,
+                weather, hideUnavailable, hidden);
         while (lineText(lines).length() > CHATBOX_LIMIT && lines.size() > 1) {
             lines.remove(lines.size() - 1);
         }
@@ -122,9 +186,10 @@ public final class ReportBuilder {
         List<ReportField> dropped = new ArrayList<>();
         for (ReportField field : ordered) {
             if (includedSet.contains(field)) kept.add(field);
-            else dropped.add(field);
+            else if (!hidden.contains(field)) dropped.add(field);
         }
-        return new Report(text, kept, dropped, hard);
+        List<ReportField> hiddenList = new ArrayList<>(hidden);
+        return new Report(text, kept, dropped, hiddenList, hard);
     }
 
     /** 分段渲染，返回用换行连接的多行文本 */
@@ -134,128 +199,217 @@ public final class ReportBuilder {
 
     public static String render(DeviceSnapshot snapshot, List<ReportField> fields, boolean asciiOnly,
                                 boolean useProductName) {
-        return lineText(buildLines(snapshot, fields, asciiOnly, useProductName, null));
+        Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
+        return lineText(buildLines(snapshot, fields, asciiOnly, useProductName,
+                null, false, hidden));
     }
 
     private static List<Line> buildLines(DeviceSnapshot snapshot, List<ReportField> fields,
                                          boolean asciiOnly, boolean useProductName,
-                                         WeatherInfo weather) {
-        List<Line> lines = new ArrayList<>(6);
+                                         WeatherInfo weather, boolean hideUnavailable,
+                                         Set<ReportField> hidden) {
+        List<Line> lines = new ArrayList<>(7);
 
         // 第一行：品牌 + 型号（真实型号或产品名称）
-        List<ReportField> deviceFields = new ArrayList<>(2);
-        StringBuilder device = new StringBuilder();
+        LineBuilder device = new LineBuilder(hidden, hideUnavailable);
         if (fields.contains(ReportField.BRAND)) {
-            append(device, orNa(snapshot.brand));
-            deviceFields.add(ReportField.BRAND);
+            device.add(ReportField.BRAND, orNa(snapshot.brand));
         }
         if (fields.contains(ReportField.MODEL)) {
             String modelText = useProductName && snapshot.seriesName != null
                     ? snapshot.seriesName
                     : snapshot.model;
-            append(device, orNa(modelText));
-            deviceFields.add(ReportField.MODEL);
+            device.add(ReportField.MODEL, orNa(modelText));
         }
-        if (device.length() > 0) lines.add(new Line(device.toString(), deviceFields));
+        if (!device.isEmpty()) {
+            lines.add(new Line(device.text.toString(), device.fields));
+        }
 
         // CPU 行
-        List<ReportField> cpuFields = new ArrayList<>(4);
-        StringBuilder cpu = new StringBuilder();
+        LineBuilder cpu = new LineBuilder(hidden, hideUnavailable);
         if (fields.contains(ReportField.CPU_NAME)) {
-            append(cpu, orNa(snapshot.cpuName));
-            cpuFields.add(ReportField.CPU_NAME);
+            cpu.add(ReportField.CPU_NAME, orNa(snapshot.cpuName));
         }
         if (fields.contains(ReportField.CPU_FREQ)) {
-            append(cpu, freq(snapshot.cpuFreqMHz));
-            cpuFields.add(ReportField.CPU_FREQ);
+            cpu.add(ReportField.CPU_FREQ, freq(snapshot.cpuFreqMHz));
         }
         if (fields.contains(ReportField.CPU_TEMP)) {
-            append(cpu, temp(snapshot.cpuTempC, asciiOnly));
-            cpuFields.add(ReportField.CPU_TEMP);
+            cpu.add(ReportField.CPU_TEMP, temp(snapshot.cpuTempC, asciiOnly));
         }
         if (fields.contains(ReportField.CPU_USAGE)) {
-            append(cpu, pct(snapshot.cpuUsagePct));
-            cpuFields.add(ReportField.CPU_USAGE);
+            cpu.add(ReportField.CPU_USAGE, pct(snapshot.cpuUsagePct));
         }
-        if (!cpuFields.isEmpty()) lines.add(new Line("CPU: " + cpu, cpuFields));
+        if (!cpu.isEmpty()) {
+            lines.add(new Line("CPU: " + cpu.text, cpu.fields));
+        }
 
         // GPU 行
-        List<ReportField> gpuFields = new ArrayList<>(4);
-        StringBuilder gpu = new StringBuilder();
+        LineBuilder gpu = new LineBuilder(hidden, hideUnavailable);
         if (fields.contains(ReportField.GPU_NAME)) {
-            append(gpu, orNa(snapshot.gpuName));
-            gpuFields.add(ReportField.GPU_NAME);
+            gpu.add(ReportField.GPU_NAME, orNa(snapshot.gpuName));
         }
         if (fields.contains(ReportField.GPU_FREQ)) {
-            append(gpu, freq(snapshot.gpuFreqMHz));
-            gpuFields.add(ReportField.GPU_FREQ);
+            gpu.add(ReportField.GPU_FREQ, freq(snapshot.gpuFreqMHz));
         }
         if (fields.contains(ReportField.GPU_TEMP)) {
-            append(gpu, temp(snapshot.gpuTempC, asciiOnly));
-            gpuFields.add(ReportField.GPU_TEMP);
+            gpu.add(ReportField.GPU_TEMP, temp(snapshot.gpuTempC, asciiOnly));
         }
         if (fields.contains(ReportField.GPU_USAGE)) {
-            append(gpu, pct(snapshot.gpuUsagePct));
-            gpuFields.add(ReportField.GPU_USAGE);
+            gpu.add(ReportField.GPU_USAGE, pct(snapshot.gpuUsagePct));
         }
-        if (!gpuFields.isEmpty()) lines.add(new Line("GPU: " + gpu, gpuFields));
+        if (!gpu.isEmpty()) {
+            lines.add(new Line("GPU: " + gpu.text, gpu.fields));
+        }
 
         // RAM 行
         if (fields.contains(ReportField.RAM)) {
-            List<ReportField> ramFields = new ArrayList<>(1);
-            ramFields.add(ReportField.RAM);
-            lines.add(new Line(ramLine(snapshot.ramUsedMb, snapshot.ramTotalMb), ramFields));
+            if (snapshot.ramUsedMb == null || snapshot.ramTotalMb == null || snapshot.ramTotalMb <= 0) {
+                if (hideUnavailable) hidden.add(ReportField.RAM);
+                else lines.add(new Line("RAM: " + NA, Collections.singletonList(ReportField.RAM)));
+            } else {
+                lines.add(new Line(ramLine(snapshot.ramUsedMb, snapshot.ramTotalMb),
+                        Collections.singletonList(ReportField.RAM)));
+            }
         }
 
         // 电量行
         if (fields.contains(ReportField.BATTERY)) {
-            String battery = snapshot.batteryPct == null ? NA : snapshot.batteryPct + "%";
-            if (snapshot.charging) {
-                battery += asciiOnly ? " Charging" : " 充电中";
+            LineBuilder battery = new LineBuilder(hidden, hideUnavailable);
+            if (snapshot.batteryPct != null) {
+                battery.add(ReportField.BATTERY, snapshot.batteryPct + "%");
+                if (snapshot.charging) battery.suffix(asciiOnly ? "Charging" : "充电中");
+            } else if (snapshot.charging) {
+                battery.add(ReportField.BATTERY, asciiOnly ? "Charging" : "充电中");
+            } else {
+                battery.add(ReportField.BATTERY, NA);
             }
-            List<ReportField> batteryFields = new ArrayList<>(1);
-            batteryFields.add(ReportField.BATTERY);
-            lines.add(new Line((asciiOnly ? "Battery: " : "电量: ") + battery, batteryFields));
+            if (!battery.isEmpty()) {
+                lines.add(new Line((asciiOnly ? "Battery: " : "电量: ") + battery.text,
+                        battery.fields));
+            }
         }
 
-        // 天气行：天气 / 气温 / 湿度共用一行，只拼用户勾选的项
-        List<ReportField> weatherFields = new ArrayList<>(3);
-        if (fields.contains(ReportField.WEATHER)) weatherFields.add(ReportField.WEATHER);
-        if (fields.contains(ReportField.TEMPERATURE)) weatherFields.add(ReportField.TEMPERATURE);
-        if (fields.contains(ReportField.HUMIDITY)) weatherFields.add(ReportField.HUMIDITY);
-        if (!weatherFields.isEmpty()) {
-            StringBuilder weatherText = new StringBuilder();
+        // 天气第一行：天气 / 气温 / 湿度
+        boolean weatherFirst = fields.contains(ReportField.WEATHER)
+                || fields.contains(ReportField.TEMPERATURE)
+                || fields.contains(ReportField.HUMIDITY);
+        if (weatherFirst) {
+            List<ReportField> selected = new ArrayList<>(3);
+            if (fields.contains(ReportField.WEATHER)) selected.add(ReportField.WEATHER);
+            if (fields.contains(ReportField.TEMPERATURE)) selected.add(ReportField.TEMPERATURE);
+            if (fields.contains(ReportField.HUMIDITY)) selected.add(ReportField.HUMIDITY);
+
             if (weather == null) {
-                append(weatherText, NA);
+                if (hideUnavailable) {
+                    hidden.addAll(selected);
+                } else {
+                    lines.add(new Line((asciiOnly ? "Weather: " : "天气: ") + NA, selected));
+                }
             } else {
+                LineBuilder w = new LineBuilder(hidden, hideUnavailable);
                 if (fields.contains(ReportField.WEATHER)) {
-                    append(weatherText, asciiOnly ? weather.conditionEn : weather.conditionZh);
+                    w.add(ReportField.WEATHER,
+                            asciiOnly ? weather.conditionEn : weather.conditionZh);
                 }
                 if (fields.contains(ReportField.TEMPERATURE)) {
-                    append(weatherText, temp(weather.temperatureC, asciiOnly));
+                    w.add(ReportField.TEMPERATURE, temp(weather.temperatureC, asciiOnly));
                 }
                 if (fields.contains(ReportField.HUMIDITY)) {
-                    append(weatherText, humidity(weather.humidityPct, asciiOnly));
+                    w.add(ReportField.HUMIDITY, humidity(weather.humidityPct, asciiOnly));
+                }
+                if (!w.isEmpty()) {
+                    lines.add(new Line((asciiOnly ? "Weather: " : "天气: ") + w.text, w.fields));
                 }
             }
-            lines.add(new Line((asciiOnly ? "Weather: " : "天气: ") + weatherText, weatherFields));
+        }
+
+        // 天气第二行：气压 / 风向风速 / 紫外线 / 日落
+        boolean weatherSecond = fields.contains(ReportField.PRESSURE)
+                || fields.contains(ReportField.WIND)
+                || fields.contains(ReportField.UV)
+                || fields.contains(ReportField.SUNSET);
+        if (weatherSecond) {
+            List<ReportField> selected = new ArrayList<>(4);
+            if (fields.contains(ReportField.PRESSURE)) selected.add(ReportField.PRESSURE);
+            if (fields.contains(ReportField.WIND)) selected.add(ReportField.WIND);
+            if (fields.contains(ReportField.UV)) selected.add(ReportField.UV);
+            if (fields.contains(ReportField.SUNSET)) selected.add(ReportField.SUNSET);
+
+            if (weather == null) {
+                if (hideUnavailable) {
+                    hidden.addAll(selected);
+                } else {
+                    LineBuilder w = new LineBuilder(hidden, false);
+                    if (fields.contains(ReportField.PRESSURE)) {
+                        w.addUnavailable(ReportField.PRESSURE, asciiOnly ? "Pressure " : "气压 ");
+                    }
+                    if (fields.contains(ReportField.WIND)) {
+                        w.addUnavailable(ReportField.WIND, asciiOnly ? "Wind " : "风向风速 ");
+                    }
+                    if (fields.contains(ReportField.UV)) {
+                        w.addUnavailable(ReportField.UV, asciiOnly ? "UV " : "紫外线 ");
+                    }
+                    if (fields.contains(ReportField.SUNSET)) {
+                        w.addUnavailable(ReportField.SUNSET, asciiOnly ? "Sunset " : "日落 ");
+                    }
+                    if (!w.isEmpty()) lines.add(new Line(w.text.toString(), w.fields));
+                }
+            } else {
+                LineBuilder w = new LineBuilder(hidden, hideUnavailable);
+                if (fields.contains(ReportField.PRESSURE)) {
+                    if (weather.pressureHpa != null) {
+                        w.add(ReportField.PRESSURE, pressureText(weather, asciiOnly));
+                    } else {
+                        w.addUnavailable(ReportField.PRESSURE, asciiOnly ? "Pressure " : "气压 ");
+                    }
+                }
+                if (fields.contains(ReportField.WIND)) {
+                    String wind = windText(weather, asciiOnly);
+                    if (wind != null) {
+                        w.add(ReportField.WIND, wind);
+                    } else {
+                        w.addUnavailable(ReportField.WIND, asciiOnly ? "Wind " : "风向风速 ");
+                    }
+                }
+                if (fields.contains(ReportField.UV)) {
+                    if (weather.uvIndex != null) {
+                        w.add(ReportField.UV, uvText(weather, asciiOnly));
+                    } else {
+                        w.addUnavailable(ReportField.UV, asciiOnly ? "UV " : "紫外线 ");
+                    }
+                }
+                if (fields.contains(ReportField.SUNSET)) {
+                    if (weather.sunset != null && !weather.sunset.trim().isEmpty()) {
+                        w.add(ReportField.SUNSET, sunsetText(weather, asciiOnly));
+                    } else {
+                        w.addUnavailable(ReportField.SUNSET, asciiOnly ? "Sunset " : "日落 ");
+                    }
+                }
+                if (!w.isEmpty()) {
+                    lines.add(new Line(w.text.toString(), w.fields));
+                }
+            }
         }
 
         // 前台应用行
         if (fields.contains(ReportField.FOREGROUND_APP)) {
-            List<ReportField> appFields = new ArrayList<>(1);
-            appFields.add(ReportField.FOREGROUND_APP);
-            lines.add(new Line("App: " + orNa(snapshot.foregroundApp), appFields));
+            LineBuilder app = new LineBuilder(hidden, hideUnavailable);
+            app.add(ReportField.FOREGROUND_APP, orNa(snapshot.foregroundApp));
+            if (!app.isEmpty()) {
+                lines.add(new Line("App: " + app.text, app.fields));
+            }
         }
 
         // 帧率行
         if (fields.contains(ReportField.VRCHAT_FPS)) {
-            List<ReportField> fpsFields = new ArrayList<>(1);
-            fpsFields.add(ReportField.VRCHAT_FPS);
             String fps = snapshot.vrchatFps == null
                     ? NA
                     : String.format(Locale.US, "%.0f", snapshot.vrchatFps);
-            lines.add(new Line("FPS: " + fps, fpsFields));
+            LineBuilder fpsLine = new LineBuilder(hidden, hideUnavailable);
+            fpsLine.add(ReportField.VRCHAT_FPS, fps);
+            if (!fpsLine.isEmpty()) {
+                lines.add(new Line("FPS: " + fpsLine.text, fpsLine.fields));
+            }
         }
 
         return lines;
@@ -271,8 +425,13 @@ public final class ReportBuilder {
     }
 
     private static void append(StringBuilder sb, String part) {
+        if (part == null) return;
         if (sb.length() > 0) sb.append(' ');
         sb.append(part);
+    }
+
+    private static boolean isAvailable(String value) {
+        return value != null && !value.trim().isEmpty() && !NA.equals(value.trim());
     }
 
     private static String orNa(String value) {
@@ -298,6 +457,51 @@ public final class ReportBuilder {
     private static String humidity(Integer value, boolean asciiOnly) {
         if (value == null) return NA;
         return String.format(Locale.US, asciiOnly ? "Humidity %d%%" : "湿度 %d%%", value);
+    }
+
+    private static String pressureText(WeatherInfo weather, boolean asciiOnly) {
+        if (weather.pressureHpa == null) return (asciiOnly ? "Pressure " : "气压 ") + NA;
+        return String.format(Locale.US, asciiOnly ? "Pressure %.0fhPa" : "气压 %.0fhPa",
+                weather.pressureHpa);
+    }
+
+    private static String uvText(WeatherInfo weather, boolean asciiOnly) {
+        String label = asciiOnly ? "UV " : "紫外线 ";
+        if (weather.uvIndex == null) return label + NA;
+        return label + weather.uvIndex;
+    }
+
+    private static String sunsetText(WeatherInfo weather, boolean asciiOnly) {
+        String label = asciiOnly ? "Sunset " : "日落 ";
+        if (weather.sunset == null || weather.sunset.trim().isEmpty()) return label + NA;
+        return label + weather.sunset.trim();
+    }
+
+    /** 风向转 8 方位；风速用 m/s，保留 1 位小数 */
+    private static String windText(WeatherInfo weather, boolean asciiOnly) {
+        boolean hasDirection = weather.windDirectionDeg != null;
+        boolean hasSpeed = weather.windSpeedMs != null;
+        if (!hasDirection && !hasSpeed) return null;
+
+        StringBuilder sb = new StringBuilder();
+        if (hasDirection) {
+            sb.append(directionText(weather.windDirectionDeg, asciiOnly));
+        }
+        if (hasSpeed) {
+            if (sb.length() > 0) sb.append(' ');
+            else sb.append(asciiOnly ? "Wind " : "风速 ");
+            sb.append(String.format(Locale.US, "%.1fm/s", weather.windSpeedMs));
+        }
+        return sb.toString();
+    }
+
+    private static String directionText(int degrees, boolean asciiOnly) {
+        String[] zh = {"北风", "东北风", "东风", "东南风", "南风", "西南风", "西风", "西北风"};
+        String[] en = {"N wind", "NE wind", "E wind", "SE wind",
+                "S wind", "SW wind", "W wind", "NW wind"};
+        int normalized = ((degrees % 360) + 360) % 360;
+        int index = (int) Math.floor((normalized + 22.5) / 45.0) % 8;
+        return asciiOnly ? en[index] : zh[index];
     }
 
     private static String ramLine(Long usedMb, Long totalMb) {

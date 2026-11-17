@@ -320,11 +320,14 @@ public class ReporterService extends Service {
                 enabledFields,
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
-                weather);
+                weather,
+                settings.isHideUnavailable());
         latestReport = report;
 
         if (report.text.trim().isEmpty()) {
-            addLog(false, "未勾选任何字段", null);
+            addLog(false, enabledFields.isEmpty()
+                    ? "未勾选任何字段"
+                    : "所选字段当前都不可用，本次未发送", null);
             notifyListeners();
             return;
         }

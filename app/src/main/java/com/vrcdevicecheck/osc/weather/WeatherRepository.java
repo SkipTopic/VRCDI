@@ -35,6 +35,10 @@ public final class WeatherRepository {
 
     private static final String PREFS = "vrcdi_weather";
 
+    /** 缓存结构版本：升级后旧缓存没有气压/风/紫外线/日落，直接丢弃重取 */
+    private static final int SCHEMA_VERSION = 2;
+    private static final String KEY_SCHEMA = "schema";
+
     private static final String KEY_LAST_SUCCESS = "last_success";
     private static final String KEY_LAST_ATTEMPT = "last_attempt";
     private static final String KEY_CITY_KEY = "city_key";
@@ -43,6 +47,11 @@ public final class WeatherRepository {
     private static final String KEY_COND_ZH = "cond_zh";
     private static final String KEY_COND_EN = "cond_en";
     private static final String KEY_PROVIDER = "provider";
+    private static final String KEY_PRESSURE = "pressure_hpa";
+    private static final String KEY_WIND_DIR = "wind_dir_deg";
+    private static final String KEY_WIND_SPEED = "wind_speed_ms";
+    private static final String KEY_UV = "uv_index";
+    private static final String KEY_SUNSET = "sunset";
     private static final String KEY_LAT = "lat";
     private static final String KEY_LON = "lon";
     private static final String KEY_COORD_CITY_KEY = "coord_city_key";
@@ -80,7 +89,9 @@ public final class WeatherRepository {
         String city = settings.getWeatherCity();
         if (city.isEmpty()) return null;
         String cityKey = settings.getWeatherProvince() + "/" + city;
-        return readCache(prefs(context), cityKey, settings.getWeatherCityLabel());
+        SharedPreferences sp = prefs(context);
+        if (sp.getInt(KEY_SCHEMA, 0) < SCHEMA_VERSION) return null;
+        return readCache(sp, cityKey, settings.getWeatherCityLabel());
     }
 
     /** 选择/切换城市；城市变了才清缓存 */
@@ -107,6 +118,11 @@ public final class WeatherRepository {
                 .remove(KEY_COND_ZH)
                 .remove(KEY_COND_EN)
                 .remove(KEY_PROVIDER)
+                .remove(KEY_PRESSURE)
+                .remove(KEY_WIND_DIR)
+                .remove(KEY_WIND_SPEED)
+                .remove(KEY_UV)
+                .remove(KEY_SUNSET)
                 .remove(KEY_LAT)
                 .remove(KEY_LON)
                 .remove(KEY_COORD_CITY_KEY)
@@ -122,6 +138,11 @@ public final class WeatherRepository {
         final String cityKey = province + "/" + city;
         final String label = settings.getWeatherCityLabel();
         SharedPreferences sp = prefs(context);
+
+        // 旧版本缓存里没有新字段，先清掉，避免升级后一小时都显示不出气压/风/紫外线/日落
+        if (sp.getInt(KEY_SCHEMA, 0) < SCHEMA_VERSION) {
+            sp.edit().clear().putInt(KEY_SCHEMA, SCHEMA_VERSION).apply();
+        }
 
         synchronized (FETCH_LOCK) {
             long now = System.currentTimeMillis();
@@ -173,7 +194,9 @@ public final class WeatherRepository {
     private static WeatherInfo fetchOpenMeteo(float lat, float lon, String label) {
         String url = String.format(Locale.US,
                 "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f"
-                        + "&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto",
+                        + "&current=temperature_2m,relative_humidity_2m,weather_code,"
+                        + "pressure_msl,wind_direction_10m,wind_speed_10m,uv_index"
+                        + "&daily=sunset&timezone=auto&wind_speed_unit=ms",
                 lat, lon);
         String json = httpGet(url, 5000);
         if (json == null) return null;
@@ -186,10 +209,28 @@ public final class WeatherRepository {
             Integer humidity = current.has("relative_humidity_2m")
                     ? current.getInt("relative_humidity_2m") : null;
             int code = current.optInt("weather_code", -1);
+            Float pressure = current.has("pressure_msl")
+                    ? (float) current.getDouble("pressure_msl") : null;
+            Integer windDir = current.has("wind_direction_10m")
+                    ? current.getInt("wind_direction_10m") : null;
+            Float windSpeed = current.has("wind_speed_10m")
+                    ? (float) current.getDouble("wind_speed_10m") : null;
+            Integer uv = current.has("uv_index")
+                    ? Math.round((float) current.getDouble("uv_index")) : null;
+
+            String sunset = null;
+            JSONObject daily = root.optJSONObject("daily");
+            if (daily != null) {
+                JSONArray sunsets = daily.optJSONArray("sunset");
+                if (sunsets != null && sunsets.length() > 0) {
+                    sunset = formatSunset(sunsets.optString(0, ""));
+                }
+            }
 
             return new WeatherInfo(label, temp, humidity,
                     WeatherCodes.zhForWmo(code), WeatherCodes.enForWmo(code),
-                    System.currentTimeMillis(), "Open-Meteo");
+                    System.currentTimeMillis(), "Open-Meteo",
+                    pressure, windDir, windSpeed, uv, sunset);
         } catch (Exception e) {
             return null;
         }
@@ -217,9 +258,26 @@ public final class WeatherRepository {
                 desc = descriptions.getJSONObject(0).optString("value", "");
             }
 
+            Integer pressure = parseInt(current.optString("pressure", ""));
+            Integer windDir = parseInt(current.optString("winddirDegree", ""));
+            Float windKmph = parseFloat(current.optString("windspeedKmph", ""));
+            Float windSpeed = windKmph == null ? null : windKmph / 3.6f;
+            Integer uv = parseInt(current.optString("uvIndex", ""));
+
+            String sunset = null;
+            JSONArray days = root.optJSONArray("weather");
+            if (days != null && days.length() > 0) {
+                JSONArray astronomy = days.getJSONObject(0).optJSONArray("astronomy");
+                if (astronomy != null && astronomy.length() > 0) {
+                    sunset = formatSunset(astronomy.getJSONObject(0).optString("sunset", ""));
+                }
+            }
+
             return new WeatherInfo(label, temp, humidity,
                     WeatherCodes.zhForWwo(code), WeatherCodes.enForWwo(code, desc),
-                    System.currentTimeMillis(), "wttr.in");
+                    System.currentTimeMillis(), "wttr.in",
+                    pressure == null ? null : pressure.floatValue(),
+                    windDir, windSpeed, uv, sunset);
         } catch (Exception e) {
             return null;
         }
@@ -281,6 +339,7 @@ public final class WeatherRepository {
 
     private static void save(SharedPreferences sp, WeatherInfo info, String cityKey) {
         SharedPreferences.Editor editor = sp.edit()
+                .putInt(KEY_SCHEMA, SCHEMA_VERSION)
                 .putLong(KEY_LAST_SUCCESS, info.fetchedAtMs)
                 .putString(KEY_CITY_KEY, cityKey)
                 .putString(KEY_COND_ZH, info.conditionZh)
@@ -290,6 +349,16 @@ public final class WeatherRepository {
         else editor.remove(KEY_TEMP);
         if (info.humidityPct != null) editor.putInt(KEY_HUMIDITY, info.humidityPct);
         else editor.remove(KEY_HUMIDITY);
+        if (info.pressureHpa != null) editor.putFloat(KEY_PRESSURE, info.pressureHpa);
+        else editor.remove(KEY_PRESSURE);
+        if (info.windDirectionDeg != null) editor.putInt(KEY_WIND_DIR, info.windDirectionDeg);
+        else editor.remove(KEY_WIND_DIR);
+        if (info.windSpeedMs != null) editor.putFloat(KEY_WIND_SPEED, info.windSpeedMs);
+        else editor.remove(KEY_WIND_SPEED);
+        if (info.uvIndex != null) editor.putInt(KEY_UV, info.uvIndex);
+        else editor.remove(KEY_UV);
+        if (info.sunset != null && !info.sunset.trim().isEmpty()) editor.putString(KEY_SUNSET, info.sunset);
+        else editor.remove(KEY_SUNSET);
         editor.apply();
     }
 
@@ -299,10 +368,15 @@ public final class WeatherRepository {
         if (time <= 0) return null;
         Float temp = sp.contains(KEY_TEMP) ? sp.getFloat(KEY_TEMP, 0f) : null;
         Integer humidity = sp.contains(KEY_HUMIDITY) ? sp.getInt(KEY_HUMIDITY, 0) : null;
+        Float pressure = sp.contains(KEY_PRESSURE) ? sp.getFloat(KEY_PRESSURE, 0f) : null;
+        Integer windDir = sp.contains(KEY_WIND_DIR) ? sp.getInt(KEY_WIND_DIR, 0) : null;
+        Float windSpeed = sp.contains(KEY_WIND_SPEED) ? sp.getFloat(KEY_WIND_SPEED, 0f) : null;
+        Integer uv = sp.contains(KEY_UV) ? sp.getInt(KEY_UV, 0) : null;
         return new WeatherInfo(label, temp, humidity,
                 sp.getString(KEY_COND_ZH, "未知"),
                 sp.getString(KEY_COND_EN, "Unknown"),
-                time, sp.getString(KEY_PROVIDER, ""));
+                time, sp.getString(KEY_PROVIDER, ""),
+                pressure, windDir, windSpeed, uv, sp.getString(KEY_SUNSET, null));
     }
 
     private static SharedPreferences prefs(Context context) {
@@ -389,5 +463,31 @@ public final class WeatherRepository {
     private static int parseIntValue(String value, int fallback) {
         Integer parsed = parseInt(value);
         return parsed == null ? fallback : parsed;
+    }
+
+    /** Open-Meteo 返回 2026-11-17T17:14，wttr.in 返回 05:14 PM，统一成 17:14 */
+    private static String formatSunset(String raw) {
+        if (raw == null) return null;
+        String value = raw.trim();
+        if (value.isEmpty()) return null;
+
+        int t = value.indexOf('T');
+        if (t >= 0 && value.length() >= t + 6) {
+            return value.substring(t + 1, t + 6);
+        }
+
+        try {
+            java.text.SimpleDateFormat input =
+                    new java.text.SimpleDateFormat("hh:mm a", Locale.US);
+            java.text.SimpleDateFormat output =
+                    new java.text.SimpleDateFormat("HH:mm", Locale.US);
+            java.util.Date date = input.parse(value);
+            if (date != null) return output.format(date);
+        } catch (Exception ignored) {
+            // 继续按 HH:mm 处理
+        }
+
+        if (value.length() >= 5 && value.charAt(2) == ':') return value.substring(0, 5);
+        return value;
     }
 }

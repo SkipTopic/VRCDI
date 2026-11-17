@@ -18,8 +18,24 @@ public final class WeatherInfo {
     /** 数据来源：Open-Meteo / wttr.in */
     public final String provider;
 
+    public final Float pressureHpa;
+    /** 风向角度：0=北，90=东，180=南，270=西 */
+    public final Integer windDirectionDeg;
+    public final Float windSpeedMs;
+    public final Integer uvIndex;
+    /** 当地日落时间，HH:mm */
+    public final String sunset;
+
     public WeatherInfo(String cityLabel, Float temperatureC, Integer humidityPct,
                        String conditionZh, String conditionEn, long fetchedAtMs, String provider) {
+        this(cityLabel, temperatureC, humidityPct, conditionZh, conditionEn, fetchedAtMs, provider,
+                null, null, null, null, null);
+    }
+
+    public WeatherInfo(String cityLabel, Float temperatureC, Integer humidityPct,
+                       String conditionZh, String conditionEn, long fetchedAtMs, String provider,
+                       Float pressureHpa, Integer windDirectionDeg, Float windSpeedMs,
+                       Integer uvIndex, String sunset) {
         this.cityLabel = cityLabel;
         this.temperatureC = temperatureC;
         this.humidityPct = humidityPct;
@@ -27,6 +43,11 @@ public final class WeatherInfo {
         this.conditionEn = conditionEn == null ? "Unknown" : conditionEn;
         this.fetchedAtMs = fetchedAtMs;
         this.provider = provider == null ? "" : provider;
+        this.pressureHpa = pressureHpa;
+        this.windDirectionDeg = windDirectionDeg;
+        this.windSpeedMs = windSpeedMs;
+        this.uvIndex = uvIndex;
+        this.sunset = sunset;
     }
 
     public String timeText() {
