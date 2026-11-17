@@ -16,12 +16,14 @@ public class AppSettings {
     public static final int DEFAULT_PORT = 9000;
     public static final int DEFAULT_INTERVAL = 10;
     public static final int MIN_INTERVAL = 2;
+    public static final int MAX_INTERVAL = 3600;
 
     private static final String PREF_NAME = "vrcdi_settings";
     private static final String KEY_IP = "target_ip";
     private static final String KEY_LOCAL_TARGET = "target_is_local";
     private static final String KEY_PORT = "target_port";
     private static final String KEY_INTERVAL = "interval_sec";
+    private static final String KEY_SEND_ON_START = "send_on_start";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
     private static final String KEY_SEND_IMMEDIATELY = "send_immediately";
@@ -85,11 +87,22 @@ public class AppSettings {
 
     /** 上报间隔（秒）。间隔越大越省电，也越不容易触发 Chatbox 限频 */
     public int getIntervalSec() {
-        return sp.getInt(KEY_INTERVAL, DEFAULT_INTERVAL);
+        int value = sp.getInt(KEY_INTERVAL, DEFAULT_INTERVAL);
+        return Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, value));
     }
 
     public void setIntervalSec(int value) {
-        sp.edit().putInt(KEY_INTERVAL, Math.max(MIN_INTERVAL, Math.min(3600, value))).apply();
+        sp.edit().putInt(KEY_INTERVAL,
+                Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, value))).apply();
+    }
+
+    /** 点「启动上报」时是否立刻采集并发送一次（默认开） */
+    public boolean isSendOnStart() {
+        return sp.getBoolean(KEY_SEND_ON_START, true);
+    }
+
+    public void setSendOnStart(boolean value) {
+        sp.edit().putBoolean(KEY_SEND_ON_START, value).apply();
     }
 
     public PrivilegeMode getPrivilegeMode() {

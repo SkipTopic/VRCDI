@@ -34,6 +34,7 @@ import rikka.shizuku.Shizuku;
 public class SettingsActivity extends Activity {
 
     private static final String[] ITEMS = new String[]{
+            "上报时间设置",
             "权限申请方式",
             "设备表设置",
             "应用表设置",
@@ -71,24 +72,27 @@ public class SettingsActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        showPrivilegeDialog();
+                        startActivity(new Intent(SettingsActivity.this, ReportIntervalActivity.class));
                         break;
                     case 1:
-                        startActivity(new Intent(SettingsActivity.this, DeviceTableSettingsActivity.class));
+                        showPrivilegeDialog();
                         break;
                     case 2:
-                        startActivity(new Intent(SettingsActivity.this, AppTableSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, DeviceTableSettingsActivity.class));
                         break;
                     case 3:
-                        startActivity(new Intent(SettingsActivity.this, CpuMapSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, AppTableSettingsActivity.class));
                         break;
                     case 4:
-                        startActivity(new Intent(SettingsActivity.this, ThemeSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, CpuMapSettingsActivity.class));
                         break;
                     case 5:
-                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        startActivity(new Intent(SettingsActivity.this, ThemeSettingsActivity.class));
                         break;
                     case 6:
+                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        break;
+                    case 7:
                         showAboutDialog();
                         break;
                     default:

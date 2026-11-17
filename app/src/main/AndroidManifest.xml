@@ -54,6 +54,11 @@
             android:label="设置" />
 
         <activity
+            android:name=".ReportIntervalActivity"
+            android:exported="false"
+            android:label="上报时间设置" />
+
+        <activity
             android:name=".DeviceTableSettingsActivity"
             android:exported="false"
             android:label="设备表设置" />
