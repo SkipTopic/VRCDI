@@ -23,12 +23,15 @@
   "description": "通过 Shizuku / Root 读取安卓设备的 CPU、GPU、内存、电量与前台应用，用 OSC 发送到 VRChat 的 Chatbox。",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Android 10+",
-  "softwareVersion": "2.3.8 Omega",
+  "softwareVersion": "2.5.0 Omega",
   "url": "https://wanliustudio.github.io/VRCDI/",
-  "downloadUrl": "https://github.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/VRCDI-2.3.8-omega.apk",
+  "downloadUrl": "https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk",
   "codeRepository": "https://github.com/WanliuStudio/VRCDI",
   "license": "https://opensource.org/licenses/MIT",
-  "author": { "@type": "Organization", "name": "WanliuStudio" },
+  "author": [
+    { "@type": "Organization", "name": "WanliuStudio" },
+    { "@type": "Person", "name": "海盗船长暗金（SkipTopic）", "url": "https://github.com/SkipTopic" }
+  ],
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
 }
 </script>
@@ -364,14 +367,14 @@
       <span>Android 10+</span>
       <span>纯 Java · 无 AndroidX 界面</span>
       <span>Shizuku / Root / 免授权</span>
-      <span id="badge-version">2.3.8 Omega (Build 138)</span>
+      <span id="badge-version">2.5.0 Omega (Build 150)</span>
     </div>
 
     <div class="actions">
-      <a class="btn primary" id="dl-gitee" href="https://gitee.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/VRCDI-2.3.8-omega.apk" target="_blank" rel="noopener">
+      <a class="btn primary" id="dl-gitee" href="https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk" target="_blank" rel="noopener">
         国内下载 <small>Gitee</small>
       </a>
-      <a class="btn" id="dl-github" href="https://github.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/VRCDI-2.3.8-omega.apk" target="_blank" rel="noopener">
+      <a class="btn" id="dl-github" href="https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk" target="_blank" rel="noopener">
         GitHub 下载 <small>Releases</small>
       </a>
     </div>
@@ -497,16 +500,16 @@
    *
    * 1. giteeDownload / githubDownload 换成真实的「附件直链」。
    *    GitHub：Releases → 右键 APK → 复制链接，形如
-   *            https://github.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/文件名.apk
+   *            https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/文件名.apk
    *    Gitee ：发行版 → 右键附件 → 复制链接，形如
-   *            https://gitee.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/文件名.apk
+   *            https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/文件名.apk
    * 2. sha256 换成你上传的那个 APK 的哈希（重新构建后要重新算）。
    */
   const CONFIG = {
-    version: '2.3.8 Omega (Build 138)',
-    sha256: '82c4ae1940b1c1da92e58a0383ecf02e2363580a752f5f49b03ff47b9eafd1ad',
-    giteeDownload: 'https://gitee.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/VRCDI-2.3.8-omega.apk',
-    githubDownload: 'https://github.com/WanliuStudio/VRCDI/releases/download/2.3.8-Omega/VRCDI-2.3.8-omega.apk',
+    version: '2.5.0 Omega (Build 150)',
+    sha256: '692eb314d6019a640bb80f9f29b84449bc008267e5b7756e56f2d6b5df635e3b',
+    giteeDownload: 'https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk',
+    githubDownload: 'https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk',
     giteeRepo: 'https://gitee.com/WanliuStudio/VRCDI',
     githubRepo: 'https://github.com/WanliuStudio/VRCDI',
     releases: 'https://github.com/WanliuStudio/VRCDI/releases'
