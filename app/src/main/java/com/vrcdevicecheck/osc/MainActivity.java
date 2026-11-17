@@ -206,7 +206,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Throwable t) {
-            return "2.3.8 Omega";
+            return "2.3.9 Omega";
         }
     }
 
@@ -406,7 +406,13 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             @Override
             public void afterTextChanged(Editable s) {
                 Integer value = parseIntOrNull(s.toString());
-                if (value != null) settings.setIntervalSec(value);
+                if (value == null) return;
+                int normalized = Math.max(AppSettings.MIN_INTERVAL,
+                        Math.min(AppSettings.MAX_INTERVAL, value));
+                if (normalized == settings.getIntervalSec()) return;
+                settings.setIntervalSec(value);
+                // 服务正在跑就按新间隔立即重排，不用等旧周期
+                ReporterService.onIntervalChanged();
             }
         });
         checkAscii.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -674,7 +680,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         sb.append("安卓API版本：API").append(Build.VERSION.SDK_INT);
         device.setText(sb.toString());
 
-        String versionName = "2.3.8 Omega";
+        String versionName = "2.3.9 Omega";
         int versionCode = 0;
         try {
             android.content.pm.PackageInfo info =
