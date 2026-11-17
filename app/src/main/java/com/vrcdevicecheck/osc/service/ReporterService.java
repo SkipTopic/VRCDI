@@ -16,6 +16,7 @@ import com.vrcdevicecheck.osc.MainActivity;
 import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.data.AppSettings;
 import com.vrcdevicecheck.osc.data.ModelDisplayMode;
+import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceInfoRepository;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.osc.OscEncoder;
@@ -23,6 +24,8 @@ import com.vrcdevicecheck.osc.osc.OscSender;
 import com.vrcdevicecheck.osc.osc.ReportBuilder;
 import com.vrcdevicecheck.osc.priv.PrivilegeController;
 import com.vrcdevicecheck.osc.priv.PrivilegedShell;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
+import com.vrcdevicecheck.osc.weather.WeatherRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,6 +34,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -79,6 +83,7 @@ public class ReporterService extends Service {
     }
 
     // ---------------- 对外可见的运行状态（静态，便于界面读取） ----------------
+    private static volatile ReporterService instance;
     private static volatile boolean running;
     private static volatile DeviceSnapshot latestSnapshot;
     private static volatile ReportBuilder.Report latestReport;
@@ -147,6 +152,12 @@ public class ReporterService extends Service {
     private final Object lock = new Object();
     private volatile boolean loop;
     private Thread worker;
+    /** 上一轮发送完成的时间；用于改间隔后按新间隔重新计算下一次发送时刻 */
+    private volatile long lastSendAt;
+    /** 下一次发送的目标时刻（0 表示下一轮立刻发送） */
+    private long nextSendAt;
+    /** 「立即发送一次」请求 */
+    private boolean forceSend;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -156,6 +167,7 @@ public class ReporterService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         settings = new AppSettings(this);
         repository = new DeviceInfoRepository(this);
         createChannel();
@@ -170,15 +182,30 @@ public class ReporterService extends Service {
         }
         if (ACTION_SEND_NOW.equals(action)) {
             synchronized (lock) {
+                forceSend = true;
+                nextSendAt = 0;
                 lock.notifyAll();
             }
-            return START_STICKY;
+            // 服务本来就在跑：只唤醒工作线程，不重复走启动流程
+            if (running) {
+                notifyListeners();
+                return START_STICKY;
+            }
+            // 服务没在跑：继续往下走正常启动，启动后立刻发送一次
         }
 
         startAsForeground();
         running = true;
         if (worker == null || !worker.isAlive()) {
             loop = true;
+            synchronized (lock) {
+                // 启动即发（默认）：下一轮直接发送；关闭后先等一个间隔
+                if (!forceSend) {
+                    nextSendAt = settings.isSendOnStart()
+                            ? 0
+                            : System.currentTimeMillis() + intervalMs();
+                }
+            }
             worker = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -204,23 +231,64 @@ public class ReporterService extends Service {
             worker = null;
         }
         sender.close();
+        if (instance == this) instance = null;
         notifyListeners();
         super.onDestroy();
     }
 
+    private long intervalMs() {
+        return Math.max(AppSettings.MIN_INTERVAL, settings.getIntervalSec()) * 1000L;
+    }
+
+    /**
+     * 按「上次发送完成时刻 + 新间隔」重新计算下一次发送。
+     * 如果新间隔已经过去，就立即补发一次；否则等剩余时间。
+     * 这样在设置里把 60 秒改成 5 秒，不用等满 60 秒才生效。
+     */
+    private void reschedule() {
+        synchronized (lock) {
+            long base = lastSendAt > 0 ? lastSendAt : System.currentTimeMillis();
+            nextSendAt = Math.max(System.currentTimeMillis(), base + intervalMs());
+            lock.notifyAll();
+        }
+        updateNotification();
+    }
+
+    /** 设置页保存间隔后调用：服务在跑就立即按新间隔重排，没跑则只存配置 */
+    public static void onIntervalChanged() {
+        ReporterService service = instance;
+        if (service != null) service.reschedule();
+    }
+
     private void reportLoop() {
         while (loop) {
-            try {
-                sampleAndSend();
-            } catch (Throwable t) {
-                addLog(false, "采集或发送异常", t.getClass().getSimpleName());
-            }
-            long intervalMs = Math.max(AppSettings.MIN_INTERVAL, settings.getIntervalSec()) * 1000L;
+            boolean due;
             synchronized (lock) {
                 if (!loop) break;
+                long now = System.currentTimeMillis();
+                due = forceSend || nextSendAt == 0 || now >= nextSendAt;
+                if (due) forceSend = false;
+            }
+
+            if (due) {
                 try {
-                    // 到点或被「立即发送」唤醒后进入下一轮
-                    lock.wait(intervalMs);
+                    sampleAndSend();
+                } catch (Throwable t) {
+                    addLog(false, "采集或发送异常", t.getClass().getSimpleName());
+                }
+                lastSendAt = System.currentTimeMillis();
+                synchronized (lock) {
+                    // 采集期间又点了「立即发送」：保持待发送状态，下一轮马上再发
+                    nextSendAt = forceSend ? 0 : lastSendAt + intervalMs();
+                }
+            }
+
+            synchronized (lock) {
+                if (!loop) break;
+                long waitMs = Math.max(0L, nextSendAt - System.currentTimeMillis());
+                try {
+                    // 到点、改间隔或「立即发送」都会唤醒
+                    lock.wait(waitMs);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -242,15 +310,24 @@ public class ReporterService extends Service {
         latestSnapshot = result.snapshot;
         warning = result.warning;
 
+        Set<ReportField> enabledFields = settings.getEnabledFields();
+        WeatherInfo weather = WeatherRepository.isWeatherEnabled(enabledFields)
+                ? WeatherRepository.getForReport(this)
+                : null;
+
         ReportBuilder.Report report = ReportBuilder.build(
                 result.snapshot,
-                settings.getEnabledFields(),
+                enabledFields,
                 settings.isAsciiOnly(),
-                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME);
+                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
+                weather,
+                settings.isHideUnavailable());
         latestReport = report;
 
         if (report.text.trim().isEmpty()) {
-            addLog(false, "未勾选任何字段", null);
+            addLog(false, enabledFields.isEmpty()
+                    ? "未勾选任何字段"
+                    : "所选字段当前都不可用，本次未发送", null);
             notifyListeners();
             return;
         }
@@ -294,6 +371,20 @@ public class ReporterService extends Service {
     }
 
     private void startAsForeground() {
+        // minSdk 29，三参数版本自 API 29 起可用
+        startForeground(NOTIFICATION_ID, buildNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+    }
+
+    /** 通知栏文案跟着间隔走，改了间隔不必重启服务 */
+    private void updateNotification() {
+        if (!running) return;
+        NotificationManager manager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) manager.notify(NOTIFICATION_ID, buildNotification());
+    }
+
+    private Notification buildNotification() {
         Intent contentIntent = new Intent(this, MainActivity.class);
         PendingIntent content = PendingIntent.getActivity(this, 0, contentIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -305,7 +396,7 @@ public class ReporterService extends Service {
         String ip = settings.getTargetIp();
         String target = (ip == null || ip.trim().isEmpty()) ? "未设置" : ip.trim();
 
-        Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID)
+        return new Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(getString(R.string.notif_title))
                 .setContentText("目标 " + target + ":" + settings.getTargetPort()
@@ -315,11 +406,8 @@ public class ReporterService extends Service {
                 .addAction(new Notification.Action.Builder(
                         android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_notification),
                         getString(R.string.notif_stop),
-                        stop).build());
-
-        // minSdk 29，三参数版本自 API 29 起可用
-        startForeground(NOTIFICATION_ID, builder.build(),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+                        stop).build())
+                .build();
     }
 
     // ---------------- 启动辅助 ----------------

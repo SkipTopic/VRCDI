@@ -49,6 +49,8 @@ import com.vrcdevicecheck.osc.priv.ShizukuShell;
 import com.vrcdevicecheck.osc.service.ReporterService;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
 import com.vrcdevicecheck.osc.update.UpdateChecker;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
+import com.vrcdevicecheck.osc.weather.WeatherRepository;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -85,6 +87,9 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     /** 界面可见时每 2 秒刷新一次「前台应用」 */
     private boolean foregroundTicking;
 
+    /** 本次界面生命周期内只提示一次「先选天气城市」 */
+    private boolean weatherPromptShown;
+
     private final Runnable foregroundTick = new Runnable() {
         @Override
         public void run() {
@@ -102,6 +107,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private CheckBox checkAscii;
     private CheckBox checkSendImmediately;
     private CheckBox checkNotificationSound;
+    private CheckBox checkHideUnavailable;
     private TextView textLocalIp;
     private TextView textLaunchArg;
     private TextView textPrivilegeMode;
@@ -117,6 +123,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private TextView textLog;
     private TextView textIpModeHint;
     private TextView textForegroundApp;
+    private TextView textWeatherHint;
 
     private DeviceSnapshot localSnapshot;
     private final List<CheckBox> fieldBoxes = new ArrayList<>();
@@ -141,6 +148,14 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         loadLocalIp();
         requestNotificationPermissionIfNeeded();
         ensureBatteryWhitelistHint();
+
+        // 等界面挂载完再弹，避免在 onCreate 里 show 对话框的窗口 token 问题
+        textPreview.post(new Runnable() {
+            @Override
+            public void run() {
+                maybePromptWeatherCity();
+            }
+        });
 
         // 放在所有控件都创建完之后，动态生成的勾选框也能一起套上主题
         ThemeManager.apply(this);
@@ -270,7 +285,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 : "填写 VRChat 所在设备的 IP，例如 PC 的局域网地址 192.168.1.10");
     }
 
-    /** 13 个字段用代码生成勾选框，避免 13 段重复 XML */
+    /** 按字段枚举生成勾选框，避免逐段重复 XML */
     private void buildFieldCheckboxes() {
         containerFields.removeAllViews();
         fieldBoxes.clear();
@@ -291,6 +306,9 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                     else current.remove(field);
                     settings.setEnabledFields(current);
                     refreshPreview();
+                    if (isChecked && field.isWeather() && settings.getWeatherCity().isEmpty()) {
+                        promptWeatherCity();
+                    }
                 }
             });
             fieldBoxes.add(box);
@@ -301,6 +319,27 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 containerFields.addView(box);
             }
         }
+
+        textWeatherHint = new TextView(this);
+        textWeatherHint.setTextSize(12f);
+        textWeatherHint.setTextColor(getColor(R.color.text_secondary));
+        int pad = Math.round(getResources().getDisplayMetrics().density * 4);
+        textWeatherHint.setPadding(0, pad, 0, pad);
+        containerFields.addView(textWeatherHint);
+
+        checkHideUnavailable = new CheckBox(this);
+        checkHideUnavailable.setText("自动屏蔽不可用字段（节省 144 字符）");
+        checkHideUnavailable.setTextSize(13f);
+        checkHideUnavailable.setTextColor(getColor(R.color.text_secondary));
+        checkHideUnavailable.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!buttonView.isPressed()) return;
+                settings.setHideUnavailable(isChecked);
+                refreshPreview();
+            }
+        });
+        containerFields.addView(checkHideUnavailable);
     }
 
     /** 「设备型号」勾选框 + 右侧「上报型号类型」下拉菜单 */
@@ -379,6 +418,15 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 box.setChecked(enabled.contains(box.getTag()));
             }
             applyModelModeToSpinner();
+            if (textWeatherHint != null) {
+                String weatherCity = settings.getWeatherCityLabel();
+                textWeatherHint.setText(weatherCity.isEmpty()
+                        ? "天气类字段需要先在「设置 → 天气城市设置」选择城市"
+                        : "天气城市：" + weatherCity + "（每小时最多更新一次）");
+            }
+            if (checkHideUnavailable != null) {
+                checkHideUnavailable.setChecked(settings.isHideUnavailable());
+            }
         } finally {
             applyingSettings = false;
         }
@@ -406,7 +454,13 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             @Override
             public void afterTextChanged(Editable s) {
                 Integer value = parseIntOrNull(s.toString());
-                if (value != null) settings.setIntervalSec(value);
+                if (value == null) return;
+                int normalized = Math.max(AppSettings.MIN_INTERVAL,
+                        Math.min(AppSettings.MAX_INTERVAL, value));
+                if (normalized == settings.getIntervalSec()) return;
+                settings.setIntervalSec(value);
+                // 服务正在跑就按新间隔立即重排，不用等旧周期
+                ReporterService.onIntervalChanged();
             }
         });
         checkAscii.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -826,6 +880,38 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         });
     }
 
+    /** 启动/勾选天气字段时，如果没有选城市就引导一次 */
+    private void maybePromptWeatherCity() {
+        if (weatherPromptShown) return;
+        boolean anyWeather = false;
+        for (ReportField field : settings.getEnabledFields()) {
+            if (field.isWeather()) {
+                anyWeather = true;
+                break;
+            }
+        }
+        if (anyWeather && settings.getWeatherCity().isEmpty()) {
+            promptWeatherCity();
+        }
+    }
+
+    private void promptWeatherCity() {
+        if (isFinishing() || weatherPromptShown) return;
+        weatherPromptShown = true;
+        new AlertDialog.Builder(this)
+                .setTitle("先选择天气城市")
+                .setMessage("天气、气温、湿度需要知道你所在的城市。\n"
+                        + "请选择省份和城市，例如：江西省 → 上饶市。")
+                .setPositiveButton("去选择", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivity(new Intent(MainActivity.this, WeatherCityActivity.class));
+                    }
+                })
+                .setNegativeButton("稍后", null)
+                .show();
+    }
+
     private void refreshPreview() {
         DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
         if (snapshot == null) snapshot = localSnapshot;
@@ -835,11 +921,14 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             textPreviewHint.setVisibility(View.GONE);
             return;
         }
+        WeatherInfo cachedWeather = WeatherRepository.getCached(this);
         ReportBuilder.Report report = ReportBuilder.build(
                 snapshot,
                 settings.getEnabledFields(),
                 settings.isAsciiOnly(),
-                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME);
+                settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
+                cachedWeather,
+                settings.isHideUnavailable());
         textPreview.setText(report.text);
         textPreviewCount.setText(report.charCount() + "/" + ReportBuilder.CHATBOX_LIMIT);
         String hint = report.limitHint();
@@ -848,6 +937,24 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             String extra = "帧率需要 VRChat 在前台时采集，并且使用 Shizuku / Root 通道；"
                     + "在本应用界面点「重新采集」时 VRChat 不在前台，读不到是正常的。";
             hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        boolean weatherEnabled = false;
+        for (ReportField field : settings.getEnabledFields()) {
+            if (field.isWeather()) weatherEnabled = true;
+        }
+        if (weatherEnabled && settings.getWeatherCity().isEmpty()) {
+            String extra = "天气类字段需要先选择城市：设置 → 天气城市设置。";
+            hint = hint == null ? extra : hint + "\n" + extra;
+        } else if (weatherEnabled && cachedWeather == null) {
+            String extra = "天气数据还没取到：启动上报后会自动获取，同一城市每小时最多请求一次。";
+            hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        if (settings.isHideUnavailable() && !report.hidden.isEmpty()) {
+            String extra = "已自动隐藏 " + report.hidden.size() + " 个不可用字段（不占 144 字符）";
+            hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        if (report.text.isEmpty() && !settings.getEnabledFields().isEmpty()) {
+            hint = "所选字段当前都不可用，已自动隐藏所有内容。";
         }
         if (hint == null) {
             textPreviewHint.setVisibility(View.GONE);

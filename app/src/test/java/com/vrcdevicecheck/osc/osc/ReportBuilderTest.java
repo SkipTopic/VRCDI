@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.device.TestSnapshots;
+import com.vrcdevicecheck.osc.weather.WeatherInfo;
 
 import org.junit.Test;
 
@@ -103,5 +104,124 @@ public class ReportBuilderTest {
         String text = ReportBuilder.render(TestSnapshots.full(),
                 Arrays.asList(ReportField.GPU_NAME, ReportField.GPU_USAGE), false);
         assertEquals("GPU: Maleoon 910 12%", text);
+    }
+
+    private WeatherInfo weather() {
+        return new WeatherInfo("江西省 上饶市", 17.3f, 86,
+                "多云", "Partly cloudy", 0L, "Open-Meteo");
+    }
+
+    @Test
+    public void weatherLineCombinesConditionTemperatureAndHumidity() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                false, true, weather()).text;
+        assertEquals("天气: 多云 17.3℃ 湿度 86%", text);
+    }
+
+    @Test
+    public void weatherLineInAsciiMode() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                true, true, weather()).text;
+        assertEquals("Weather: Partly cloudy 17.3C Humidity 86%", text);
+    }
+
+    @Test
+    public void weatherLineOnlyIncludesSelectedParts() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.TEMPERATURE), false, true, weather()).text;
+        assertEquals("天气: 17.3℃", text);
+    }
+
+    @Test
+    public void weatherWithoutDataShowsPlaceholder() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE),
+                false, true, null).text;
+        assertEquals("天气: 不可用", text);
+    }
+
+    private WeatherInfo weatherWithDetails() {
+        return new WeatherInfo("江西省 上饶市", 17.3f, 86,
+                "多云", "Partly cloudy", 0L, "Open-Meteo",
+                1018f, 225, 3.2f, 5, "17:14");
+    }
+
+    @Test
+    public void weatherSecondLineIncludesPressureWindUvSunset() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.PRESSURE, ReportField.WIND,
+                        ReportField.UV, ReportField.SUNSET),
+                false, true, weatherWithDetails(), false).text;
+        assertEquals("气压 1018hPa 西南风 3.2m/s 紫外线 5 日落 17:14", text);
+    }
+
+    @Test
+    public void weatherSecondLineInAsciiMode() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.PRESSURE, ReportField.WIND,
+                        ReportField.UV, ReportField.SUNSET),
+                true, true, weatherWithDetails(), false).text;
+        assertEquals("Pressure 1018hPa SW wind 3.2m/s UV 5 Sunset 17:14", text);
+    }
+
+    @Test
+    public void windWithoutDirectionStillShowsSpeed() {
+        WeatherInfo weather = new WeatherInfo("上饶市", 17.3f, 86,
+                "多云", "Partly cloudy", 0L, "Open-Meteo",
+                null, null, 3.2f, null, null);
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WIND), false, true, weather, false).text;
+        assertEquals("风速 3.2m/s", text);
+    }
+
+    @Test
+    public void hideUnavailableDropsWholeEmptyReport() {
+        ReportBuilder.Report report = ReportBuilder.build(TestSnapshots.empty(),
+                EnumSet.of(ReportField.BRAND, ReportField.MODEL, ReportField.CPU_NAME),
+                false, true, null, true);
+
+        assertEquals("", report.text);
+        assertTrue(report.hidden.contains(ReportField.BRAND));
+        assertTrue(report.hidden.contains(ReportField.MODEL));
+        assertTrue(report.hidden.contains(ReportField.CPU_NAME));
+        assertTrue(report.dropped.isEmpty());
+        assertNull(report.limitHint());
+    }
+
+    @Test
+    public void hideUnavailableKeepsAvailablePartsAndHidesOnlyNa() {
+        ReportBuilder.Report report = ReportBuilder.build(TestSnapshots.notCharging(66),
+                EnumSet.of(ReportField.BRAND, ReportField.CPU_NAME, ReportField.CPU_TEMP),
+                false, true, null, true);
+
+        assertEquals("zte", report.text);
+        assertTrue(report.included.contains(ReportField.BRAND));
+        assertTrue(report.hidden.contains(ReportField.CPU_NAME));
+        assertTrue(report.hidden.contains(ReportField.CPU_TEMP));
+        assertTrue(report.dropped.isEmpty());
+    }
+
+    @Test
+    public void hidingCanBeDisabled() {
+        ReportBuilder.Report report = ReportBuilder.build(TestSnapshots.empty(),
+                EnumSet.of(ReportField.BRAND), false, true, null, false);
+
+        assertEquals("不可用", report.text);
+        assertTrue(report.hidden.isEmpty());
+        assertTrue(report.dropped.isEmpty());
+    }
+
+    @Test
+    public void weatherFieldsAreHiddenWhenNoWeatherData() {
+        ReportBuilder.Report report = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.PRESSURE),
+                false, true, null, true);
+
+        assertEquals("", report.text);
+        assertTrue(report.hidden.contains(ReportField.WEATHER));
+        assertTrue(report.hidden.contains(ReportField.PRESSURE));
+        assertTrue(report.dropped.isEmpty());
     }
 }

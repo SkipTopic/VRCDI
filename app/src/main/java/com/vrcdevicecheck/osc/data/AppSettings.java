@@ -16,12 +16,17 @@ public class AppSettings {
     public static final int DEFAULT_PORT = 9000;
     public static final int DEFAULT_INTERVAL = 10;
     public static final int MIN_INTERVAL = 2;
+    public static final int MAX_INTERVAL = 3600;
 
     private static final String PREF_NAME = "vrcdi_settings";
     private static final String KEY_IP = "target_ip";
     private static final String KEY_LOCAL_TARGET = "target_is_local";
     private static final String KEY_PORT = "target_port";
     private static final String KEY_INTERVAL = "interval_sec";
+    private static final String KEY_SEND_ON_START = "send_on_start";
+    private static final String KEY_WEATHER_PROVINCE = "weather_province";
+    private static final String KEY_WEATHER_CITY = "weather_city";
+    private static final String KEY_HIDE_UNAVAILABLE = "hide_unavailable";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
     private static final String KEY_SEND_IMMEDIATELY = "send_immediately";
@@ -85,11 +90,66 @@ public class AppSettings {
 
     /** 上报间隔（秒）。间隔越大越省电，也越不容易触发 Chatbox 限频 */
     public int getIntervalSec() {
-        return sp.getInt(KEY_INTERVAL, DEFAULT_INTERVAL);
+        int value = sp.getInt(KEY_INTERVAL, DEFAULT_INTERVAL);
+        return Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, value));
     }
 
     public void setIntervalSec(int value) {
-        sp.edit().putInt(KEY_INTERVAL, Math.max(MIN_INTERVAL, Math.min(3600, value))).apply();
+        sp.edit().putInt(KEY_INTERVAL,
+                Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, value))).apply();
+    }
+
+    /** 点「启动上报」时是否立刻采集并发送一次（默认开） */
+    public boolean isSendOnStart() {
+        return sp.getBoolean(KEY_SEND_ON_START, true);
+    }
+
+    public void setSendOnStart(boolean value) {
+        sp.edit().putBoolean(KEY_SEND_ON_START, value).apply();
+    }
+
+    // ---------------- 天气城市 ----------------
+
+    public String getWeatherProvince() {
+        String value = sp.getString(KEY_WEATHER_PROVINCE, "");
+        return value == null ? "" : value;
+    }
+
+    public String getWeatherCity() {
+        String value = sp.getString(KEY_WEATHER_CITY, "");
+        return value == null ? "" : value;
+    }
+
+    /** "江西省 上饶市"；未选择时返回空串 */
+    public String getWeatherCityLabel() {
+        String province = getWeatherProvince();
+        String city = getWeatherCity();
+        if (city.isEmpty()) return "";
+        if (province.isEmpty() || province.equals(city)) return city;
+        return province + " " + city;
+    }
+
+    public void setWeatherCity(String province, String city) {
+        sp.edit()
+                .putString(KEY_WEATHER_PROVINCE, province == null ? "" : province.trim())
+                .putString(KEY_WEATHER_CITY, city == null ? "" : city.trim())
+                .apply();
+    }
+
+    public void clearWeatherCity() {
+        sp.edit()
+                .remove(KEY_WEATHER_PROVINCE)
+                .remove(KEY_WEATHER_CITY)
+                .apply();
+    }
+
+    /** 上报时是否把读到「不可用」的字段整项删掉，节省 144 字符（默认开） */
+    public boolean isHideUnavailable() {
+        return sp.getBoolean(KEY_HIDE_UNAVAILABLE, true);
+    }
+
+    public void setHideUnavailable(boolean value) {
+        sp.edit().putBoolean(KEY_HIDE_UNAVAILABLE, value).apply();
     }
 
     public PrivilegeMode getPrivilegeMode() {
@@ -163,10 +223,16 @@ public class AppSettings {
         sp.edit().putBoolean(KEY_NOTIFICATION_SOUND, value).apply();
     }
 
-    /** 已勾选的字段；首次运行默认全选 */
+    /** 已勾选的字段；首次运行默认全选（天气类除外，需要先选城市再手动勾选） */
     public Set<ReportField> getEnabledFields() {
         Set<String> stored = sp.getStringSet(KEY_FIELDS, null);
-        if (stored == null) return EnumSet.allOf(ReportField.class);
+        if (stored == null) {
+            Set<ReportField> defaults = EnumSet.allOf(ReportField.class);
+            for (ReportField field : ReportField.values()) {
+                if (field.isWeather()) defaults.remove(field);
+            }
+            return defaults;
+        }
         Set<ReportField> result = EnumSet.noneOf(ReportField.class);
         for (ReportField field : ReportField.values()) {
             if (stored.contains(field.key)) result.add(field);
