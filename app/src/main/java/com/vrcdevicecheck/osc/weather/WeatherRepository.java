@@ -55,7 +55,7 @@ public final class WeatherRepository {
     /** api.open-meteo.com 失败后 6 小时内直接走 wttr.in，避免每小时都白等一次超时 */
     private static final long OPEN_METEO_SKIP_MS = 6L * 60L * 60L * 1000L;
 
-    private static final int CONNECT_TIMEOUT_MS = 5000;
+    private static final int CONNECT_TIMEOUT_MS = 3000;
     private static final Object FETCH_LOCK = new Object();
 
     private WeatherRepository() {
@@ -175,7 +175,7 @@ public final class WeatherRepository {
                 "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f"
                         + "&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto",
                 lat, lon);
-        String json = httpGet(url, 6000);
+        String json = httpGet(url, 5000);
         if (json == null) return null;
         try {
             JSONObject root = new JSONObject(json);
@@ -200,7 +200,7 @@ public final class WeatherRepository {
                 ? String.format(Locale.US, "%.4f,%.4f", coords[0], coords[1])
                 : encode(city);
         String url = "https://wttr.in/" + location + "?format=j1&lang=zh";
-        String json = httpGet(url, 8000);
+        String json = httpGet(url, 7000);
         if (json == null) return null;
         try {
             JSONObject root = new JSONObject(json);
