@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -23,16 +25,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 主题页面：列出已安装主题、导入 zip/tar.gz、点击切换（切换后自动重启应用）。
+ * 主题页面，分两块：
  *
- * 主题包结构见 ThemeManager 的注释与代码仓库说明。
+ * 1) 内置配色：默认 + 若干套现成配色，只换背景/卡片/文字四个颜色，点了立刻生效；
+ * 2) 导入主题：zip / tar.gz 包，能带底图和按钮图，适合做复杂外观。
+ *
+ * 两块共用一个列表，中间用分组标题隔开。切换后自动重启应用。
  */
 public class ThemeSettingsActivity extends Activity {
 
     private static final int REQUEST_CODE_THEME = 61;
 
-    private ArrayAdapter<String> adapter;
-    private final List<Theme> themes = new ArrayList<>();
+    private static final int TYPE_HEADER = 0;
+    private static final int TYPE_DEFAULT = 1;
+    private static final int TYPE_BUILTIN = 2;
+    private static final int TYPE_IMPORTED = 3;
+    private static final int TYPE_EMPTY = 4;
+
+    /** 列表里的一行：标题行、默认项、内置配色、导入主题、空提示 */
+    private static final class Row {
+        final int type;
+        final String title;
+        final Theme theme;
+
+        Row(int type, String title, Theme theme) {
+            this.type = type;
+            this.title = title;
+            this.theme = theme;
+        }
+    }
+
+    private final List<Row> rows = new ArrayList<>();
+    private ThemeAdapter adapter;
+    private ListView list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,11 +70,16 @@ public class ThemeSettingsActivity extends Activity {
         root.setPadding(padding, padding, padding, padding);
 
         TextView hint = new TextView(this);
-        hint.setText("主题包支持 .zip 与 .tar.gz，里面需要有 theme.json 和图片。点击主题切换，切换后会自动重启应用。");
+        hint.setText("内置配色点一下就能用，只换颜色。\n"
+                + "想要底图、按钮素材这类复杂外观，用下面的「导入主题」，"
+                + "主题包支持 .zip 与 .tar.gz，里面需要有 theme.json 和图片。\n"
+                + "切换后会自动重启应用。");
         hint.setTextSize(12f);
+        hint.setTextColor(getColor(R.color.text_secondary));
+        hint.setLineSpacing(dp(2), 1f);
         root.addView(hint);
 
-        final ListView list = new ListView(this);
+        list = new ListView(this);
         root.addView(list, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -66,21 +96,19 @@ public class ThemeSettingsActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         setContentView(root);
-        ThemeManager.apply(this);
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        adapter = new ThemeAdapter();
         list.setAdapter(adapter);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                applyTheme(position);
+                applyRow(rows.get(position));
             }
         });
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                confirmDelete(position);
-                return true;
+                return confirmDelete(rows.get(position));
             }
         });
 
@@ -88,40 +116,60 @@ public class ThemeSettingsActivity extends Activity {
     }
 
     private void refresh() {
-        themes.clear();
-        themes.addAll(ThemeManager.installed(this));
+        rows.clear();
         String currentId = ThemeManager.currentId(this);
 
-        List<String> lines = new ArrayList<>();
-        lines.add(currentId.isEmpty() ? "默认主题（当前）" : "默认主题");
-        for (Theme theme : themes) {
-            lines.add(theme.name + (theme.id.equals(currentId) ? "（当前）" : ""));
+        rows.add(new Row(TYPE_HEADER, "默认配色", null));
+        rows.add(new Row(TYPE_DEFAULT, "默认（应用自带外观）", null));
+        for (Theme theme : ThemeManager.builtIns()) {
+            rows.add(new Row(TYPE_BUILTIN, theme.name, theme));
         }
-        adapter.clear();
-        adapter.addAll(lines);
+
+        List<Theme> imported = ThemeManager.installed(this);
+        rows.add(new Row(TYPE_HEADER, "已导入的主题", null));
+        if (imported.isEmpty()) {
+            rows.add(new Row(TYPE_EMPTY, "还没有导入过主题", null));
+        } else {
+            for (Theme theme : imported) {
+                rows.add(new Row(TYPE_IMPORTED, theme.name, theme));
+            }
+        }
+
         adapter.notifyDataSetChanged();
+        // 列表行是在布局时才创建的，紧跟着 apply 一次才能把新行也刷上主题色
+        list.post(new Runnable() {
+            @Override
+            public void run() {
+                ThemeManager.apply(ThemeSettingsActivity.this);
+            }
+        });
     }
 
-    private void applyTheme(int position) {
-        if (position == 0) {
-            ThemeManager.setCurrent(this, "");
-            ThemeManager.restart(this);
-            return;
+    private void applyRow(Row row) {
+        switch (row.type) {
+            case TYPE_DEFAULT:
+                ThemeManager.setCurrent(this, "");
+                ThemeManager.restart(this);
+                break;
+            case TYPE_BUILTIN:
+            case TYPE_IMPORTED:
+                ThemeManager.setCurrent(this, row.theme.id);
+                ThemeManager.restart(this);
+                break;
+            default:
+                // 分组标题和空提示不响应
+                break;
         }
-        int index = position - 1;
-        if (index < 0 || index >= themes.size()) return;
-        ThemeManager.setCurrent(this, themes.get(index).id);
-        ThemeManager.restart(this);
     }
 
-    private void confirmDelete(final int position) {
-        if (position <= 0) {
-            toast("默认主题不能删除");
-            return;
+    private boolean confirmDelete(Row row) {
+        if (row.type == TYPE_DEFAULT || row.type == TYPE_BUILTIN) {
+            toast("内置配色不能删除");
+            return true;
         }
-        final int index = position - 1;
-        if (index < 0 || index >= themes.size()) return;
-        final Theme theme = themes.get(index);
+        if (row.type != TYPE_IMPORTED) return false;
+
+        final Theme theme = row.theme;
         new AlertDialog.Builder(this)
                 .setTitle("删除主题")
                 .setMessage("确定删除主题「" + theme.name + "」吗？")
@@ -134,6 +182,7 @@ public class ThemeSettingsActivity extends Activity {
                 })
                 .setNegativeButton("取消", null)
                 .show();
+        return true;
     }
 
     private void pickThemeFile() {
@@ -197,6 +246,113 @@ public class ThemeSettingsActivity extends Activity {
                 });
             }
         }, "vrcdi-theme-import").start();
+    }
+
+    // ---------------- 列表 ----------------
+
+    private final class ThemeAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return rows.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return rows.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return rows.get(position).type == TYPE_HEADER ? 0 : 1;
+        }
+
+        @Override
+        public boolean isEnabled(int position) {
+            int type = rows.get(position).type;
+            return type != TYPE_HEADER && type != TYPE_EMPTY;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            Row row = rows.get(position);
+            if (row.type == TYPE_HEADER) {
+                return buildHeader(row.title);
+            }
+            return buildItem(row);
+        }
+
+        private View buildHeader(String title) {
+            TextView header = new TextView(ThemeSettingsActivity.this);
+            header.setText(title);
+            header.setTextSize(12f);
+            header.setTextColor(getColor(R.color.text_secondary));
+            header.setPadding(dp(2), dp(14), dp(2), dp(6));
+            return header;
+        }
+
+        private View buildItem(Row row) {
+            LinearLayout view = new LinearLayout(ThemeSettingsActivity.this);
+            view.setOrientation(LinearLayout.HORIZONTAL);
+            view.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            view.setPadding(dp(2), dp(12), dp(2), dp(12));
+
+            View swatch = new View(ThemeSettingsActivity.this);
+            LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(18), dp(18));
+            swatchParams.rightMargin = dp(12);
+            swatch.setBackground(swatchFor(row));
+            view.addView(swatch, swatchParams);
+
+            TextView name = new TextView(ThemeSettingsActivity.this);
+            name.setTextSize(15f);
+            if (row.type == TYPE_EMPTY) {
+                name.setTextColor(getColor(R.color.text_secondary));
+            }
+            name.setText(row.title);
+            view.addView(name, new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+            if (isCurrent(row)) {
+                TextView badge = new TextView(ThemeSettingsActivity.this);
+                badge.setText("当前");
+                badge.setTextSize(12f);
+                badge.setTextColor(getColor(R.color.accent));
+                view.addView(badge);
+            }
+            return view;
+        }
+
+        private GradientDrawable swatchFor(Row row) {
+            GradientDrawable drawable = new GradientDrawable();
+            drawable.setShape(GradientDrawable.OVAL);
+            int color;
+            if (row.type == TYPE_DEFAULT) {
+                color = getColor(R.color.bg);
+            } else if (row.theme != null && row.theme.background != 0) {
+                color = row.theme.background;
+            } else {
+                color = getColor(R.color.card_bg);
+            }
+            drawable.setColor(color);
+            drawable.setStroke(dp(1), getColor(R.color.divider));
+            return drawable;
+        }
+
+        private boolean isCurrent(Row row) {
+            String currentId = ThemeManager.currentId(ThemeSettingsActivity.this);
+            if (row.type == TYPE_DEFAULT) return currentId.isEmpty();
+            return row.theme != null && row.theme.id.equals(currentId);
+        }
     }
 
     private int dp(int value) {
