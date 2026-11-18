@@ -26,6 +26,8 @@ public class AppSettings {
     private static final String KEY_SEND_ON_START = "send_on_start";
     private static final String KEY_WEATHER_PROVINCE = "weather_province";
     private static final String KEY_WEATHER_CITY = "weather_city";
+    private static final String KEY_QWEATHER_HOST = "qweather_host";
+    private static final String KEY_QWEATHER_KEY = "qweather_key";
     private static final String KEY_HIDE_UNAVAILABLE = "hide_unavailable";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
@@ -141,6 +143,51 @@ public class AppSettings {
                 .remove(KEY_WEATHER_PROVINCE)
                 .remove(KEY_WEATHER_CITY)
                 .apply();
+    }
+
+    // ---------------- 和风天气兜底 ----------------
+
+    /**
+     * 和风天气 2026 年起逐步停用公共地址（devapi.qweather.com 等），
+     * 改为每个账号独立的 API Host，形如 h2a9cf3mhs.xy.qweatherapi.com。
+     * 没填时退回旧公共地址，只为兼容老配置，新用户应该填自己的 Host。
+     */
+    public static final String QWEATHER_LEGACY_HOST = "devapi.qweather.com";
+
+    /** 用户可能把 https:// 和结尾的斜杠一起粘进来，这里统一清洗 */
+    public String getQWeatherHost() {
+        String value = sp.getString(KEY_QWEATHER_HOST, "");
+        String host = value == null ? "" : value.trim();
+        if (host.isEmpty()) return QWEATHER_LEGACY_HOST;
+        if (host.startsWith("https://")) {
+            host = host.substring("https://".length());
+        } else if (host.startsWith("http://")) {
+            host = host.substring("http://".length());
+        }
+        while (host.endsWith("/")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        int slash = host.indexOf('/');
+        if (slash > 0) host = host.substring(0, slash);
+        return host.isEmpty() ? QWEATHER_LEGACY_HOST : host;
+    }
+
+    public void setQWeatherHost(String value) {
+        sp.edit().putString(KEY_QWEATHER_HOST, value == null ? "" : value.trim()).apply();
+    }
+
+    public String getQWeatherKey() {
+        String value = sp.getString(KEY_QWEATHER_KEY, "");
+        return value == null ? "" : value.trim();
+    }
+
+    public void setQWeatherKey(String value) {
+        sp.edit().putString(KEY_QWEATHER_KEY, value == null ? "" : value.trim()).apply();
+    }
+
+    /** 填了 Key 才让和风天气参与兜底 */
+    public boolean isQWeatherConfigured() {
+        return !getQWeatherKey().isEmpty();
     }
 
     /** 上报时是否把读到「不可用」的字段整项删掉，节省 144 字符（默认开） */

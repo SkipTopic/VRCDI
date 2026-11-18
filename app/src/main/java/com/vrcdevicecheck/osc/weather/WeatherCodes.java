@@ -4,9 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 两套天气编码到中英文文案的映射：
+ * 三套天气编码到中英文文案的映射：
  * - Open-Meteo 用 WMO Weather interpretation codes；
- * - wttr.in 用 WWO（World Weather Online）weatherCode。
+ * - wttr.in 用 WWO（World Weather Online）weatherCode；
+ * - 和风天气用 icon 码（100 / 305 这类字符串）。
+ *
+ * 和风天气的中文文案直接由接口返回（text 字段），这里只维护英文，
+ * 因为它只返回一种语言，不额外发第二次请求省额度。
  *
  * 只映射常见天气；未知编码回退到「未知 / Unknown」。
  */
@@ -16,6 +20,7 @@ public final class WeatherCodes {
     private static final Map<Integer, String> WMO_EN = new HashMap<>();
     private static final Map<Integer, String> WWO_ZH = new HashMap<>();
     private static final Map<Integer, String> WWO_EN = new HashMap<>();
+    private static final Map<String, String> QW_EN = new HashMap<>();
 
     static {
         wmo(0, "晴", "Clear sky");
@@ -95,6 +100,68 @@ public final class WeatherCodes {
         wwo(389, "强雷雨", "Moderate or heavy rain with thunder");
         wwo(392, "雷雪", "Patchy light snow with thunder");
         wwo(395, "强雷雪", "Moderate or heavy snow with thunder");
+
+        // 和风天气 icon 码（数值区间是有规律的：1xx 晴/云，3xx 雨，4xx 雪，5xx 雾霾）
+        qw("100", "Sunny");
+        qw("101", "Cloudy");
+        qw("102", "Few clouds");
+        qw("103", "Partly cloudy");
+        qw("104", "Overcast");
+        qw("150", "Clear");
+        qw("151", "Cloudy");
+        qw("152", "Few clouds");
+        qw("153", "Partly cloudy");
+        qw("300", "Shower rain");
+        qw("301", "Heavy shower rain");
+        qw("302", "Thundershower");
+        qw("303", "Heavy thunderstorm");
+        qw("304", "Thundershower with hail");
+        qw("305", "Light rain");
+        qw("306", "Moderate rain");
+        qw("307", "Heavy rain");
+        qw("308", "Extreme rain");
+        qw("309", "Drizzle");
+        qw("310", "Storm");
+        qw("311", "Heavy storm");
+        qw("312", "Severe storm");
+        qw("313", "Freezing rain");
+        qw("314", "Light to moderate rain");
+        qw("315", "Moderate to heavy rain");
+        qw("316", "Heavy rain to Storm");
+        qw("317", "Storm to heavy storm");
+        qw("318", "Heavy to severe storm");
+        qw("399", "Rain");
+        qw("400", "Light snow");
+        qw("401", "Moderate snow");
+        qw("402", "Heavy snow");
+        qw("403", "Snowstorm");
+        qw("404", "Sleet");
+        qw("405", "Rain and snow");
+        qw("406", "Shower rain and snow");
+        qw("407", "Shower snow");
+        qw("408", "Light to moderate snow");
+        qw("409", "Moderate to heavy snow");
+        qw("410", "Heavy snow to snowstorm");
+        qw("456", "Shower rain and snow");
+        qw("457", "Shower snow");
+        qw("499", "Snow");
+        qw("500", "Mist");
+        qw("501", "Fog");
+        qw("502", "Haze");
+        qw("503", "Sand");
+        qw("504", "Dust");
+        qw("507", "Sandstorm");
+        qw("508", "Severe sandstorm");
+        qw("509", "Dense fog");
+        qw("510", "Strong dense fog");
+        qw("511", "Moderate haze");
+        qw("512", "Heavy haze");
+        qw("513", "Severe haze");
+        qw("514", "Heavy fog");
+        qw("515", "Extra strong dense fog");
+        qw("900", "Hot");
+        qw("901", "Cold");
+        qw("999", "Unknown");
     }
 
     private WeatherCodes() {
@@ -108,6 +175,10 @@ public final class WeatherCodes {
     private static void wwo(int code, String zh, String en) {
         WWO_ZH.put(code, zh);
         WWO_EN.put(code, en);
+    }
+
+    private static void qw(String icon, String en) {
+        QW_EN.put(icon, en);
     }
 
     public static String zhForWmo(int code) {
@@ -129,5 +200,12 @@ public final class WeatherCodes {
         String value = WWO_EN.get(code);
         if (value != null) return value;
         return fallback == null || fallback.trim().isEmpty() ? "Unknown" : fallback.trim();
+    }
+
+    /** 和风天气的 icon 是字符串，例如 "100"、"305" */
+    public static String enForQWeather(String icon) {
+        if (icon == null) return "Unknown";
+        String value = QW_EN.get(icon.trim());
+        return value == null ? "Unknown" : value;
     }
 }

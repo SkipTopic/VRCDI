@@ -26,4 +26,14 @@ public class WeatherCodesTest {
         assertEquals("Unknown", WeatherCodes.enForWmo(999));
         assertEquals("Patchy rain nearby", WeatherCodes.enForWwo(999, "Patchy rain nearby"));
     }
+
+    @Test
+    public void mapsQWeatherIconCodes() {
+        assertEquals("Sunny", WeatherCodes.enForQWeather("100"));
+        assertEquals("Cloudy", WeatherCodes.enForQWeather("101"));
+        assertEquals("Light rain", WeatherCodes.enForQWeather("305"));
+        assertEquals("Heavy snow", WeatherCodes.enForQWeather("402"));
+        assertEquals("Unknown", WeatherCodes.enForQWeather("12345"));
+        assertEquals("Unknown", WeatherCodes.enForQWeather(null));
+    }
 }
