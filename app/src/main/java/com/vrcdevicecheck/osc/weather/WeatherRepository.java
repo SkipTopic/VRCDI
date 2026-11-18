@@ -11,7 +11,9 @@ import com.vrcdevicecheck.osc.data.ReportField;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -23,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 /**
  * 天气查询 + 本地缓存。
@@ -37,6 +40,12 @@ import java.util.Set;
  * 1) Open-Meteo（免费、无需 key）——国内部分网络访问 api.open-meteo.com 会超时；
  * 2) wttr.in（免费、无需 key）——境外服务，国内可用性不稳定；
  * 3) 和风天气（国内服务、需要自己申请 key）——前两个都失败时的最后兜底。
+ *    用天气 API v1（/weather/v1/current/{lat}/{lon}）。旧的 /v7/weather/now 官方已公告
+ *    2027-08-01 停服，所以不采用。实测 v1 同样接受 ?key= 的 API KEY 认证，不需要 JWT。
+ *
+ * 另外两个实测到的细节：
+ * - 和风天气即使请求里没有 Accept-Encoding 也会返回 gzip，所以响应体按魔数判断是否解压；
+ * - 出错时返回 {@code {"error":{"status":401,"detail":"..."}}}，HTTP 状态码同时就是错误码。
  *
  * 每次失败都会记下具体原因（{@link WeatherError}），
  * 用户能在界面上看到「是 DNS 挂了、超时了，还是 key 不对」，而不是一句「获取失败」。
@@ -362,24 +371,21 @@ public final class WeatherRepository {
                 return null;
             }
 
-            String location;
-            if (coords != null) {
-                // 和风天气要求「经度,纬度」，最多两位小数
-                location = String.format(Locale.US, "%.2f,%.2f", coords[1], coords[0]);
-                step("· 用经纬度查询：" + location);
-            } else {
-                step("· 按城市名查 LocationID…");
-                String id = geoLookup(host, key, city);
-                if (id == null) {
+            Float[] point = coords;
+            if (point == null) {
+                // v1 用路径里的经纬度，没有坐标时先让 GeoAPI 把城市名换成坐标
+                step("· 用城市名查经纬度（GeoAPI）…");
+                point = geoLookup(host, key, city);
+                if (point == null) {
                     fail("和风天气", WeatherError.of(WeatherError.Kind.UNKNOWN, "城市名解析失败"));
                     recordFail("全部数据源", lastError);
                     return null;
                 }
-                location = id;
+                step(String.format(Locale.US, "· 城市库定位：%.4f, %.4f", point[0], point[1]));
             }
 
             WeatherError[] err = new WeatherError[1];
-            WeatherInfo info = fetchQWeather(host, key, location, label, err);
+            WeatherInfo info = fetchQWeather(host, key, point[0], point[1], label, err);
             if (info != null) return succeed(info);
             fail("和风天气", err[0]);
             recordFail("全部数据源", lastError);
@@ -531,14 +537,15 @@ public final class WeatherRepository {
     }
 
     /**
-     * 和风天气实时天气。
+     * 和风天气实时天气（天气 API v1）。
      * 地址是每个账号独立的 API Host，公共地址 devapi.qweather.com 从 2026 年起逐步停用。
-     * location 传 LocationID 或「经度,纬度」。
+     * v1 的坐标放在路径里：/weather/v1/current/{lat}/{lon}，实测同样接受 ?key= 认证。
      */
-    private static WeatherInfo fetchQWeather(String host, String key, String location,
+    private static WeatherInfo fetchQWeather(String host, String key, float lat, float lon,
                                             String label, WeatherError[] out) {
-        String url = "https://" + host + "/v7/weather/now?location=" + encode(location)
-                + "&key=" + encode(key) + "&lang=zh";
+        String url = String.format(Locale.US,
+                "https://%s/weather/v1/current/%.2f/%.2f?key=%s&lang=zh",
+                host, lat, lon, encode(key));
         HttpResult result = httpGet(url, 5000);
         if (!result.ok()) {
             out[0] = result.error;
@@ -547,36 +554,64 @@ public final class WeatherRepository {
         return parseQWeather(result.body, label, out);
     }
 
-    /** 拆出来单独一个方法，方便 JVM 单元测试直接喂 JSON */
+    /**
+     * 拆出来单独一个方法，方便以后直接喂 JSON 做单测。
+     * v1 的字段是嵌套的，单位写在 unit 里：温度 °C、风速 m/s、气压 hPa、湿度是 0-1 的小数。
+     */
     static WeatherInfo parseQWeather(String json, String label, WeatherError[] out) {
         try {
             JSONObject root = new JSONObject(json);
-            String code = root.optString("code", "");
-            if (!"200".equals(code)) {
-                out[0] = WeatherError.qweather(code);
-                return null;
-            }
-            JSONObject now = root.optJSONObject("now");
-            if (now == null) {
-                out[0] = WeatherError.of(WeatherError.Kind.MISSING_FIELD, "now");
-                return null;
-            }
-            if (!now.has("temp")) {
-                out[0] = WeatherError.of(WeatherError.Kind.MISSING_FIELD, "now.temp");
+
+            JSONObject error = root.optJSONObject("error");
+            if (error != null) {
+                out[0] = WeatherError.qweather(
+                        String.valueOf(error.optInt("status", 0)),
+                        error.optString("detail", ""));
                 return null;
             }
 
-            Float temp = parseFloat(now.optString("temp"));
-            Integer humidity = parseInt(now.optString("humidity"));
-            Float pressure = parseFloat(now.optString("pressure"));
-            Integer windDir = parseInt(now.optString("wind360"));
-            // 和风天气的风速单位是 km/h，这里统一折算成 m/s
-            Float windKph = parseFloat(now.optString("windSpeed"));
-            Float windMs = windKph == null ? null : windKph / 3.6f;
-            Integer uv = parseInt(now.optString("uvIndex"));
+            JSONObject temperature = root.optJSONObject("temperature");
+            if (temperature == null || !temperature.has("value")) {
+                out[0] = WeatherError.of(WeatherError.Kind.MISSING_FIELD, "temperature.value");
+                return null;
+            }
+            float temp = (float) temperature.optDouble("value");
 
-            String text = now.optString("text", "").trim();
-            String icon = now.optString("icon", "").trim();
+            // v1 的湿度是 0-1，上报文案里是百分比
+            Integer humidity = null;
+            if (root.has("humidity")) {
+                double value = root.optDouble("humidity", -1);
+                if (value >= 0) humidity = (int) Math.round(value * 100);
+            }
+
+            JSONObject condition = root.optJSONObject("condition");
+            String text = condition == null ? "" : condition.optString("text", "").trim();
+            String icon = condition == null ? "" : condition.optString("code", "").trim();
+
+            Float pressure = null;
+            JSONObject pressureObject = root.optJSONObject("pressure");
+            if (pressureObject != null && pressureObject.has("value")) {
+                pressure = (float) pressureObject.optDouble("value");
+            }
+
+            Integer windDir = null;
+            Float windMs = null;
+            JSONObject wind = root.optJSONObject("wind");
+            if (wind != null) {
+                JSONObject direction = wind.optJSONObject("direction");
+                if (direction != null && direction.has("degree")) {
+                    windDir = direction.optInt("degree");
+                }
+                JSONObject speed = wind.optJSONObject("speed");
+                // v1 的风速已经是 m/s，不需要换算
+                if (speed != null && speed.has("value")) {
+                    windMs = (float) speed.optDouble("value");
+                }
+            }
+
+            Integer uv = null;
+            Object uvRaw = root.opt("uvIndex");
+            if (uvRaw instanceof Number) uv = ((Number) uvRaw).intValue();
 
             return new WeatherInfo(label, temp, humidity,
                     text.isEmpty() ? "未知" : text,
@@ -589,8 +624,8 @@ public final class WeatherRepository {
         }
     }
 
-    /** 没有坐标时，用城市名换 LocationID */
-    private static String geoLookup(String host, String key, String city) {
+    /** 没有坐标时，用城市名换经纬度（GeoAPI 返回里就带 lat/lon） */
+    private static Float[] geoLookup(String host, String key, String city) {
         String url = "https://" + host + "/geo/v2/city/lookup?location=" + encode(city)
                 + "&key=" + encode(key) + "&lang=zh";
         HttpResult result = httpGet(url, 5000);
@@ -601,8 +636,12 @@ public final class WeatherRepository {
             JSONArray list = root.optJSONArray("location");
             if (list == null || list.length() == 0) return null;
             JSONObject first = list.getJSONObject(0);
-            String id = first.optString("id", "");
-            return id.isEmpty() ? null : id;
+            String lat = first.optString("lat", "");
+            String lon = first.optString("lon", "");
+            Float latValue = parseFloat(lat);
+            Float lonValue = parseFloat(lon);
+            if (latValue == null || lonValue == null) return null;
+            return new Float[]{latValue, lonValue};
         } catch (Exception e) {
             return null;
         }
@@ -756,6 +795,9 @@ public final class WeatherRepository {
             connection.setInstanceFollowRedirects(true);
             connection.setRequestProperty("User-Agent", "VRCDI/2.3.9 (Android) weather");
             connection.setRequestProperty("Accept", "application/json");
+            // 显式要 gzip，自己解。不依赖 HttpURLConnection 的透明解压，
+            // 因为和风天气不带 Accept-Encoding 也会压，各版本行为不一致。
+            connection.setRequestProperty("Accept-Encoding", "gzip");
 
             int code = connection.getResponseCode();
             InputStream in = (code >= 200 && code < 300)
@@ -764,10 +806,7 @@ public final class WeatherRepository {
 
             String body = readAll(in);
             if (code < 200 || code >= 300) {
-                // 错误体里通常有一句话，截一小段留给日志
-                String snippet = body == null ? "" : body.trim();
-                if (snippet.length() > 80) snippet = snippet.substring(0, 80) + "…";
-                return new HttpResult(code, body, WeatherError.http(code, snippet));
+                return new HttpResult(code, body, WeatherError.http(code, errorDetail(body)));
             }
             if (body == null || body.trim().isEmpty()) {
                 return new HttpResult(code, body, WeatherError.of(WeatherError.Kind.EMPTY_BODY));
@@ -780,6 +819,28 @@ public final class WeatherRepository {
         }
     }
 
+    /** 错误响应里通常带一句话，取出来比裸截 JSON 有用 */
+    private static String errorDetail(String body) {
+        if (body == null) return "";
+        try {
+            JSONObject root = new JSONObject(body);
+            JSONObject error = root.optJSONObject("error");
+            if (error != null) {
+                String detail = error.optString("detail", "").trim();
+                if (!detail.isEmpty()) return detail;
+                String title = error.optString("title", "").trim();
+                if (!title.isEmpty()) return title;
+            }
+            String message = root.optString("message", "").trim();
+            if (!message.isEmpty()) return message;
+        } catch (Exception ignored) {
+            // 不是 JSON，退回截断
+        }
+        String snippet = body.trim();
+        return snippet.length() > 80 ? snippet.substring(0, 80) + "…" : snippet;
+    }
+
+    /** 读完并按需解压（有的服务器不看 Accept-Encoding，直接发 gzip） */
     private static String readAll(InputStream in) {
         if (in == null) return null;
         try {
@@ -788,10 +849,25 @@ public final class WeatherRepository {
             int count;
             while ((count = in.read(buffer)) > 0) out.write(buffer, 0, count);
             in.close();
-            return new String(out.toByteArray(), StandardCharsets.UTF_8);
+
+            byte[] bytes = out.toByteArray();
+            if (bytes.length > 2 && (bytes[0] & 0xff) == 0x1f && (bytes[1] & 0xff) == 0x8b) {
+                bytes = gunzip(bytes);
+            }
+            return new String(bytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static byte[] gunzip(byte[] compressed) throws IOException {
+        GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(compressed));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int count;
+        while ((count = gzip.read(buffer)) > 0) out.write(buffer, 0, count);
+        gzip.close();
+        return out.toByteArray();
     }
 
     private static String encode(String value) {

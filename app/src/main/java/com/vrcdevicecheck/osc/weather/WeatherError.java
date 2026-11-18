@@ -100,6 +100,13 @@ public final class WeatherError {
 
     /** 和风天气的业务错误码 -> 可读原因 */
     public static WeatherError qweather(String code) {
+        return qweather(code, "");
+    }
+
+    /**
+     * @param detail 服务端原话，例如 "Authentication failed, check your KEY/Token or Host."
+     */
+    public static WeatherError qweather(String code, String detail) {
         String meaning;
         if ("204".equals(code)) {
             meaning = "该地区没有数据";
@@ -120,7 +127,10 @@ public final class WeatherError {
         } else {
             meaning = "未知错误码";
         }
-        return new WeatherError(Kind.SERVER_CODE, 0, code + " " + meaning);
+        String extra = detail == null ? "" : detail.trim();
+        if (extra.length() > 60) extra = extra.substring(0, 60) + "…";
+        String suffix = extra.isEmpty() ? "" : "（" + extra + "）";
+        return new WeatherError(Kind.SERVER_CODE, 0, code + " " + meaning + suffix);
     }
 
     /** 一句话原因，直接显示给用户 */
