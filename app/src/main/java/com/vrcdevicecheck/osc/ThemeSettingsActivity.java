@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,7 +31,7 @@ import java.util.List;
  *
  * 两块共用一个列表，中间用分组标题隔开。切换后自动重启应用。
  */
-public class ThemeSettingsActivity extends Activity {
+public class ThemeSettingsActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_THEME = 61;
 
@@ -62,7 +61,7 @@ public class ThemeSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("主题");
+        setTitle(R.string.theme_title);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -70,10 +69,7 @@ public class ThemeSettingsActivity extends Activity {
         root.setPadding(padding, padding, padding, padding);
 
         TextView hint = new TextView(this);
-        hint.setText("内置配色点一下就能用，只换颜色。\n"
-                + "想要底图、按钮素材这类复杂外观，用下面的「导入主题」，"
-                + "主题包支持 .zip 与 .tar.gz，里面需要有 theme.json 和图片。\n"
-                + "切换后会自动重启应用。");
+        hint.setText(R.string.theme_hint);
         hint.setTextSize(12f);
         hint.setTextColor(getColor(R.color.text_secondary));
         hint.setLineSpacing(dp(2), 1f);
@@ -84,7 +80,7 @@ public class ThemeSettingsActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
         Button importButton = new Button(this);
-        importButton.setText("导入主题（zip / tar.gz）");
+        importButton.setText(R.string.theme_import);
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,21 +113,20 @@ public class ThemeSettingsActivity extends Activity {
 
     private void refresh() {
         rows.clear();
-        String currentId = ThemeManager.currentId(this);
 
-        rows.add(new Row(TYPE_HEADER, "默认配色", null));
-        rows.add(new Row(TYPE_DEFAULT, "默认（应用自带外观）", null));
+        rows.add(new Row(TYPE_HEADER, getString(R.string.theme_group_default), null));
+        rows.add(new Row(TYPE_DEFAULT, getString(R.string.theme_default_item), null));
         for (Theme theme : ThemeManager.builtIns()) {
-            rows.add(new Row(TYPE_BUILTIN, theme.name, theme));
+            rows.add(new Row(TYPE_BUILTIN, theme.displayName(this), theme));
         }
 
         List<Theme> imported = ThemeManager.installed(this);
-        rows.add(new Row(TYPE_HEADER, "已导入的主题", null));
+        rows.add(new Row(TYPE_HEADER, getString(R.string.theme_group_imported), null));
         if (imported.isEmpty()) {
-            rows.add(new Row(TYPE_EMPTY, "还没有导入过主题", null));
+            rows.add(new Row(TYPE_EMPTY, getString(R.string.theme_none_imported), null));
         } else {
             for (Theme theme : imported) {
-                rows.add(new Row(TYPE_IMPORTED, theme.name, theme));
+                rows.add(new Row(TYPE_IMPORTED, theme.displayName(this), theme));
             }
         }
 
@@ -164,23 +159,23 @@ public class ThemeSettingsActivity extends Activity {
 
     private boolean confirmDelete(Row row) {
         if (row.type == TYPE_DEFAULT || row.type == TYPE_BUILTIN) {
-            toast("内置配色不能删除");
+            toast(getString(R.string.theme_builtin_undeletable));
             return true;
         }
         if (row.type != TYPE_IMPORTED) return false;
 
         final Theme theme = row.theme;
         new AlertDialog.Builder(this)
-                .setTitle("删除主题")
-                .setMessage("确定删除主题「" + theme.name + "」吗？")
-                .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.theme_delete_title)
+                .setMessage(getString(R.string.theme_delete_message, theme.displayName(this)))
+                .setPositiveButton(R.string.common_delete, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         ThemeManager.delete(ThemeSettingsActivity.this, theme.id);
                         refresh();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
         return true;
     }
@@ -194,9 +189,11 @@ public class ThemeSettingsActivity extends Activity {
                     "application/zip", "application/x-zip-compressed",
                     "application/gzip", "application/x-gzip",
                     "application/x-tar", "application/octet-stream"});
-            startActivityForResult(Intent.createChooser(intent, "选择主题包"), REQUEST_CODE_THEME);
+            startActivityForResult(
+                    Intent.createChooser(intent, getString(R.string.theme_pick_file)),
+                    REQUEST_CODE_THEME);
         } catch (Throwable t) {
-            toast("没有找到可用的文件选择器");
+            toast(getString(R.string.common_no_file_picker));
         }
     }
 
@@ -217,7 +214,7 @@ public class ThemeSettingsActivity extends Activity {
                 InputStream in = null;
                 try {
                     in = getContentResolver().openInputStream(uri);
-                    if (in == null) throw new Exception("无法读取文件");
+                    if (in == null) throw new Exception(getString(R.string.common_unknown_error));
                     installed = ThemeManager.install(ThemeSettingsActivity.this, in);
                 } catch (Throwable t) {
                     error = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
@@ -237,10 +234,11 @@ public class ThemeSettingsActivity extends Activity {
                     @Override
                     public void run() {
                         if (result == null) {
-                            toast("导入失败：" + (failure == null ? "未知错误" : failure));
+                            toast(getString(R.string.theme_import_failed,
+                                    failure == null ? getString(R.string.common_unknown_error) : failure));
                             return;
                         }
-                        toast("已导入主题：" + result.name);
+                        toast(getString(R.string.theme_imported, result.displayName(ThemeSettingsActivity.this)));
                         refresh();
                     }
                 });
@@ -324,7 +322,7 @@ public class ThemeSettingsActivity extends Activity {
 
             if (isCurrent(row)) {
                 TextView badge = new TextView(ThemeSettingsActivity.this);
-                badge.setText("当前");
+                badge.setText(R.string.theme_current);
                 badge.setTextSize(12f);
                 badge.setTextColor(getColor(R.color.accent));
                 view.addView(badge);

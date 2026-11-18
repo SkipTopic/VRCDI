@@ -7,8 +7,10 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Build;
 
+import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.priv.PrivilegedShell;
 import com.vrcdevicecheck.osc.priv.SnapshotScript;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import java.util.List;
 
@@ -125,11 +127,11 @@ public class DeviceInfoRepository {
     /** 采集一次。必须在子线程调用。 */
     public CollectResult collect(PrivilegedShell shell) {
         JavaSideInfo java = javaSideInfo();
-        String channel = shell.label();
+        String channel = shell.label(context);
 
         com.vrcdevicecheck.osc.priv.ShellResult result;
         try {
-            result = shell.run(script, SCRIPT_TIMEOUT_MS);
+            result = shell.run(context, script, SCRIPT_TIMEOUT_MS);
         } catch (Throwable t) {
             result = null;
         }
@@ -137,15 +139,17 @@ public class DeviceInfoRepository {
         if (result == null || !result.isOk()) {
             String warning;
             if (result == null) {
-                warning = channel + " 通道不可用，当前仅显示免特权信息";
+                warning = LocaleHelper.str(context, R.string.channel_unavailable, channel);
             } else if (result.stdout.trim().isEmpty() && !result.stderr.trim().isEmpty()) {
-                warning = channel + " 执行失败：" + firstLine(result.stderr);
+                warning = LocaleHelper.str(context, R.string.channel_failed,
+                        channel, firstLine(result.stderr));
             } else {
-                warning = channel + " 无输出，当前仅显示免特权信息";
+                warning = LocaleHelper.str(context, R.string.channel_empty, channel);
             }
             RawFacts degradedFacts = RawFacts.empty().withGpuRenderer(GpuInfo.renderer());
             DeviceSnapshot degraded = SnapshotMapper.map(
-                    degradedFacts, java, null, modelTable, channel + "（降级）", foregroundAppName());
+                    degradedFacts, java, null, modelTable,
+                    LocaleHelper.str(context, R.string.channel_degraded, channel), foregroundAppName());
             return new CollectResult(degraded, warning);
         }
 

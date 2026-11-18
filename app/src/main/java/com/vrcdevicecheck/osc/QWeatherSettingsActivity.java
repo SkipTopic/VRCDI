@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,7 +25,7 @@ import com.vrcdevicecheck.osc.weather.WeatherRepository;
  * 每个账号在控制台有独立的 API Host，所以这里要填两样东西：
  * API Host（形如 h2a9cf3mhs.xy.qweatherapi.com）和 API KEY。
  */
-public class QWeatherSettingsActivity extends Activity {
+public class QWeatherSettingsActivity extends BaseActivity {
 
     private AppSettings settings;
     private TextView intro;
@@ -55,7 +54,7 @@ public class QWeatherSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("和风天气兜底");
+        setTitle(R.string.qweather_title);
         settings = new AppSettings(this);
         buildUi();
         loadValues();
@@ -71,20 +70,13 @@ public class QWeatherSettingsActivity extends Activity {
         intro.setTextSize(12f);
         intro.setTextColor(getColor(R.color.text_secondary));
         intro.setLineSpacing(dp(2), 1f);
-        intro.setText("和风天气是国内的天气服务，服务器在境内，不需要翻墙，作为最后一个兜底源。\n\n"
-                + "申请步骤：\n"
-                + "1. 打开 console.qweather.com 注册并完成实名认证\n"
-                + "2. 「项目管理」→ 创建项目\n"
-                + "3. 项目里「+ 添加凭据」→ 认证方式选 API KEY\n"
-                + "4. 回到「设置」页，复制你的 API Host（形如 xxxx.qweatherapi.com）\n"
-                + "5. 把 Host 和 Key 填到下面，点「测试连接」\n\n"
-                + "免费订阅每天 1000 次，本应用同一城市每小时最多问一次，用不完。");
+        intro.setText(R.string.qweather_intro);
         root.addView(intro);
 
         TextView hostLabel = new TextView(this);
         hostLabel.setTextSize(12f);
         hostLabel.setTextColor(getColor(R.color.text_primary));
-        hostLabel.setText("API Host");
+        hostLabel.setText(R.string.qweather_host_label);
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         labelParams.topMargin = dp(14);
@@ -94,21 +86,21 @@ public class QWeatherSettingsActivity extends Activity {
         hostInput.setSingleLine(true);
         hostInput.setInputType(InputType.TYPE_CLASS_TEXT);
         hostInput.setTextSize(13f);
-        hostInput.setHint("xxxx.qweatherapi.com");
+        hostInput.setHint(R.string.qweather_host_hint);
         root.addView(hostInput, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView keyLabel = new TextView(this);
         keyLabel.setTextSize(12f);
         keyLabel.setTextColor(getColor(R.color.text_primary));
-        keyLabel.setText("API KEY");
+        keyLabel.setText(R.string.qweather_key_label);
         root.addView(keyLabel, labelParams);
 
         keyInput = new EditText(this);
         keyInput.setSingleLine(true);
         keyInput.setInputType(InputType.TYPE_CLASS_TEXT);
         keyInput.setTextSize(13f);
-        keyInput.setHint("控制台里那一串 32 位十六进制");
+        keyInput.setHint(R.string.qweather_key_hint);
         root.addView(keyInput, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -119,19 +111,19 @@ public class QWeatherSettingsActivity extends Activity {
         rowParams.topMargin = dp(10);
 
         Button saveButton = new Button(this);
-        saveButton.setText("保存");
+        saveButton.setText(R.string.common_save);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 save();
-                toast("已保存");
+                toast(getString(R.string.qweather_saved));
             }
         });
         row.addView(saveButton, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         testButton = new Button(this);
-        testButton.setText("测试连接");
+        testButton.setText(R.string.qweather_test);
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -169,8 +161,7 @@ public class QWeatherSettingsActivity extends Activity {
         keyInput.setText(settings.getUserQWeatherKey());
 
         if (AppSettings.hasBuiltInQWeather()) {
-            intro.append("\n\n这个安装包已经内置了一套兜底凭据，不用填也能用；"
-                    + "下面的输入框只用于覆盖它（留空即用内置）。");
+            intro.append("\n\n" + getString(R.string.qweather_builtin_note));
         }
     }
 
@@ -182,19 +173,19 @@ public class QWeatherSettingsActivity extends Activity {
     private void runTest() {
         if (testing) return;
         if (settings.getWeatherCity().isEmpty()) {
-            toast("先回上一页选一个城市，才能测");
+            toast(getString(R.string.qweather_need_city));
             return;
         }
         if (!settings.isQWeatherConfigured()) {
-            toast("Key 是空的，测不了");
+            toast(getString(R.string.qweather_need_key));
             return;
         }
         testing = true;
         testButton.setEnabled(false);
         logView.setText("");
         logScroll.setVisibility(View.VISIBLE);
-        appendLog("——— 测试和风天气 ———");
-        appendLog("· API Host：" + settings.getQWeatherHost());
+        appendLog("——— " + getString(R.string.qweather_log_header) + " ———");
+        appendLog(getString(R.string.qweather_log_host, settings.getQWeatherHost()));
 
         new Thread(new Runnable() {
             @Override
@@ -207,7 +198,7 @@ public class QWeatherSettingsActivity extends Activity {
                         if (isFinishing() || isDestroyed()) return;
                         testing = false;
                         testButton.setEnabled(true);
-                        appendLog("——— " + result.summaryLine() + " ———");
+                        appendLog("——— " + result.summaryLine(QWeatherSettingsActivity.this) + " ———");
                     }
                 });
             }

@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
@@ -34,7 +33,7 @@ import java.io.File;
  *      cache/update/VRCDI-update.apk；
  *   4. 通过自带的 ApkProvider 以 content:// 交给系统安装器。
  */
-public class UpdateSettingsActivity extends Activity {
+public class UpdateSettingsActivity extends BaseActivity {
 
     private AppSettings settings;
     private TextView statusView;
@@ -49,7 +48,7 @@ public class UpdateSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("软件更新设置");
+        setTitle(R.string.update_title);
         settings = new AppSettings(this);
 
         ScrollView scroll = new ScrollView(this);
@@ -61,11 +60,11 @@ public class UpdateSettingsActivity extends Activity {
 
         TextView current = new TextView(this);
         current.setTextSize(15f);
-        current.setText("当前版本：" + versionName() + "（Build " + versionCode() + "）");
+        current.setText(getString(R.string.update_current, versionName(), versionCode()));
         root.addView(current);
 
         CheckBox autoCheck = new CheckBox(this);
-        autoCheck.setText("打开应用时自动检查更新（静默，默认关闭）");
+        autoCheck.setText(R.string.update_auto_check);
         autoCheck.setTextSize(14f);
         autoCheck.setPadding(0, dp(10), 0, 0);
         autoCheck.setChecked(settings.isAutoUpdateCheck());
@@ -78,7 +77,7 @@ public class UpdateSettingsActivity extends Activity {
         root.addView(autoCheck);
 
         TextView sourceLabel = new TextView(this);
-        sourceLabel.setText("更新源");
+        sourceLabel.setText(R.string.update_source_label);
         sourceLabel.setTextSize(14f);
         sourceLabel.setPadding(0, dp(18), 0, dp(6));
         root.addView(sourceLabel);
@@ -86,10 +85,10 @@ public class UpdateSettingsActivity extends Activity {
         sourceGroup = new RadioGroup(this);
         sourceGroup.setOrientation(RadioGroup.HORIZONTAL);
         RadioButton gitee = new RadioButton(this);
-        gitee.setText("Gitee（国内）");
+        gitee.setText(R.string.update_source_gitee);
         gitee.setId(1001);
         RadioButton github = new RadioButton(this);
-        github.setText("GitHub");
+        github.setText(R.string.update_source_github);
         github.setId(1002);
         sourceGroup.addView(gitee);
         sourceGroup.addView(github);
@@ -110,7 +109,7 @@ public class UpdateSettingsActivity extends Activity {
         statusView = new TextView(this);
         statusView.setTextSize(14f);
         statusView.setPadding(0, dp(14), 0, dp(6));
-        statusView.setText("还没有检查更新");
+        statusView.setText(R.string.update_not_checked);
         root.addView(statusView);
 
         detailView = new TextView(this);
@@ -119,7 +118,7 @@ public class UpdateSettingsActivity extends Activity {
         root.addView(detailView);
 
         checkButton = new Button(this);
-        checkButton.setText("检查更新");
+        checkButton.setText(R.string.update_check_button);
         checkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,7 +129,7 @@ public class UpdateSettingsActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         installButton = new Button(this);
-        installButton.setText("下载并安装");
+        installButton.setText(R.string.update_install_button);
         installButton.setEnabled(false);
         installButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,9 +143,7 @@ public class UpdateSettingsActivity extends Activity {
         TextView note = new TextView(this);
         note.setTextSize(12f);
         note.setPadding(0, dp(16), 0, 0);
-        note.setText("说明：更新包会下载到应用缓存目录，下载完成后由系统安装器安装。"
-                + "首次更新需要允许「安装未知应用」。Gitee 偶尔会把 APK 命名成 .apk.zip，"
-                + "下载后会自动按 .apk 处理。");
+        note.setText(R.string.update_note);
         root.addView(note);
 
         setContentView(scroll);
@@ -158,7 +155,7 @@ public class UpdateSettingsActivity extends Activity {
         busy = true;
         checkButton.setEnabled(false);
         installButton.setEnabled(false);
-        statusView.setText("正在检查更新…");
+        statusView.setText(R.string.update_checking);
         detailView.setText("");
 
         final String source = settings.getUpdateSource();
@@ -168,7 +165,8 @@ public class UpdateSettingsActivity extends Activity {
                 UpdateChecker.Release release = null;
                 String error = null;
                 try {
-                    release = UpdateChecker.fetchLatest(source);
+                    release = UpdateChecker.fetchLatest(
+                            getApplicationContext(), source);
                 } catch (Throwable t) {
                     error = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
                 }
@@ -180,21 +178,23 @@ public class UpdateSettingsActivity extends Activity {
                         busy = false;
                         checkButton.setEnabled(true);
                         if (result == null) {
-                            statusView.setText("检查失败：" + failure);
+                            statusView.setText(getString(R.string.update_check_failed, failure));
                             return;
                         }
                         latest = result;
-                        detailView.setText("最新发行版：" + result.tag
-                                + (result.name.isEmpty() ? "" : " · " + result.name));
+                        detailView.setText(result.name.isEmpty()
+                                ? getString(R.string.update_latest_release, result.tag)
+                                : getString(R.string.update_latest_release_named,
+                                        result.tag, result.name));
                         if (UpdateChecker.isNewer(result.tag, versionName())) {
-                            statusView.setText("发现新版本：" + result.tag);
+                            statusView.setText(getString(R.string.update_found, result.tag));
                             installButton.setEnabled(result.apkAsset() != null);
                             if (result.apkAsset() == null) {
-                                statusView.setText("发现新版本，但发行版里没有 APK 附件");
+                                statusView.setText(R.string.update_found_no_apk);
                             }
                             showReleaseNotes(result);
                         } else {
-                            statusView.setText("已是最新版本");
+                            statusView.setText(R.string.update_is_latest);
                             installButton.setEnabled(false);
                         }
                     }
@@ -206,9 +206,9 @@ public class UpdateSettingsActivity extends Activity {
     private void showReleaseNotes(UpdateChecker.Release release) {
         if (release.body.trim().isEmpty()) return;
         new AlertDialog.Builder(this)
-                .setTitle("更新内容 · " + release.tag)
+                .setTitle(getString(R.string.update_notes_title, release.tag))
                 .setMessage(release.body)
-                .setPositiveButton("知道了", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.update_got_it, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -221,14 +221,14 @@ public class UpdateSettingsActivity extends Activity {
         if (busy || latest == null) return;
         final UpdateChecker.Asset asset = latest.apkAsset();
         if (asset == null) {
-            toast("发行版里没有可下载的 APK");
+            toast(getString(R.string.update_no_apk));
             return;
         }
 
         busy = true;
         checkButton.setEnabled(false);
         installButton.setEnabled(false);
-        statusView.setText("正在下载… 0%");
+        statusView.setText(getString(R.string.update_downloading, 0));
 
         new Thread(new Runnable() {
             @Override
@@ -243,7 +243,8 @@ public class UpdateSettingsActivity extends Activity {
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            statusView.setText("正在下载… " + percent + "%");
+                                            statusView.setText(getString(
+                                                    R.string.update_downloading, percent));
                                         }
                                     });
                                 }
@@ -260,16 +261,17 @@ public class UpdateSettingsActivity extends Activity {
                         busy = false;
                         checkButton.setEnabled(true);
                         if (file == null) {
-                            statusView.setText("下载失败：" + failure);
+                            statusView.setText(getString(R.string.update_download_failed, failure));
                             installButton.setEnabled(true);
                             return;
                         }
-                        statusView.setText("下载完成，正在打开安装器…");
+                        statusView.setText(R.string.update_downloaded);
                         try {
                             UpdateManager.install(UpdateSettingsActivity.this, file);
                         } catch (Throwable t) {
-                            statusView.setText("安装失败："
-                                    + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
+                            statusView.setText(getString(R.string.update_install_failed,
+                                    t.getMessage() == null
+                                            ? t.getClass().getSimpleName() : t.getMessage()));
                             installButton.setEnabled(true);
                         }
                     }

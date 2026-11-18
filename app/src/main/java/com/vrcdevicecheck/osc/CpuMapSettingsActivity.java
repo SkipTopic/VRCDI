@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,7 +27,7 @@ import java.io.InputStream;
  * }
  * 也可以省略 "cpus" 这一层。导入后写入 files/cpu_map.json，覆盖内置同名条目。
  */
-public class CpuMapSettingsActivity extends Activity {
+public class CpuMapSettingsActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_CPU_MAP = 53;
 
@@ -37,7 +36,7 @@ public class CpuMapSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("CPU 映射表设置");
+        setTitle(R.string.cpu_map_title);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -46,9 +45,7 @@ public class CpuMapSettingsActivity extends Activity {
 
         TextView hint = new TextView(this);
         hint.setTextSize(13f);
-        hint.setText("CPU 映射表把系统里的平台代号换成型号名，例如 kona = Snapdragon 865。\n"
-                + "高通手机通常只暴露 ro.board.platform（kona / taro / kalama），没有 ro.soc.model，"
-                + "有了这张表就能显示成「Qualcomm Snapdragon 865」。");
+        hint.setText(R.string.cpu_map_hint);
         root.addView(hint);
 
         countView = new TextView(this);
@@ -57,7 +54,7 @@ public class CpuMapSettingsActivity extends Activity {
         root.addView(countView);
 
         Button importButton = new Button(this);
-        importButton.setText("导入 CPU 映射表（JSON）");
+        importButton.setText(R.string.cpu_map_import);
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,10 +68,7 @@ public class CpuMapSettingsActivity extends Activity {
         TextView format = new TextView(this);
         format.setTextSize(12f);
         format.setPadding(0, dp(14), 0, 0);
-        format.setText("格式示例：\n{\n  \"cpus\": {\n"
-                + "    \"kona\": \"Snapdragon 865\",\n"
-                + "    \"taro\": \"Snapdragon 8 Gen 1\"\n"
-                + "  }\n}");
+        format.setText(R.string.cpu_map_format);
         root.addView(format);
 
         setContentView(root);
@@ -83,7 +77,7 @@ public class CpuMapSettingsActivity extends Activity {
     }
 
     private void refresh() {
-        countView.setText("当前已收录 " + CpuNames.count() + " 条 CPU 映射（内置 + 导入）");
+        countView.setText(getString(R.string.cpu_map_count, CpuNames.count()));
     }
 
     private void pickFile() {
@@ -93,10 +87,10 @@ public class CpuMapSettingsActivity extends Activity {
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_MIME_TYPES,
                     new String[]{"application/json", "text/plain", "text/*", "application/octet-stream"});
-            startActivityForResult(Intent.createChooser(intent, "选择 CPU 映射表 JSON"),
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.cpu_map_pick_title)),
                     REQUEST_CODE_CPU_MAP);
         } catch (Throwable t) {
-            toast("没有找到可用的文件选择器");
+            toast(getString(R.string.common_no_file_picker));
         }
     }
 
@@ -123,10 +117,10 @@ public class CpuMapSettingsActivity extends Activity {
                     @Override
                     public void run() {
                         if (count < 0) {
-                            toast("导入失败：不是有效的 CPU 映射表 JSON");
+                            toast(getString(R.string.cpu_map_import_failed));
                             return;
                         }
-                        toast("已导入 " + count + " 条 CPU 映射");
+                        toast(getString(R.string.cpu_map_imported, count));
                         refresh();
                     }
                 });

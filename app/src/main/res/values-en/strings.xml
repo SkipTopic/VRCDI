@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    English UI strings. Chinese (values/) stays the default language.
+    Note: the text sent to the VRChat chatbox does NOT use these strings — it is
+    controlled only by the "ASCII only" switch (see ReportBuilder).
+-->
+<resources>
+    <string name="app_name">VRCDI</string>
+
+    <!-- ==================== Common ==================== -->
+    <string name="common_cancel">Cancel</string>
+    <string name="common_confirm">OK</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_close">Close</string>
+    <string name="common_later">Later</string>
+    <string name="common_exit">Exit</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_unknown_error">Unknown error</string>
+    <string name="common_selected_file">file selected</string>
+    <string name="common_no_file_picker">No file picker available</string>
+    <string name="not_available">N/A</string>
+    <string name="charging">Charging</string>
+
+    <!-- ==================== Notification ==================== -->
+    <string name="notif_channel_name">Device reporting</string>
+    <string name="notif_channel_desc">Keeps VRCDI running in the foreground while reporting device info to VRChat over OSC chatbox</string>
+    <string name="notif_title">VRCDI is reporting device info</string>
+    <string name="notif_stop">Stop</string>
+    <string name="notif_text">Target %1$s:%2$d · every %3$ds</string>
+    <string name="notif_target_unset">not set</string>
+
+    <!-- ==================== Main screen: cards ==================== -->
+    <string name="card_connection">Connection</string>
+    <string name="card_privilege">Privilege channel</string>
+    <string name="card_fields">Reported fields</string>
+    <string name="card_preview">Chatbox preview</string>
+    <string name="card_log">Send log</string>
+
+    <!-- ==================== Main screen: connection ==================== -->
+    <string name="hint_target_ip">Custom IP, e.g. 192.168.1.10</string>
+    <string name="ip_mode_local">This device</string>
+    <string name="ip_mode_custom">Custom...</string>
+    <string name="hint_target_port">OSC port, default 9000</string>
+    <string name="label_interval">Interval (sec)</string>
+    <string name="ip_mode_hint_local">Sending to 127.0.0.1: VRChat runs on this same device (choose this on standalone Quest)</string>
+    <string name="ip_mode_hint_custom">Enter the LAN IP of the device running VRChat, e.g. the PC address 192.168.1.10</string>
+    <string name="action_scan_vrchat">Scan LAN for VRChat PC</string>
+    <string name="check_ascii">Send ASCII only (Chinese turns into question marks but always displays)</string>
+    <string name="check_send_immediately">Send immediately (off = only fill the VRChat input box)</string>
+    <string name="check_notification_sound">Play notification sound</string>
+    <string name="local_ip_loading">Local LAN IP: loading…</string>
+    <string name="local_ip_none">Local LAN IP: not found (make sure Wi-Fi is connected)</string>
+    <string name="local_ip_value">Local LAN IP: %1$s</string>
+    <string name="list_separator">, </string>
+    <string name="launch_arg">VRChat launch option (add in Steam): --osc=9000:%1$s:9001\nSame LAN + allow UDP 9000 in the PC firewall, then enable OSC in the Action Menu</string>
+    <string name="launch_arg_placeholder">&lt;PC LAN IP&gt;</string>
+
+    <!-- ==================== Main screen: privilege ==================== -->
+    <string name="action_battery">Add to battery whitelist</string>
+    <string name="action_recheck">Re-check</string>
+    <string name="privilege_current">Channel: %1$s</string>
+    <string name="privilege_not_checked">Not checked yet</string>
+    <string name="privilege_shizuku">Shizuku</string>
+    <string name="privilege_root">Root</string>
+    <string name="privilege_none">No privilege (public system info only)</string>
+    <string name="privilege_none_dialog">No authorization (public info only)</string>
+    <string name="privilege_shizuku_not_running">Shizuku is not running: open the Shizuku app and start the service (wireless debugging on Android 11+)</string>
+    <string name="privilege_shizuku_raw_not_running">Shizuku is not running: open the Shizuku app and start the service (wireless debugging works on Android 11+)</string>
+    <string name="privilege_shizuku_unauthorized">Shizuku is running, but VRCDI is not authorized yet</string>
+    <string name="privilege_shizuku_granted">Shizuku authorized (shell permission, uid=2000)</string>
+    <string name="privilege_shizuku_granted_short">Shizuku authorized</string>
+    <string name="privilege_shizuku_denied">Shizuku authorization denied</string>
+    <string name="privilege_shizuku_requesting">Requesting Shizuku authorization…</string>
+    <string name="privilege_local_status">No-privilege mode: only public system info is readable, CPU/GPU frequency and temperature will mostly be N/A</string>
+    <string name="privilege_local_label">No privilege</string>
+    <string name="privilege_root_granted_uid">Root authorized (uid=%1$d)</string>
+    <string name="privilege_root_granted">Root authorized</string>
+    <string name="privilege_root_denied">No usable root authorization detected</string>
+    <string name="privilege_root_denied_hint">Root not granted. Give VRCDI superuser access in your root manager</string>
+    <string name="privilege_root_detecting">Detecting root environment…</string>
+    <string name="privilege_root_requesting">Requesting root access, tap Allow in the dialog…</string>
+    <string name="privilege_root_timeout">Root request denied or timed out</string>
+    <string name="privilege_root_detected_uid">Root authorized (uid=0)</string>
+    <string name="privilege_switch_none">Switched to no privilege: only public system info is readable</string>
+    <string name="privilege_detect_root_toast">Checking root access…</string>
+    <string name="privilege_shizuku_need_start">Shizuku is not running: open the Shizuku app and start the service first</string>
+    <!-- Root manager hints -->
+    <string name="root_state_granted">Root granted (uid=0)</string>
+    <string name="root_state_no_env">No root environment found: no known mask directory under /data/adb (not rooted, or paths hidden)</string>
+    <string name="root_state_kernel_manager">%1$s is a kernel-level solution; grant VRCDI superuser access manually in its superuser list</string>
+    <string name="root_state_magisk_manager">Detected %1$s, root can be requested directly</string>
+    <string name="root_manager_unknown">Unknown root solution</string>
+    <string name="root_hint_ksu">In KernelSU open Superuser, enable VRCDI, then come back and tap Re-check</string>
+    <string name="root_hint_apatch">In APatch open Superuser, enable VRCDI, then come back and tap Re-check</string>
+    <string name="root_hint_magisk">In %1$s open Superuser, confirm VRCDI is granted, then come back and tap Re-check</string>
+    <string name="root_hint_generic">Grant VRCDI superuser access in your root manager, then come back and tap Re-check</string>
+    <string name="root_manager_missing">The %1$s app was not found. Open its superuser list manually and grant VRCDI</string>
+    <!-- Channel failure (degraded collection) -->
+    <string name="channel_unavailable">%1$s channel unavailable, showing unprivileged info only</string>
+    <string name="channel_failed">%1$s failed: %2$s</string>
+    <string name="channel_empty">%1$s returned nothing, showing unprivileged info only</string>
+    <string name="channel_degraded">%1$s (degraded)</string>
+
+    <!-- ==================== Main screen: fields & preview ==================== -->
+    <string name="action_select_all">Select all</string>
+    <string name="action_select_none">Select none</string>
+    <string name="check_hide_unavailable">Hide unavailable fields automatically (saves the 144 chars)</string>
+    <string name="label_model_mode">Model name type</string>
+    <string name="weather_hint_no_city">Weather fields need a city first: Settings → Weather city</string>
+    <string name="weather_hint_city">Weather city: %1$s (updated at most once an hour)</string>
+    <string name="action_start">Start reporting</string>
+    <string name="action_stop">Stop reporting</string>
+    <string name="action_send_now">Send once now</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_clear_log">Clear log</string>
+    <string name="action_settings">Settings</string>
+    <string name="running_state">Reporting: once every %1$d s</string>
+    <string name="not_running">Not reporting</string>
+    <string name="foreground_unauthed">Foreground app: Usage Access not granted, tap to enable</string>
+    <string name="foreground_unknown">Foreground app: not detected (no recent switch)</string>
+    <string name="foreground_value">Foreground app: %1$s</string>
+    <string name="foreground_value_pkg">Foreground app: %1$s (%2$s)</string>
+    <string name="foreground_previous"> · before: %1$s</string>
+    <string name="preview_empty">Nothing collected yet. Tap Refresh or start reporting</string>
+    <string name="preview_count">%1$d/%2$d</string>
+    <string name="log_empty">No records yet</string>
+
+    <!-- Preview hints -->
+    <string name="hint_dropped">Over 144 characters, omitted: %1$s</string>
+    <string name="hint_hard_truncated">Over 144 characters, the tail was truncated</string>
+    <string name="hint_hidden_count">%1$d unavailable field(s) hidden automatically (they do not use the 144 chars)</string>
+    <string name="hint_all_hidden">None of the selected fields is available right now, so everything was hidden.</string>
+    <string name="hint_fps_need_foreground">FPS can only be read while VRChat is in the foreground and with the Shizuku / Root channel. VRChat is not in the foreground when you tap Refresh here, so N/A is expected.</string>
+    <string name="hint_weather_need_city">Weather fields need a city: Settings → Weather city.</string>
+    <string name="hint_weather_no_data">No weather data yet: it is fetched automatically once reporting starts, at most once an hour per city.</string>
+
+    <!-- Main screen toasts & dialogs -->
+    <string name="toast_sent_now">Triggered one immediate send</string>
+    <string name="toast_collected_not_running">Not reporting; collected once. Start reporting to send it</string>
+    <string name="toast_collect_failed">Collection failed: %1$s</string>
+    <string name="scanning_toast">Scanning the LAN for port 9000, please wait…</string>
+    <string name="scan_none">No VRChat with OSC found: make sure the PC and phone are on the same Wi-Fi, OSC is enabled in VRChat, and port 9000 is allowed in the PC firewall. You can also pick Custom... and type the PC IP</string>
+    <string name="scan_title">Devices found</string>
+    <string name="connect_title">Connect to VRChat</string>
+    <string name="connect_message">Found a PC that may be running VRChat at %1$s:9000. Connect and start reporting?</string>
+    <string name="connect_button">Connect</string>
+    <string name="toast_connected">Connected to %1$s, reporting started</string>
+    <string name="weather_prompt_title">Choose a weather city first</string>
+    <string name="weather_prompt_message">Weather, temperature and humidity need to know where you are.\nPick a province and city; for cities outside China use Search city (Chinese or English names both work).</string>
+    <string name="go_choose">Choose</string>
+    <string name="battery_hint_title">Add to the battery optimization whitelist</string>
+    <string name="battery_hint_message">A foreground service survives most cases, but aggressive OEM power saving can still kill it. Set VRCDI to Not optimized on the next screen, otherwise reporting may stop when the screen is off.</string>
+    <string name="go_settings">Open settings</string>
+    <string name="toast_battery_already">Already on the battery whitelist</string>
+    <string name="toast_battery_failed">Could not open battery settings. Set VRCDI to Not optimized manually</string>
+    <string name="toast_usage_granted">Usage Access permission granted</string>
+    <string name="toast_usage_failed">Could not open Usage Access settings. Grant it manually in system settings</string>
+
+    <!-- Update prompt (main screen) -->
+    <string name="update_dialog_title">New version %1$s</string>
+    <string name="update_dialog_body">A new version is available: %1$s</string>
+    <string name="update_go">Update</string>
+    <string name="update_later">Later</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_title">About VRCDI</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_author_label">Authors: </string>
+    <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_device_label">Your device:</string>
+    <string name="about_brand">Brand: %1$s</string>
+    <string name="about_model">Model: %1$s</string>
+    <string name="about_model_series">Model: %1$s (%2$s)</string>
+    <string name="about_cpu">CPU: %1$s</string>
+    <string name="about_gpu">GPU: %1$s</string>
+    <string name="about_api">Android API level: API%1$d</string>
+    <string name="about_version_value">%1$s (Build %2$d)</string>
+
+    <!-- ==================== Settings menu ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_interval">Report interval</string>
+    <string name="settings_weather_city">Weather city</string>
+    <string name="settings_weather_city_with">Weather city (%1$s)</string>
+    <string name="settings_privilege">Privilege method</string>
+    <string name="settings_device_table">Device model tables</string>
+    <string name="settings_app_table">App name tables</string>
+    <string name="settings_cpu_map">CPU map tables</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_update">Software update</string>
+    <string name="settings_about">About VRCDI</string>
+    <string name="settings_exit">Exit</string>
+    <string name="exit_confirm_title">Exit</string>
+    <string name="exit_confirm_message">Exit VRCDI?\nReporting stops and the background service is closed too.</string>
+
+    <!-- Language -->
+    <string name="language_dialog_title">Language / 语言</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_en">English</string>
+    <string name="language_restarting">Language changed, restarting…</string>
+
+    <!-- ==================== Report interval ==================== -->
+    <string name="interval_title">Report interval</string>
+    <string name="interval_preview_card">Pending settings</string>
+    <string name="interval_card">Interval</string>
+    <string name="interval_card_hint">Time to wait between two reports. Shorter means the chatbox refreshes faster, but collection and sending run more often and drain more battery; too short may also get rate-limited by VRChat.</string>
+    <string name="interval_preset_2">2 s (fastest)</string>
+    <string name="interval_preset_5">5 s</string>
+    <string name="interval_preset_10">10 s (default)</string>
+    <string name="interval_preset_30">30 s</string>
+    <string name="interval_preset_60">60 s</string>
+    <string name="interval_custom">Custom</string>
+    <string name="interval_custom_hint">Seconds (2–3600)</string>
+    <string name="interval_range_hint">Allowed range is 2–3600 seconds. 2 s is the fastest allowed; VRChat currently accepts at most 5 messages per 5 seconds, so raise the interval if the chatbox stops refreshing.</string>
+    <string name="interval_start_card">Start behaviour</string>
+    <string name="interval_send_on_start">Send once immediately when reporting starts</string>
+    <string name="interval_send_on_start_hint">When on, tapping Start reporting collects and sends one report right away, then loops at the interval above. When off, the first report waits one full interval.</string>
+    <string name="interval_reset">Restore defaults (10 s)</string>
+    <string name="interval_invalid_preview">Invalid interval: enter a whole number of seconds between %1$d and %2$d</string>
+    <string name="interval_preview_ok">Report once every %1$d s%2$s</string>
+    <string name="interval_tail_immediate">; one report is sent immediately on Start, then it loops</string>
+    <string name="interval_tail_wait">; the first report waits one interval after Start</string>
+    <string name="interval_invalid_toast">Enter a whole number of seconds between %1$d and %2$d</string>
+    <string name="interval_saved">Saved: once every %1$d s%2$s</string>
+    <string name="interval_saved_immediate">, effective immediately</string>
+    <string name="interval_reset_done">Defaults restored: every 10 s, send immediately on start</string>
+
+    <!-- ==================== Weather city ==================== -->
+    <string name="weather_title">Weather city</string>
+    <string name="weather_load_failed">Failed to load city data</string>
+    <string name="weather_load_failed_toast">Failed to load city data, please reinstall the app</string>
+    <string name="weather_hint">Pick a province, then a city.\nFor cities outside China use Search city below; Chinese or English names both work.\nSources are tried in order: Open-Meteo → wttr.in → QWeather.\nThe first two are overseas services and often time out or get DNS-polluted from mainland China — if both fail and you are not on a proxy, it is the network, not the app. QWeather is hosted in China and is the most reliable, but needs your own key.\nOne request per city per hour.</string>
+    <string name="weather_search_entry">Search city (worldwide)</string>
+    <string name="weather_fetch_now">Fetch now</string>
+    <string name="weather_qweather">QWeather fallback</string>
+    <string name="weather_clear_city">Clear selected city</string>
+    <string name="weather_cleared">Weather city cleared</string>
+    <string name="weather_pick_city_first">Pick a city first</string>
+    <string name="weather_pick_province_title">Choose city · %1$s</string>
+    <string name="weather_province_header">Province: %1$s\nChoose a city</string>
+    <string name="weather_city_selected">Selected: %1$s</string>
+    <string name="weather_log_test">Testing QWeather</string>
+    <string name="weather_log_start">Fetching weather</string>
+    <string name="weather_no_city">No city selected</string>
+    <string name="weather_current_city">Current city: %1$s</string>
+    <string name="weather_current_value">Current weather: %1$s (updated %2$s · %3$s)</string>
+    <string name="weather_never_fetched">Current weather: never fetched successfully</string>
+    <string name="weather_last_fail">Last failure: %1$s</string>
+    <string name="weather_last_fail_at">%1$s (%2$s)</string>
+
+    <!-- ==================== City search ==================== -->
+    <string name="search_title">Search city</string>
+    <string name="search_hint">City name in Chinese or English, e.g. Tokyo / 东京</string>
+    <string name="search_button">Search</string>
+    <string name="search_need_keyword">Enter a city name first</string>
+    <string name="search_empty">No matching city. Try another spelling</string>
+    <string name="search_failed">Search failed: %1$s</string>
+    <string name="search_searching">Searching…</string>
+    <string name="search_result">%1$s · %2$s · %3$s</string>
+    <string name="search_result_simple">%1$s · %2$s</string>
+    <string name="search_tip">Results come from Open-Meteo geocoding. Once picked, weather is fetched by coordinates — same for domestic and foreign cities.</string>
+
+    <!-- ==================== QWeather ==================== -->
+    <string name="qweather_title">QWeather fallback</string>
+    <string name="qweather_intro">QWeather (和风天气) is a Chinese weather service hosted in mainland China, no VPN needed, used as the last fallback.\n\nHow to get credentials:\n1. Open console.qweather.com, register and complete verification\n2. Project Management → create a project\n3. In the project: + Add credential → choose API KEY\n4. Go to Settings and copy your API Host (looks like xxxx.qweatherapi.com)\n5. Fill Host and Key below, then tap Test connection\n\nThe free plan allows 1000 calls a day; this app asks at most once an hour per city.</string>
+    <string name="qweather_builtin_note">This build already has fallback credentials baked in, so you can leave these empty. The fields below only override them (empty = use the built-in).</string>
+    <string name="qweather_host_label">API Host</string>
+    <string name="qweather_host_hint">xxxx.qweatherapi.com</string>
+    <string name="qweather_key_label">API KEY</string>
+    <string name="qweather_key_hint">the 32-character hex string from the console</string>
+    <string name="qweather_test">Test connection</string>
+    <string name="qweather_saved">Saved</string>
+    <string name="qweather_need_city">Go back and pick a city first, then test</string>
+    <string name="qweather_need_key">Key is empty, cannot test</string>
+    <string name="qweather_log_header">Testing QWeather</string>
+    <string name="qweather_log_host">· API Host: %1$s</string>
+
+    <!-- ==================== Theme ==================== -->
+    <string name="theme_title">Theme</string>
+    <string name="theme_hint">Built-in palettes apply with one tap and only change colours.\nFor backgrounds and button artwork, use Import theme below. Theme packs can be .zip or .tar.gz and must contain theme.json plus images.\nThe app restarts after switching.</string>
+    <string name="theme_import">Import theme (zip / tar.gz)</string>
+    <string name="theme_group_default">Default palette</string>
+    <string name="theme_default_item">Default (app look)</string>
+    <string name="theme_group_imported">Imported themes</string>
+    <string name="theme_none_imported">No theme imported yet</string>
+    <string name="theme_current">current</string>
+    <string name="theme_builtin_undeletable">Built-in palettes cannot be deleted</string>
+    <string name="theme_delete_title">Delete theme</string>
+    <string name="theme_delete_message">Delete theme “%1$s”?</string>
+    <string name="theme_pick_file">Choose a theme pack</string>
+    <string name="theme_import_failed">Import failed: %1$s</string>
+    <string name="theme_imported">Imported theme: %1$s</string>
+    <string name="theme_builtin_crimson">Crimson</string>
+    <string name="theme_builtin_mist">Mist blue</string>
+    <string name="theme_builtin_sakura">Sakura</string>
+    <string name="theme_builtin_pine">Pine</string>
+    <string name="theme_builtin_amber">Amber</string>
+    <string name="theme_builtin_violet">Violet</string>
+
+    <!-- ==================== Device tables ==================== -->
+    <string name="device_table_title">Device model tables</string>
+    <string name="device_table_section">Brand tables</string>
+    <string name="device_table_empty">No brand table yet, use the button below to create one</string>
+    <string name="device_table_create">Create a brand table</string>
+    <string name="device_table_count">%1$s (%2$d entries)</string>
+    <string name="device_table_unparsable">%1$s (unparsable)</string>
+    <string name="device_table_delete_title">Delete table</string>
+    <string name="device_table_delete_message">Delete the device table for “%1$s”?</string>
+    <string name="device_table_brand_hint">Brand name, e.g. ZTE / HUAWEI</string>
+    <string name="device_table_file_none">Table file: not selected</string>
+    <string name="device_table_file_selected">Table file: %1$s</string>
+    <string name="device_table_pick">Choose table file (JSON)</string>
+    <string name="device_table_pick_title">Choose a device table JSON</string>
+    <string name="device_table_need_brand">Enter a brand name first</string>
+    <string name="device_table_need_file">Choose a table file first</string>
+    <string name="device_table_import_failed">Import failed: not a valid device table JSON</string>
+    <string name="device_table_created">Created the “%1$s” table with %2$d entries</string>
+
+    <!-- ==================== App tables ==================== -->
+    <string name="app_table_title">App name tables</string>
+    <string name="app_table_hint">The app table maps package names to display names, e.g. com.tencent.mm = WeChat.\nImported entries are stored in the app private directory and override built-in ones; unknown apps show their package name.</string>
+    <string name="app_table_import">Import app table (JSON)</string>
+    <string name="app_table_count">%1$d app names available (built-in + imported)</string>
+    <string name="app_table_format">Format example:\n{\n  \"apps\": {\n    \"com.tencent.mm\": \"WeChat\",\n    \"com.vrchat.mobile.playstore\": \"VRChat\"\n  }\n}</string>
+    <string name="app_table_pick_title">Choose an app table JSON</string>
+    <string name="app_table_import_failed">Import failed: not a valid app table JSON</string>
+    <string name="app_table_imported">Imported %1$d app names</string>
+
+    <!-- ==================== CPU map ==================== -->
+    <string name="cpu_map_title">CPU map tables</string>
+    <string name="cpu_map_hint">The CPU map turns a platform codename into a model name, e.g. kona = Snapdragon 865.\nQualcomm phones often only expose ro.board.platform (kona / taro / kalama) and no ro.soc.model; with this table they display as “Qualcomm Snapdragon 865”.</string>
+    <string name="cpu_map_import">Import CPU map (JSON)</string>
+    <string name="cpu_map_count">%1$d CPU mappings available (built-in + imported)</string>
+    <string name="cpu_map_format">Format example:\n{\n  \"cpus\": {\n    \"kona\": \"Snapdragon 865\",\n    \"taro\": \"Snapdragon 8 Gen 1\"\n  }\n}</string>
+    <string name="cpu_map_pick_title">Choose a CPU map JSON</string>
+    <string name="cpu_map_import_failed">Import failed: not a valid CPU map JSON</string>
+    <string name="cpu_map_imported">Imported %1$d CPU mappings</string>
+
+    <!-- ==================== Software update ==================== -->
+    <string name="update_title">Software update</string>
+    <string name="update_current">Current version: %1$s (Build %2$d)</string>
+    <string name="update_auto_check">Check for updates on launch (silent, off by default)</string>
+    <string name="update_source_label">Update source</string>
+    <string name="update_source_gitee">Gitee (China)</string>
+    <string name="update_source_github">GitHub</string>
+    <string name="update_not_checked">Not checked yet</string>
+    <string name="update_check_button">Check for updates</string>
+    <string name="update_install_button">Download and install</string>
+    <string name="update_note">Note: the package is downloaded into the app cache, then handed to the system installer. The first update needs the Install unknown apps permission. Gitee sometimes names the APK .apk.zip; it is treated as .apk automatically.</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_check_failed">Check failed: %1$s</string>
+    <string name="update_latest_release">Latest release: %1$s</string>
+    <string name="update_latest_release_named">Latest release: %1$s · %2$s</string>
+    <string name="update_found">New version: %1$s</string>
+    <string name="update_found_no_apk">New version found, but the release has no APK asset</string>
+    <string name="update_is_latest">Already up to date</string>
+    <string name="update_notes_title">What is new · %1$s</string>
+    <string name="update_got_it">Got it</string>
+    <string name="update_no_apk">The release has no downloadable APK</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_download_failed">Download failed: %1$s</string>
+    <string name="update_downloaded">Download complete, opening the installer…</string>
+    <string name="update_install_failed">Install failed: %1$s</string>
+    <string name="update_err_no_release">No usable release found (maybe draft or pre-release): %1$s</string>
+    <string name="update_err_http">Server returned HTTP %1$d</string>
+    <string name="update_err_overwrite">Could not overwrite the old package</string>
+    <string name="update_err_download_http">Download failed: HTTP %1$d</string>
+    <string name="update_err_empty_file">Downloaded file is empty</string>
+    <string name="update_err_no_apk_file">Package file not found</string>
+    <string name="update_err_unknown_sources">Allow Install unknown apps first, then tap update again</string>
+
+    <!-- ==================== Weather log / failures ==================== -->
+    <string name="wlog_no_network">✗ No network connection (airplane mode / mobile data off)</string>
+    <string name="wlog_start">Fetching weather for: %1$s</string>
+    <string name="wlog_pick_city_first">No city yet, pick one below first</string>
+    <string name="wlog_geocoding">· Resolving city coordinates (geocoding-api.open-meteo.com)…</string>
+    <string name="wlog_located">· Located: %1$.4f, %2$.4f</string>
+    <string name="wlog_no_coords">· No coordinates; QWeather will look the city up by name</string>
+    <string name="wlog_coords_failed">· Coordinate lookup failed: %1$s</string>
+    <string name="wlog_openmeteo_cooldown">① Open-Meteo: skipped, in the 6-hour cooldown after a failure</string>
+    <string name="wlog_openmeteo_connect">① Connecting to Open-Meteo (api.open-meteo.com)…</string>
+    <string name="wlog_wttr">② Switching to fallback wttr.in (wttr.in)…</string>
+    <string name="wlog_qweather">③ Switching to fallback QWeather (%1$s)…</string>
+    <string name="wlog_qweather_no_key">· All three sources failed. Add a key under QWeather fallback to fix this</string>
+    <string name="wlog_geoapi">· Looking up coordinates by city name (GeoAPI)…</string>
+    <string name="wlog_geoapi_located">· Located via city database: %1$.4f, %2$.4f</string>
+    <string name="wlog_all_failed">· All three sources failed, no weather this time</string>
+    <string name="wlog_success">✓ %1$s succeeded: %2$s</string>
+    <string name="wlog_fail">✗ %1$s failed: %2$s</string>
+    <string name="wlog_hint">   ↳ %1$s</string>
+    <string name="wsummary_ok">OK: %1$s · %2$s</string>
+    <string name="wsummary_fail">Failed: %1$s</string>
+    <string name="wsummary_failed">Failed</string>
+    <string name="wdetail_no_coords">no coordinates</string>
+    <string name="wdetail_city_parse_failed">city name could not be resolved</string>
+    <string name="wdetail_no_city">no city selected</string>
+    <string name="wdetail_network">network</string>
+    <string name="wdetail_all_sources">all sources</string>
+    <string name="wprovider_qweather">QWeather</string>
+    <string name="wprovider_qweather_en">QWeather</string>
+    <string name="wsummary_humidity">Humidity %1$d%%</string>
+
+    <!-- Failure: one-line reason -->
+    <string name="werr_no_network">The device has no network connection</string>
+    <string name="werr_dns">Cannot resolve the server name (DNS lookup failed)</string>
+    <string name="werr_connection_refused">Server refused the connection or is unreachable</string>
+    <string name="werr_connect_timeout">Connect timed out (no response in time)</string>
+    <string name="werr_read_timeout">Read timed out (connected, but the server never answered)</string>
+    <string name="werr_ssl">TLS handshake failed</string>
+    <string name="werr_connection_reset">Connection reset by peer</string>
+    <string name="werr_http">Server returned HTTP %1$d</string>
+    <string name="werr_empty_body">Server returned an empty body</string>
+    <string name="werr_bad_json">Response is not valid JSON (possibly a captive portal or carrier interception)</string>
+    <string name="werr_missing_field">Response is missing a required field: %1$s</string>
+    <string name="werr_not_configured">QWeather API key is not configured</string>
+    <string name="werr_server_code">QWeather error %1$s</string>
+    <string name="werr_unknown">Unknown error</string>
+    <string name="werr_unknown_detail">Unknown error (%1$s)</string>
+    <!-- Failure: hints -->
+    <string name="werr_hint_dns">Usually carrier DNS pollution, or a booster/proxy taking over DNS</string>
+    <string name="werr_hint_connect_timeout">This domain is unstable from mainland China anyway; a game booster can make it slower</string>
+    <string name="werr_hint_refused">Check whether airplane mode, a VPN or a booster is blocking traffic</string>
+    <string name="werr_hint_ssl">Possibly intercepted by a proxy, packet capture tool or booster</string>
+    <string name="werr_hint_read_timeout">The server is too slow; switching sources usually helps</string>
+    <string name="werr_hint_http_auth">Invalid key, no permission, or the API Host is wrong</string>
+    <string name="werr_hint_http_404">Wrong endpoint or location parameter</string>
+    <string name="werr_hint_http_429">Too many requests, rate limited</string>
+    <string name="werr_hint_qw_quota">Quota or rate limit, recovers in a while</string>
+    <string name="werr_hint_qw_auth">Check the API Host and key in the console, they must match</string>
+    <string name="werr_hint_not_configured">Fill API Host and key under QWeather fallback so it can take part</string>
+    <!-- QWeather business codes -->
+    <string name="qw_code_204">No data for this region</string>
+    <string name="qw_code_400">Bad request parameters (usually city or coordinate format)</string>
+    <string name="qw_code_401">Authentication failed: invalid API key, or key does not match the API Host</string>
+    <string name="qw_code_402">Daily free quota used up (1000/day), resets at midnight</string>
+    <string name="qw_code_403">This credential has no access to that endpoint</string>
+    <string name="qw_code_404">The requested region does not exist</string>
+    <string name="qw_code_429">Too many requests, rate limited (free plan about 10/min)</string>
+    <string name="qw_code_500">QWeather server error</string>
+    <string name="qw_code_unknown">Unknown error code</string>
+
+    <!-- Send results -->
+    <string name="send_err_no_ip">Target IP is not set</string>
+    <string name="send_err_bad_port">Invalid port: %1$d</string>
+    <string name="send_err_unresolved_ip">Cannot resolve IP address: %1$s</string>
+    <string name="send_err_unreachable">Port %1$d unreachable: make sure VRChat is running and OSC is enabled in the Action Menu</string>
+    <string name="send_err_network">Network send failed: %1$s</string>
+    <string name="send_err_no_permission">Missing INTERNET permission</string>
+    <string name="send_err_exception">Send failed: %1$s</string>
+    <string name="log_collect_error">Collection or send error</string>
+    <string name="log_collect_failed">Collection failed</string>
+    <string name="log_no_fields">No fields selected</string>
+    <string name="log_all_unavailable">All selected fields are unavailable, nothing sent</string>
+    <string name="log_no_target">Target IP is empty, nothing sent</string>
+    <string name="log_sent">Sent %1$d bytes to %2$s:%3$d</string>
+    <!-- ==================== Report field names ==================== -->
+    <string name="field_brand">Device brand</string>
+    <string name="field_model">Device model</string>
+    <string name="field_cpu_name">CPU name</string>
+    <string name="field_cpu_freq">CPU frequency</string>
+    <string name="field_cpu_temp">CPU temperature</string>
+    <string name="field_cpu_usage">CPU usage</string>
+    <string name="field_gpu_name">GPU name</string>
+    <string name="field_gpu_freq">GPU frequency</string>
+    <string name="field_gpu_temp">GPU temperature</string>
+    <string name="field_gpu_usage">GPU usage</string>
+    <string name="field_ram">RAM used/total</string>
+    <string name="field_battery">Battery and charging</string>
+    <string name="field_weather">Weather</string>
+    <string name="field_temperature">Temperature</string>
+    <string name="field_humidity">Humidity</string>
+    <string name="field_pressure">Pressure</string>
+    <string name="field_wind">Wind</string>
+    <string name="field_uv">UV index</string>
+    <string name="field_sunset">Sunset</string>
+    <string name="field_foreground_app">Foreground app</string>
+    <string name="field_vrchat_fps">FPS</string>
+    <string name="model_mode_real">Real device model</string>
+    <string name="model_mode_product">Marketing product name</string>
+
+    <string name="werr_detail_suffix"> (%1$s)</string>
+    <string name="priv_read_timeout">Read timeout (%1$d ms)</string>
+    <string name="foreground_self">VRCDI (this app)</string>
+    <string name="foreground_vrchat_quest">VRChat (Quest)</string>
+    <string name="theme_err_mkdir_temp">Cannot create a temporary directory</string>
+    <string name="theme_err_no_theme_json">The archive has no theme.json</string>
+    <string name="theme_err_parse_theme_json">Failed to parse theme.json</string>
+    <string name="theme_err_save">Failed to save the theme</string>
+    <string name="theme_err_mkdir">Cannot create a directory</string>
+    <string name="theme_err_archive_format">Unsupported archive format, only zip / tar.gz</string>
+</resources>

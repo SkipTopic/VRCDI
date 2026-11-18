@@ -28,6 +28,12 @@ public class AppSettings {
     private static final String KEY_SEND_ON_START = "send_on_start";
     private static final String KEY_WEATHER_PROVINCE = "weather_province";
     private static final String KEY_WEATHER_CITY = "weather_city";
+    /** 国外城市才有：国家名与国家代码，国内城市为空 */
+    private static final String KEY_WEATHER_COUNTRY = "weather_country";
+    private static final String KEY_WEATHER_COUNTRY_CODE = "weather_country_code";
+    /** 搜索选中的城市直接存经纬度，省掉一次地理编码，顺带解决同名城市 */
+    private static final String KEY_WEATHER_LAT = "weather_lat";
+    private static final String KEY_WEATHER_LON = "weather_lon";
     private static final String KEY_QWEATHER_HOST = "qweather_host";
     private static final String KEY_QWEATHER_KEY = "qweather_key";
     private static final String KEY_HIDE_UNAVAILABLE = "hide_unavailable";
@@ -124,26 +130,94 @@ public class AppSettings {
         return value == null ? "" : value;
     }
 
-    /** "江西省 上饶市"；未选择时返回空串 */
+    /** 国外城市所在国家（本地化名称，例如「日本」/「Japan」）；国内城市为空 */
+    public String getWeatherCountry() {
+        String value = sp.getString(KEY_WEATHER_COUNTRY, "");
+        return value == null ? "" : value;
+    }
+
+    /** ISO 国家代码，例如 JP / US；国内城市为空 */
+    public String getWeatherCountryCode() {
+        String value = sp.getString(KEY_WEATHER_COUNTRY_CODE, "");
+        return value == null ? "" : value.trim();
+    }
+
+    /** 选城市时已经知道的经纬度；没存过返回 null，交给地理编码去解析 */
+    public Float[] getWeatherCoords() {
+        if (!sp.contains(KEY_WEATHER_LAT) || !sp.contains(KEY_WEATHER_LON)) return null;
+        return new Float[]{sp.getFloat(KEY_WEATHER_LAT, 0f), sp.getFloat(KEY_WEATHER_LON, 0f)};
+    }
+
+    /** "江西省 上饶市"；国外城市显示成「东京, 日本」；未选择时返回空串 */
     public String getWeatherCityLabel() {
         String province = getWeatherProvince();
         String city = getWeatherCity();
         if (city.isEmpty()) return "";
+        String country = getWeatherCountry();
+        if (!country.isEmpty() && !isChina(country)) {
+            // 同名城市很多（比如好几个 Springfield），带上国家才分得清
+            return city + " · " + country;
+        }
         if (province.isEmpty() || province.equals(city)) return city;
         return province + " " + city;
     }
 
+    /** 缓存键：带上国家代码，避免不同国家的同名城市共用一份缓存 */
+    public String getWeatherPlaceKey() {
+        return getCountryCodeForKey() + "/" + getWeatherProvince() + "/" + getWeatherCity();
+    }
+
+    private String getCountryCodeForKey() {
+        String code = getWeatherCountryCode();
+        if (!code.isEmpty()) return code;
+        String country = getWeatherCountry();
+        return isChina(country) ? "CN" : country;
+    }
+
+    private static boolean isChina(String country) {
+        if (country == null) return false;
+        String value = country.trim();
+        return "中国".equals(value) || "China".equalsIgnoreCase(value)
+                || "中华人民共和国".equals(value);
+    }
+
     public void setWeatherCity(String province, String city) {
-        sp.edit()
+        setWeatherPlace(province, city, "", "", null, null);
+    }
+
+    /**
+     * 记录选中的城市。国内外共用一套字段：
+     *
+     * @param province    国内是省，国外是行政区（可能为空）
+     * @param city        城市名，保留接口返回的写法
+     * @param country     国家名，国内留空
+     * @param countryCode ISO 国家代码，例如 JP
+     * @param lat         纬度，未知传 null
+     * @param lon         经度，未知传 null
+     */
+    public void setWeatherPlace(String province, String city, String country,
+                                String countryCode, Float lat, Float lon) {
+        SharedPreferences.Editor editor = sp.edit()
                 .putString(KEY_WEATHER_PROVINCE, province == null ? "" : province.trim())
                 .putString(KEY_WEATHER_CITY, city == null ? "" : city.trim())
-                .apply();
+                .putString(KEY_WEATHER_COUNTRY, country == null ? "" : country.trim())
+                .putString(KEY_WEATHER_COUNTRY_CODE, countryCode == null ? "" : countryCode.trim());
+        if (lat != null && lon != null) {
+            editor.putFloat(KEY_WEATHER_LAT, lat).putFloat(KEY_WEATHER_LON, lon);
+        } else {
+            editor.remove(KEY_WEATHER_LAT).remove(KEY_WEATHER_LON);
+        }
+        editor.apply();
     }
 
     public void clearWeatherCity() {
         sp.edit()
                 .remove(KEY_WEATHER_PROVINCE)
                 .remove(KEY_WEATHER_CITY)
+                .remove(KEY_WEATHER_COUNTRY)
+                .remove(KEY_WEATHER_COUNTRY_CODE)
+                .remove(KEY_WEATHER_LAT)
+                .remove(KEY_WEATHER_LON)
                 .apply();
     }
 

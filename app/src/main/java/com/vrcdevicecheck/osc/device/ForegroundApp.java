@@ -7,6 +7,9 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Process;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 /**
  * 读取"当前位于前台的包名"。
  *
@@ -102,7 +105,25 @@ public final class ForegroundApp {
     }
 
     /**
-     * 包名 -> 便于阅读的名字。
+     * 只给界面显示用：本应用 / VRChat 一体机版按界面语言给括号里的说明，
+     * 其余走 {@link #label(Context, String)}。
+     *
+     * 注意上报文本不能用这个，否则 Chatbox 内容会随界面语言变化。
+     */
+    public static String displayLabel(Context context, String pkg) {
+        if (pkg != null && context != null) {
+            if (pkg.equals(context.getPackageName())) {
+                return LocaleHelper.str(context, R.string.foreground_self);
+            }
+            if (PKG_VRCHAT_QUEST.equals(pkg)) {
+                return LocaleHelper.str(context, R.string.foreground_vrchat_quest);
+            }
+        }
+        return label(context, pkg);
+    }
+
+    /**
+     * 包名 -> 便于阅读的名字（也用于 Chatbox 上报文本，不能跟界面语言走）。
      * 顺序：本应用 > VRChat 特判 > 应用表 > 系统应用名 > 包名本身。
      */
     public static String label(Context context, String pkg) {

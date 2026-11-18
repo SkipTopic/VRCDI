@@ -3,6 +3,9 @@ package com.vrcdevicecheck.osc.priv;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import rikka.shizuku.Shizuku;
 
 /**
@@ -23,23 +26,23 @@ public class ShizukuShell implements PrivilegedShell {
 
     @Override
     public String statusText(Context context) {
-        if (!ping()) return "Shizuku 未运行：请打开 Shizuku 应用并启动服务（Android 11+ 可用无线调试启动）";
-        if (!granted()) return "Shizuku 已运行，但尚未授权给 VRCDI";
-        return "Shizuku 已授权（shell 权限，uid=2000）";
+        if (!ping()) return LocaleHelper.str(context, R.string.privilege_shizuku_raw_not_running);
+        if (!granted()) return LocaleHelper.str(context, R.string.privilege_shizuku_unauthorized);
+        return LocaleHelper.str(context, R.string.privilege_shizuku_granted);
     }
 
     @Override
-    public String label() {
+    public String label(Context context) {
         return "Shizuku";
     }
 
     @Override
-    public ShellResult run(String script, long timeoutMs) {
+    public ShellResult run(Context context, String script, long timeoutMs) {
         if (!granted()) return null;
         try {
             // 注意：若升级 Shizuku 后此行报类型不兼容，把声明类型改成 rikka.shizuku.ShizukuRemoteProcess
             Process process = Shizuku.newProcess(new String[]{"sh", "-c", script}, null, null);
-            return ProcessRunner.read(process, timeoutMs);
+            return ProcessRunner.read(context, process, timeoutMs);
         } catch (Throwable t) {
             // Shizuku 的方法在失败时抛 RuntimeException（例如 binder 尚未收到）
             String message = t.getMessage();

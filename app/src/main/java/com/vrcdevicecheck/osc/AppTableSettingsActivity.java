@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -30,7 +29,7 @@ import java.io.InputStream;
  * }
  * 也可以直接省略 "apps" 这一层。导入后写入 files/app_names.json，覆盖内置同名条目。
  */
-public class AppTableSettingsActivity extends Activity {
+public class AppTableSettingsActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_APP_TABLE = 52;
 
@@ -39,7 +38,7 @@ public class AppTableSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("应用表设置");
+        setTitle(R.string.app_table_title);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -48,8 +47,7 @@ public class AppTableSettingsActivity extends Activity {
 
         TextView hint = new TextView(this);
         hint.setTextSize(13f);
-        hint.setText("应用表把包名映射成应用名，例如 com.tencent.mm = 微信。\n"
-                + "导入后写入应用私有目录，覆盖内置同名条目；没有收录的应用显示包名。");
+        hint.setText(R.string.app_table_hint);
         root.addView(hint);
 
         countView = new TextView(this);
@@ -58,7 +56,7 @@ public class AppTableSettingsActivity extends Activity {
         root.addView(countView);
 
         Button importButton = new Button(this);
-        importButton.setText("导入应用表（JSON）");
+        importButton.setText(R.string.app_table_import);
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -72,10 +70,7 @@ public class AppTableSettingsActivity extends Activity {
         TextView format = new TextView(this);
         format.setTextSize(12f);
         format.setPadding(0, dp(14), 0, 0);
-        format.setText("格式示例：\n{\n  \"apps\": {\n"
-                + "    \"com.tencent.mm\": \"微信\",\n"
-                + "    \"com.vrchat.mobile.playstore\": \"VRChat\"\n"
-                + "  }\n}");
+        format.setText(R.string.app_table_format);
         root.addView(format);
 
         setContentView(root);
@@ -84,7 +79,7 @@ public class AppTableSettingsActivity extends Activity {
     }
 
     private void refresh() {
-        countView.setText("当前已收录 " + AppNames.count(this) + " 条应用名（内置 + 导入）");
+        countView.setText(getString(R.string.app_table_count, AppNames.count(this)));
     }
 
     private void pickFile() {
@@ -94,10 +89,10 @@ public class AppTableSettingsActivity extends Activity {
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_MIME_TYPES,
                     new String[]{"application/json", "text/plain", "text/*", "application/octet-stream"});
-            startActivityForResult(Intent.createChooser(intent, "选择应用表 JSON 文件"),
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.app_table_pick_title)),
                     REQUEST_CODE_APP_TABLE);
         } catch (Throwable t) {
-            toast("没有找到可用的文件选择器");
+            toast(getString(R.string.common_no_file_picker));
         }
     }
 
@@ -124,10 +119,10 @@ public class AppTableSettingsActivity extends Activity {
                     @Override
                     public void run() {
                         if (count < 0) {
-                            toast("导入失败：不是有效的应用表 JSON");
+                            toast(getString(R.string.app_table_import_failed));
                             return;
                         }
-                        toast("已导入 " + count + " 条应用名");
+                        toast(getString(R.string.app_table_imported, count));
                         refresh();
                     }
                 });
@@ -170,7 +165,7 @@ public class AppTableSettingsActivity extends Activity {
         } catch (Throwable ignored) {
             // 忽略
         }
-        return "已选择文件";
+        return getString(R.string.common_selected_file);
     }
 
     private int dp(int value) {

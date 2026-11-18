@@ -2,6 +2,9 @@ package com.vrcdevicecheck.osc.priv;
 
 import android.content.Context;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 /**
  * Root 通道：直接 su 执行，不引入第三方 root 库，依赖更少、行为更可控。
  * 本类不依赖 Shizuku，即使去掉 Shizuku 依赖也能独立工作。
@@ -18,21 +21,23 @@ public class RootShell implements PrivilegedShell {
     @Override
     public String statusText(Context context) {
         Integer uid = probe();
-        return uid != null ? "Root 已授权（uid=" + uid + "）" : "未检测到可用的 root 授权";
+        return uid != null
+                ? LocaleHelper.str(context, R.string.privilege_root_granted_uid, uid)
+                : LocaleHelper.str(context, R.string.privilege_root_denied);
     }
 
     @Override
-    public String label() {
+    public String label(Context context) {
         return "Root";
     }
 
     @Override
-    public ShellResult run(String script, long timeoutMs) {
+    public ShellResult run(Context context, String script, long timeoutMs) {
         try {
             Process process = new ProcessBuilder("su", "-c", script)
                     .redirectErrorStream(false)
                     .start();
-            return ProcessRunner.read(process, timeoutMs);
+            return ProcessRunner.read(context, process, timeoutMs);
         } catch (Throwable t) {
             String message = t.getMessage();
             return new ShellResult(-1, "", message == null ? t.getClass().getSimpleName() : message);

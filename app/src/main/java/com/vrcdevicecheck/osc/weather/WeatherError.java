@@ -1,5 +1,10 @@
 package com.vrcdevicecheck.osc.weather;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -13,6 +18,8 @@ import javax.net.ssl.SSLException;
  * 这个类的唯一目的：把「失败了」变成「为什么失败」。
  * 网络异常在 Java 里都长得很像，但用户能采取的动作完全不同——
  * DNS 失败要去查加速器/代理，超时要换源，HTTP 401 要去查 Key。
+ *
+ * 文案跟着界面语言走，所以 text()/hint()/logLine() 都要传 Context。
  */
 public final class WeatherError {
 
@@ -49,25 +56,28 @@ public final class WeatherError {
     public final Kind kind;
     /** 仅 HTTP_STATUS 有效，其余为 0 */
     public final int httpStatus;
-    /** 补充信息：异常消息、缺失字段名、业务错误码等 */
+    /** 和风天气业务错误码；其余情况为空 */
+    public final String code;
+    /** 补充信息：异常消息、缺失字段名、服务端原话等 */
     public final String detail;
 
-    private WeatherError(Kind kind, int httpStatus, String detail) {
+    private WeatherError(Kind kind, int httpStatus, String code, String detail) {
         this.kind = kind;
         this.httpStatus = httpStatus;
+        this.code = code == null ? "" : code;
         this.detail = detail == null ? "" : detail;
     }
 
     public static WeatherError of(Kind kind) {
-        return new WeatherError(kind, 0, "");
+        return new WeatherError(kind, 0, "", "");
     }
 
     public static WeatherError of(Kind kind, String detail) {
-        return new WeatherError(kind, 0, detail);
+        return new WeatherError(kind, 0, "", detail);
     }
 
     public static WeatherError http(int status, String detail) {
-        return new WeatherError(Kind.HTTP_STATUS, status, detail);
+        return new WeatherError(Kind.HTTP_STATUS, status, "", detail);
     }
 
     /** 把网络异常翻译成人能看懂的一句话 */
@@ -98,7 +108,6 @@ public final class WeatherError {
         return of(Kind.UNKNOWN, message.isEmpty() ? className : className + ": " + message);
     }
 
-    /** 和风天气的业务错误码 -> 可读原因 */
     public static WeatherError qweather(String code) {
         return qweather(code, "");
     }
@@ -107,110 +116,119 @@ public final class WeatherError {
      * @param detail 服务端原话，例如 "Authentication failed, check your KEY/Token or Host."
      */
     public static WeatherError qweather(String code, String detail) {
-        String meaning;
+        return new WeatherError(Kind.SERVER_CODE, 0, code, detail);
+    }
+
+    /** 和风天气业务码 -> 本地化含义 */
+    private static String qweatherMeaning(Context context, String code) {
+        int resId;
         if ("204".equals(code)) {
-            meaning = "该地区没有数据";
+            resId = R.string.qw_code_204;
         } else if ("400".equals(code)) {
-            meaning = "请求参数有误（多半是城市或经纬度格式不对）";
+            resId = R.string.qw_code_400;
         } else if ("401".equals(code)) {
-            meaning = "认证失败：API Key 无效，或 Key 与 API Host 不匹配";
+            resId = R.string.qw_code_401;
         } else if ("402".equals(code)) {
-            meaning = "今日免费额度已用完（免费订阅 1000 次/天），明天 0 点恢复";
+            resId = R.string.qw_code_402;
         } else if ("403".equals(code)) {
-            meaning = "这个凭据没有访问该接口的权限";
+            resId = R.string.qw_code_403;
         } else if ("404".equals(code)) {
-            meaning = "查询的地区不存在";
+            resId = R.string.qw_code_404;
         } else if ("429".equals(code)) {
-            meaning = "请求太频繁，被限流了（免费订阅约 10 次/分钟）";
+            resId = R.string.qw_code_429;
         } else if ("500".equals(code)) {
-            meaning = "和风天气服务端出错";
+            resId = R.string.qw_code_500;
         } else {
-            meaning = "未知错误码";
+            resId = R.string.qw_code_unknown;
         }
-        String extra = detail == null ? "" : detail.trim();
-        if (extra.length() > 60) extra = extra.substring(0, 60) + "…";
-        String suffix = extra.isEmpty() ? "" : "（" + extra + "）";
-        return new WeatherError(Kind.SERVER_CODE, 0, code + " " + meaning + suffix);
+        return LocaleHelper.str(context, resId);
     }
 
     /** 一句话原因，直接显示给用户 */
-    public String text() {
+    public String text(Context context) {
         switch (kind) {
             case NO_NETWORK:
-                return "设备当前没有网络连接";
+                return LocaleHelper.str(context, R.string.werr_no_network);
             case DNS:
-                return "无法解析服务器域名（DNS 查询失败）";
+                return LocaleHelper.str(context, R.string.werr_dns);
             case CONNECTION_REFUSED:
-                return "服务器拒绝连接或无法建立连接";
+                return LocaleHelper.str(context, R.string.werr_connection_refused);
             case CONNECT_TIMEOUT:
-                return "连接超时（对方在规定时间内没有响应）";
+                return LocaleHelper.str(context, R.string.werr_connect_timeout);
             case READ_TIMEOUT:
-                return "读取超时（已连上，但服务器迟迟不返回数据）";
+                return LocaleHelper.str(context, R.string.werr_read_timeout);
             case SSL:
-                return "TLS 握手失败";
+                return LocaleHelper.str(context, R.string.werr_ssl);
             case CONNECTION_RESET:
-                return "连接被对方重置";
+                return LocaleHelper.str(context, R.string.werr_connection_reset);
             case HTTP_STATUS:
-                return "服务器返回 HTTP " + httpStatus;
+                return LocaleHelper.str(context, R.string.werr_http, httpStatus);
             case EMPTY_BODY:
-                return "服务器返回了空内容";
+                return LocaleHelper.str(context, R.string.werr_empty_body);
             case BAD_JSON:
-                return "返回内容不是有效 JSON（可能被登录门户或运营商劫持）";
+                return LocaleHelper.str(context, R.string.werr_bad_json);
             case MISSING_FIELD:
-                return "返回内容缺少必要字段：" + detail;
+                return LocaleHelper.str(context, R.string.werr_missing_field, detail);
             case NOT_CONFIGURED:
-                return "未配置和风天气 API Key";
-            case SERVER_CODE:
-                return "和风天气错误 " + detail;
+                return LocaleHelper.str(context, R.string.werr_not_configured);
+            case SERVER_CODE: {
+                String suffix = detail.isEmpty()
+                        ? ""
+                        : LocaleHelper.str(context, R.string.werr_detail_suffix, detail);
+                return LocaleHelper.str(context, R.string.werr_server_code,
+                        code + " " + qweatherMeaning(context, code) + suffix);
+            }
             default:
-                return detail.isEmpty() ? "未知错误" : "未知错误（" + detail + "）";
+                return detail.isEmpty()
+                        ? LocaleHelper.str(context, R.string.werr_unknown)
+                        : LocaleHelper.str(context, R.string.werr_unknown_detail, detail);
         }
     }
 
     /** 排查建议；没有建议时返回空串 */
-    public String hint() {
+    public String hint(Context context) {
         switch (kind) {
             case DNS:
-                return "常见于运营商 DNS 污染，或加速器/代理接管了 DNS";
+                return LocaleHelper.str(context, R.string.werr_hint_dns);
             case CONNECT_TIMEOUT:
-                return "该域名在国内访问本来就不稳定；开着游戏加速器时可能更慢";
+                return LocaleHelper.str(context, R.string.werr_hint_connect_timeout);
             case CONNECTION_REFUSED:
-                return "检查飞行模式、VPN、加速器是否把流量拦掉了";
+                return LocaleHelper.str(context, R.string.werr_hint_refused);
             case SSL:
-                return "可能被代理、抓包工具或加速器中间人接管";
+                return LocaleHelper.str(context, R.string.werr_hint_ssl);
             case READ_TIMEOUT:
-                return "服务器响应太慢，换个数据源通常就好了";
+                return LocaleHelper.str(context, R.string.werr_hint_read_timeout);
             case HTTP_STATUS:
                 if (httpStatus == 401 || httpStatus == 403) {
-                    return "Key 无效、没有权限，或 API Host 填错了";
+                    return LocaleHelper.str(context, R.string.werr_hint_http_auth);
                 }
                 if (httpStatus == 404) {
-                    return "接口地址或地区参数不对";
+                    return LocaleHelper.str(context, R.string.werr_hint_http_404);
                 }
                 if (httpStatus == 429) {
-                    return "请求太频繁，被限流了";
+                    return LocaleHelper.str(context, R.string.werr_hint_http_429);
                 }
                 return "";
             case SERVER_CODE:
-                if (detail.startsWith("402") || detail.startsWith("429")) {
-                    return "额度或频率限制，等一会儿就恢复";
+                if ("402".equals(code) || "429".equals(code)) {
+                    return LocaleHelper.str(context, R.string.werr_hint_qw_quota);
                 }
-                if (detail.startsWith("401") || detail.startsWith("403")) {
-                    return "去控制台核对 API Host 和 Key，两者必须配对";
+                if ("401".equals(code) || "403".equals(code)) {
+                    return LocaleHelper.str(context, R.string.werr_hint_qw_auth);
                 }
                 return "";
             case NOT_CONFIGURED:
-                return "在「和风天气兜底」里填 API Host 和 Key，它才参与兜底";
+                return LocaleHelper.str(context, R.string.werr_hint_not_configured);
             default:
                 return "";
         }
     }
 
     /** 日志里的一行：原因 + 括注细节 */
-    public String logLine() {
-        String base = text();
+    public String logLine(Context context) {
+        String base = text(context);
         if (detail.isEmpty()) return base;
         if (kind == Kind.SERVER_CODE || kind == Kind.MISSING_FIELD) return base;
-        return base + "（" + detail + "）";
+        return base + LocaleHelper.str(context, R.string.werr_detail_suffix, detail);
     }
 }
