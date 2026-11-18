@@ -42,8 +42,9 @@ public final class LocaleHelper {
         if (value != null) return value;
         value = LANG_ZH;
         if (context != null) {
-            SharedPreferences sp = context.getApplicationContext()
-                    .getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            Context app = context.getApplicationContext();
+            if (app == null) app = context;
+            SharedPreferences sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             String stored = sp.getString(KEY_LANGUAGE, LANG_ZH);
             if (LANG_EN.equals(stored)) value = LANG_EN;
         }
