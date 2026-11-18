@@ -230,7 +230,7 @@
     <string name="weather_title">Weather city</string>
     <string name="weather_load_failed">Failed to load city data</string>
     <string name="weather_load_failed_toast">Failed to load city data, please reinstall the app</string>
-    <string name="weather_hint">Pick a province, then a city.\nFor cities outside China use Search city below; Chinese or English names both work.\nSources are tried in order: Open-Meteo → wttr.in → QWeather.\nThe first two are overseas services and often time out or get DNS-polluted from mainland China — if both fail and you are not on a proxy, it is the network, not the app. QWeather is hosted in China and is the most reliable, but needs your own key.\nOne request per city per hour.</string>
+    <string name="weather_hint">Pick a province, then a city.\nFor cities outside China use Search city (Chinese or English), or Browse by country at the bottom.\nSources are tried in order: Open-Meteo → wttr.in → QWeather.\nThe first two are overseas services and often time out or get DNS-polluted from mainland China — if both fail and you are not on a proxy, it is the network, not the app. QWeather is hosted in China and is the most reliable, but needs your own key.\nOne request per city per hour.</string>
     <string name="weather_search_entry">Search city (worldwide)</string>
     <string name="weather_fetch_now">Fetch now</string>
     <string name="weather_qweather">QWeather fallback</string>
@@ -259,7 +259,7 @@
     <string name="search_searching">Searching…</string>
     <string name="search_result">%1$s · %2$s · %3$s</string>
     <string name="search_result_simple">%1$s · %2$s</string>
-    <string name="search_tip">Results come from Open-Meteo geocoding. Once picked, weather is fetched by coordinates — same for domestic and foreign cities.</string>
+    <string name="search_tip">Results come from Open-Meteo geocoding; weather is fetched by coordinates once picked. For foreign cities, English names or Browse by country work best.</string>
 
     <!-- ==================== QWeather ==================== -->
     <string name="qweather_title">QWeather fallback</string>
@@ -489,4 +489,10 @@
     <string name="theme_err_save">Failed to save the theme</string>
     <string name="theme_err_mkdir">Cannot create a directory</string>
     <string name="theme_err_archive_format">Unsupported archive format, only zip / tar.gz</string>
+    <string name="world_entry">Browse by country</string>
+    <string name="world_title">Choose country</string>
+    <string name="world_hint">Pick a country, then a city. Only the larger cities of each country are listed; if yours is missing, go back and use Search city.</string>
+    <string name="world_city_title">Choose city · %1$s</string>
+    <string name="world_city_count">%1$d cities in this country</string>
+    <string name="world_empty">Failed to load city data, please reinstall the app</string>
 </resources>

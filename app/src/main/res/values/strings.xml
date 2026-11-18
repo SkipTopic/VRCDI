@@ -230,7 +230,7 @@
     <string name="weather_title">天气城市设置</string>
     <string name="weather_load_failed">城市数据加载失败</string>
     <string name="weather_load_failed_toast">城市数据加载失败，请重新安装应用</string>
-    <string name="weather_hint">先选省份，再选具体城市。\n国外城市用下面的「搜索城市」，输入中文或英文名字都可以。\n数据源按顺序兜底：Open-Meteo → wttr.in → 和风天气。\n前两个都在境外，国内直连经常超时或被 DNS 污染——如果两个都失败而你没开代理，那基本就是网络环境的问题，不是应用的问题。和风天气在国内，最稳，但要自己申请 Key。\n同一城市每小时最多请求一次。</string>
+    <string name="weather_hint">先选省份，再选具体城市。\n国外城市可以「搜索城市」（中英文都行），也可以在最下面「选择国外」按国家浏览。\n数据源按顺序兜底：Open-Meteo → wttr.in → 和风天气。\n前两个都在境外，国内直连经常超时或被 DNS 污染——如果两个都失败而你没开代理，那基本就是网络环境的问题，不是应用的问题。和风天气在国内，最稳，但要自己申请 Key。\n同一城市每小时最多请求一次。</string>
     <string name="weather_search_entry">搜索城市（支持国外）</string>
     <string name="weather_fetch_now">立即获取</string>
     <string name="weather_qweather">和风天气兜底</string>
@@ -259,7 +259,7 @@
     <string name="search_searching">正在搜索…</string>
     <string name="search_result">%1$s · %2$s · %3$s</string>
     <string name="search_result_simple">%1$s · %2$s</string>
-    <string name="search_tip">搜索结果来自 Open-Meteo 地理编码，选中后按经纬度取天气，国内国外都一样。</string>
+    <string name="search_tip">搜索结果来自 Open-Meteo 地理编码，选中后按经纬度取天气。国外城市建议用英文名搜，或回上一页用「选择国外」按国家浏览。</string>
 
     <!-- ==================== 和风天气兜底 ==================== -->
     <string name="qweather_title">和风天气兜底</string>
@@ -491,4 +491,10 @@
     <string name="theme_err_save">主题保存失败</string>
     <string name="theme_err_mkdir">无法创建目录</string>
     <string name="theme_err_archive_format">无法识别的压缩格式，只支持 zip / tar.gz</string>
+    <string name="world_entry">选择国外（按国家浏览）</string>
+    <string name="world_title">选择国家</string>
+    <string name="world_hint">先选国家，再选城市。这里只收各国人口较多的城市；找不到就回上一页用「搜索城市」。</string>
+    <string name="world_city_title">选择城市 · %1$s</string>
+    <string name="world_city_count">该国家收录了 %1$d 个城市</string>
+    <string name="world_empty">城市数据加载失败，请重新安装应用</string>
 </resources>

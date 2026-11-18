@@ -36,6 +36,7 @@ import java.util.List;
 public class WeatherCityActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_SEARCH = 71;
+    private static final int REQUEST_CODE_WORLD = 72;
 
     private AppSettings settings;
     private List<ChinaCities.Province> provinces;
@@ -179,11 +180,12 @@ public class WeatherCityActivity extends BaseActivity {
         setTitle(R.string.weather_title);
         updateHeader();
 
-        // 第 0 项永远是「搜索城市」，国外城市从这里进；下面才是国内省市。
-        // 省市数据读取失败时也保留这一项，至少还能靠搜索选城市。
+        // 结构：第 0 项「搜索城市」+ 国内省市 + 最后一项「选择国外」。
+        // 省市数据读取失败时也保留首尾两项，至少还能靠搜索或按国家选城市。
         final List<String> names = new ArrayList<>();
         names.add(getString(R.string.weather_search_entry));
         for (ChinaCities.Province province : provinces) names.add(province.name);
+        names.add(getString(R.string.world_entry));
 
         list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names));
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -193,6 +195,12 @@ public class WeatherCityActivity extends BaseActivity {
                     startActivityForResult(
                             new Intent(WeatherCityActivity.this, CitySearchActivity.class),
                             REQUEST_CODE_SEARCH);
+                    return;
+                }
+                if (position == names.size() - 1) {
+                    startActivityForResult(
+                            new Intent(WeatherCityActivity.this, WorldCityActivity.class),
+                            REQUEST_CODE_WORLD);
                     return;
                 }
                 int index = position - 1;
@@ -234,7 +242,7 @@ public class WeatherCityActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQUEST_CODE_SEARCH) return;
+        if (requestCode != REQUEST_CODE_SEARCH && requestCode != REQUEST_CODE_WORLD) return;
         if (resultCode != RESULT_OK) return;
         // 搜索页已经把城市和坐标写进设置，这里只负责回到列表并立刻取一次天气
         showProvinces();

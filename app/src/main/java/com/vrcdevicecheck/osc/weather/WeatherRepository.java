@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.data.AppSettings;
 import com.vrcdevicecheck.osc.data.ReportField;
+import com.vrcdevicecheck.osc.util.ChineseText;
 import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import org.json.JSONArray;
@@ -24,8 +25,11 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -133,6 +137,8 @@ public final class WeatherRepository {
 
     /** 搜索到的一个地点 */
     public static final class Place {
+        /** 数据源的地点 id，用于合并两次查询时去重；0 表示没有 */
+        public final long id;
         public final String name;
         /** 省 / 州 / 都道府县，可能为空 */
         public final String admin1;
@@ -143,8 +149,9 @@ public final class WeatherRepository {
         public final float longitude;
         public final long population;
 
-        Place(String name, String admin1, String country, String countryCode,
+        Place(long id, String name, String admin1, String country, String countryCode,
               float latitude, float longitude, long population) {
+            this.id = id;
             this.name = name == null ? "" : name;
             this.admin1 = admin1 == null ? "" : admin1;
             this.country = country == null ? "" : country;
@@ -250,6 +257,57 @@ public final class WeatherRepository {
         if (value.isEmpty()) return new SearchResult(null, "");
 
         String language = LocaleHelper.isEnglish(context) ? "en" : "zh";
+        List<Place> collected = new ArrayList<>();
+        String firstError = "";
+        boolean anyOk = false;
+
+        SearchResult raw = requestPlaces(context, value, language);
+        if (raw.error.isEmpty()) {
+            anyOk = true;
+            collected.addAll(raw.places);
+        } else {
+            firstError = raw.error;
+        }
+
+        // 不少国外地名的中文写法在数据源里只有繁体（東京 / 紐約 / 首爾）。
+        // 只输简体时匹配不到，这里补查一次繁体写法再合并，避免「东京」只出来江苏的同名村子。
+        if (ChineseText.hasCjk(value)) {
+            String traditional = ChineseText.toTraditional(value);
+            if (!traditional.equals(value)) {
+                SearchResult alt = requestPlaces(context, traditional, language);
+                if (alt.error.isEmpty()) {
+                    anyOk = true;
+                    collected.addAll(alt.places);
+                }
+            }
+        }
+
+        if (!anyOk) return new SearchResult(null, firstError);
+
+        // 同一地点去重：两次查询会有重复结果
+        Map<Long, Place> unique = new LinkedHashMap<>();
+        for (Place place : collected) {
+            long key = place.id != 0
+                    ? place.id
+                    : (place.name + "/" + place.latitude + "/" + place.longitude).hashCode();
+            if (!unique.containsKey(key)) unique.put(key, place);
+        }
+
+        // 按人口降序：数据源只按名称匹配度排序，不排人口，
+        // 于是「伦敦」的第一个结果是加拿大那个 40 万人的 London，而不是英国那个。
+        List<Place> sorted = new ArrayList<>(unique.values());
+        Collections.sort(sorted, new Comparator<Place>() {
+            @Override
+            public int compare(Place a, Place b) {
+                return Long.compare(b.population, a.population);
+            }
+        });
+        if (sorted.size() > 30) sorted = new ArrayList<>(sorted.subList(0, 30));
+        return new SearchResult(sorted, "");
+    }
+
+    /** 真正发一次地理编码请求；error 已本地化 */
+    private static SearchResult requestPlaces(Context context, String value, String language) {
         String url = "https://geocoding-api.open-meteo.com/v1/search?name=" + encode(value)
                 + "&count=20&language=" + language + "&format=json";
         HttpResult result = httpGet(url, 8000);
@@ -267,6 +325,7 @@ public final class WeatherRepository {
                     String name = item.optString("name", "").trim();
                     if (name.isEmpty()) continue;
                     places.add(new Place(
+                            item.optLong("id", 0L),
                             name,
                             item.optString("admin1", ""),
                             item.optString("country", ""),
