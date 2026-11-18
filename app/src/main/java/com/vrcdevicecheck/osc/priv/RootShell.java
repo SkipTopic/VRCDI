@@ -15,12 +15,12 @@ public class RootShell implements PrivilegedShell {
 
     @Override
     public boolean available(Context context) {
-        return probe() != null;
+        return probe(context) != null;
     }
 
     @Override
     public String statusText(Context context) {
-        Integer uid = probe();
+        Integer uid = probe(context);
         return uid != null
                 ? LocaleHelper.str(context, R.string.privilege_root_granted_uid, uid)
                 : LocaleHelper.str(context, R.string.privilege_root_denied);
@@ -48,8 +48,8 @@ public class RootShell implements PrivilegedShell {
      * 探测是否已经授予 root；返回 uid（0 表示成功），失败返回 null。
      * 超时 3 秒，避免卡在授权弹窗上阻塞界面。
      */
-    public static Integer probe() {
-        ShellResult result = new RootShell().run("id -u", PROBE_TIMEOUT_MS);
+    public static Integer probe(Context context) {
+        ShellResult result = new RootShell().run(context, "id -u", PROBE_TIMEOUT_MS);
         if (result == null || result.stdout == null) return null;
         try {
             int uid = Integer.parseInt(result.stdout.trim());

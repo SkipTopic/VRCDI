@@ -165,7 +165,7 @@ public class DeviceInfoRepository {
             }
             com.vrcdevicecheck.osc.priv.ShellResult again = null;
             try {
-                again = shell.run("head -1 /proc/stat 2>/dev/null", 3000L);
+                again = shell.run(context, "head -1 /proc/stat 2>/dev/null", 3000L);
             } catch (Throwable ignored) {
                 // 补采样失败就跳过，下一轮自然会有基准
             }

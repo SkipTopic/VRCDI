@@ -790,7 +790,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         runInBackground(new Runnable() {
             @Override
             public void run() {
-                Integer uid = RootShell.probe();
+                Integer uid = RootShell.probe(MainActivity.this);
                 if (uid != null) {
                     postStatus(getString(R.string.privilege_root_detected_uid), null);
                     collectOnce();
@@ -822,7 +822,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
 
                 // Magisk / Alpha / Kitsune：直接执行 su，触发系统授权弹窗（会阻塞几秒）
                 postStatus(getString(R.string.privilege_root_requesting), null);
-                boolean granted = RootController.requestRootBlocking();
+                boolean granted = RootController.requestRootBlocking(MainActivity.this);
                 postStatus(granted
                                 ? getString(R.string.privilege_root_granted)
                                 : getString(R.string.privilege_root_timeout),

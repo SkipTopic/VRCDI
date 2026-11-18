@@ -121,8 +121,8 @@ public final class RootController {
     }
 
     /** 直接执行 su 触发授权弹窗（适用于 Magisk 系），返回是否已授权。会阻塞数秒，必须在子线程调用。 */
-    public static boolean requestRootBlocking() {
-        return RootShell.probe() != null;
+    public static boolean requestRootBlocking(Context context) {
+        return RootShell.probe(context) != null;
     }
 
     /**

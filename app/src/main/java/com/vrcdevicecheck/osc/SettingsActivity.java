@@ -199,7 +199,7 @@ public class SettingsActivity extends BaseActivity {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final boolean granted = RootShell.probe() != null;
+                    final boolean granted = RootShell.probe(SettingsActivity.this) != null;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
