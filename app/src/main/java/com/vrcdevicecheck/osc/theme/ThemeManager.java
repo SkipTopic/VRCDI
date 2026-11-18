@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -54,7 +55,41 @@ public final class ThemeManager {
     private static final String THEMES_DIR = "themes";
     private static final String THEME_JSON = "theme.json";
 
+    /** 内置配色的 id 前缀。sanitize 会滤掉冒号，所以不可能和导入主题的目录名撞车 */
+    public static final String BUILTIN_PREFIX = "builtin:";
+
+    private static final List<Theme> BUILT_INS = buildBuiltIns();
+
     private ThemeManager() {
+    }
+
+    /**
+     * 内置配色：只换背景/卡片/文字四色，不带图片。
+     *
+     * 这里刻意只收浅色系：Button 和 EditText 也是 TextView，上色时文字会被改成主题色，
+     * 但内置配色没有按钮/输入框素材，底色仍是系统默认的浅色。深色配色会导致
+     * 「浅色文字 + 浅色按钮」看不清。需要深色外观的，用「导入主题」并自带按钮图。
+     */
+    private static List<Theme> buildBuiltIns() {
+        List<Theme> list = new ArrayList<>();
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "crimson", "胭脂红",
+                0xFFFCEAEA, 0xFFFFFFFF, 0xFF3D0F12, 0xFF8B464C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "mist", "雾蓝",
+                0xFFE8F1FA, 0xFFFFFFFF, 0xFF102B45, 0xFF4B6E8C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "sakura", "樱粉",
+                0xFFFCEFF3, 0xFFFFFFFF, 0xFF3B1522, 0xFF82495C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "pine", "松绿",
+                0xFFEAF4EC, 0xFFFFFFFF, 0xFF14301D, 0xFF4A6B54));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "amber", "暖橙",
+                0xFFFDF3E6, 0xFFFFFFFF, 0xFF3D2510, 0xFF7D5633));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "violet", "黛紫",
+                0xFFF1EDFB, 0xFFFFFFFF, 0xFF241A3E, 0xFF5C4B7E));
+        return Collections.unmodifiableList(list);
+    }
+
+    /** 内置配色列表（不含「默认」，默认就是不带任何覆盖） */
+    public static List<Theme> builtIns() {
+        return BUILT_INS;
     }
 
     public static File themesDir(Context context) {
@@ -67,6 +102,13 @@ public final class ThemeManager {
     public static Theme current(Context context) {
         String id = currentId(context);
         if (id.isEmpty()) return null;
+        if (id.startsWith(BUILTIN_PREFIX)) {
+            for (Theme theme : BUILT_INS) {
+                if (theme.id.equals(id)) return theme;
+            }
+            // 记录的内置配色不存在了（比如降级安装），按默认处理
+            return null;
+        }
         return Theme.load(new File(themesDir(context), id), id);
     }
 
@@ -201,6 +243,7 @@ public final class ThemeManager {
         if (theme.text == 0 && theme.textSecondary == 0) return;
         int warn = activity.getColor(R.color.warn);
         int error = activity.getColor(R.color.err);
+        int secondary = activity.getColor(R.color.text_secondary);
         List<View> textViews = new ArrayList<>();
         collectViews(root, TextView.class, textViews);
         for (View view : textViews) {
@@ -208,7 +251,15 @@ public final class ThemeManager {
             int current = textView.getCurrentTextColor();
             // 状态色（警告/错误）保留，避免主题把语义色盖掉
             if (current == warn || current == error) continue;
-            if (theme.text != 0) textView.setTextColor(theme.text);
+            // 已经上过色了（列表滚动后重复 apply 时不要再叠一层，否则次要色会被拉成正文色）
+            if (theme.text != 0 && current == theme.text) continue;
+            if (theme.textSecondary != 0 && current == theme.textSecondary) continue;
+            if (current == secondary && theme.textSecondary != 0) {
+                // 原本就是次要文字，跟随主题的次要色，别被提到正文色
+                textView.setTextColor(theme.textSecondary);
+            } else if (theme.text != 0) {
+                textView.setTextColor(theme.text);
+            }
         }
     }
 

@@ -60,6 +60,20 @@ public final class Theme {
         this.buttonPressedImage = buttonPressedImage;
     }
 
+    /**
+     * 内置配色：没有目录、没有图片，只有四个颜色。
+     * 适合「就是换个底色」的需求，不需要用户去做主题包。
+     */
+    static Theme builtIn(String id, String name,
+                         int background, int card, int text, int textSecondary) {
+        return new Theme(id, name, null, background, card, text, textSecondary, null, null, null);
+    }
+
+    /** 内置配色不占文件系统，不能删除，也不需要重新导入 */
+    public boolean isBuiltIn() {
+        return dir == null;
+    }
+
     static Theme load(File dir, String id) {
         if (dir == null || !dir.isDirectory()) return null;
         File jsonFile = new File(dir, "theme.json");
