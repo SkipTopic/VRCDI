@@ -29,6 +29,7 @@ import com.vrcdevicecheck.osc.weather.WeatherRepository;
 public class QWeatherSettingsActivity extends Activity {
 
     private AppSettings settings;
+    private TextView intro;
     private EditText hostInput;
     private EditText keyInput;
     private TextView logView;
@@ -66,7 +67,7 @@ public class QWeatherSettingsActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(14), dp(14), dp(14), dp(14));
 
-        TextView intro = new TextView(this);
+        intro = new TextView(this);
         intro.setTextSize(12f);
         intro.setTextColor(getColor(R.color.text_secondary));
         intro.setLineSpacing(dp(2), 1f);
@@ -162,10 +163,15 @@ public class QWeatherSettingsActivity extends Activity {
     }
 
     private void loadValues() {
+        // Host 不是机密，可以回显；Key 只回显用户自己填过的那个，内置的不显示
         String host = settings.getQWeatherHost();
-        // 默认值不填进输入框，避免用户以为已经配好了
         if (!AppSettings.QWEATHER_LEGACY_HOST.equals(host)) hostInput.setText(host);
-        keyInput.setText(settings.getQWeatherKey());
+        keyInput.setText(settings.getUserQWeatherKey());
+
+        if (AppSettings.hasBuiltInQWeather()) {
+            intro.append("\n\n这个安装包已经内置了一套兜底凭据，不用填也能用；"
+                    + "下面的输入框只用于覆盖它（留空即用内置）。");
+        }
     }
 
     private void save() {

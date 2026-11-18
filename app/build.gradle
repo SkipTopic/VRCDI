@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// 和风天气兜底凭据的来源。
+// 写在 local.properties 里（该文件已被 .gitignore 排除，永远不会进仓库、进 PR），
+// 有值就编译进 APK，装的人不用填任何东西；没有就回落到设置页手输。
+// 这样「别人装上就能用」和「仓库里没有 Key」可以同时成立。
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream -> localProperties.load(stream) }
+}
+
 android {
     // Android Studio 4.2 自带 SDK 30，这里不用更高的 compileSdk，避免 IDE 提示升级
     compileSdkVersion 30
@@ -12,6 +22,14 @@ android {
         targetSdkVersion 30
         versionCode 138
         versionName "2.3.8 Omega"
+
+        // 空字符串表示没有内置凭据，运行时回落到设置页
+        buildConfigField "String", "QWEATHER_HOST", "\"${localProperties.getProperty('qweather.host', '')}\""
+        buildConfigField "String", "QWEATHER_KEY", "\"${localProperties.getProperty('qweather.key', '')}\""
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     buildTypes {
