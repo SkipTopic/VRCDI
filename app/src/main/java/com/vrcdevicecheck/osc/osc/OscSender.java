@@ -1,5 +1,10 @@
 package com.vrcdevicecheck.osc.osc;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,7 +22,7 @@ import java.net.UnknownHostException;
  */
 public class OscSender {
 
-    /** 发送结果：ok=true 时 bytes 为发出的字节数；ok=false 时 message 为可直接展示的中文原因 */
+    /** 发送结果：ok=true 时 bytes 为发出的字节数；ok=false 时 message 为可直接展示的失败原因 */
     public static final class Result {
         public final boolean ok;
         public final int bytes;
@@ -47,12 +52,12 @@ public class OscSender {
         return socket;
     }
 
-    public Result send(String host, int port, byte[] packet) {
+    public Result send(Context context, String host, int port, byte[] packet) {
         if (host == null || host.trim().isEmpty()) {
-            return Result.failure("尚未填写目标 IP");
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_no_ip));
         }
         if (port < 1 || port > 65535) {
-            return Result.failure("端口不合法：" + port);
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_bad_port, port));
         }
         try {
             InetAddress address = InetAddress.getByName(host.trim());
@@ -61,15 +66,17 @@ public class OscSender {
             s.send(datagram);
             return Result.success(packet.length);
         } catch (UnknownHostException e) {
-            return Result.failure("IP 地址无法解析：" + host);
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_unresolved_ip, host));
         } catch (PortUnreachableException e) {
-            return Result.failure("端口 " + port + " 不可达：确认 VRChat 已启动并在动作菜单里开启了 OSC");
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_unreachable, port));
         } catch (IOException e) {
-            return Result.failure("网络发送失败：" + safeMessage(e));
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_network,
+                    safeMessage(e)));
         } catch (SecurityException e) {
-            return Result.failure("缺少网络权限（INTERNET）");
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_no_permission));
         } catch (Throwable t) {
-            return Result.failure("发送异常：" + t.getClass().getSimpleName());
+            return Result.failure(LocaleHelper.str(context, R.string.send_err_exception,
+                    t.getClass().getSimpleName()));
         }
     }
 

@@ -2,6 +2,9 @@ package com.vrcdevicecheck.osc.priv;
 
 import android.content.Context;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.io.File;
 
 /**
@@ -19,16 +22,16 @@ public class LocalShell implements PrivilegedShell {
 
     @Override
     public String statusText(Context context) {
-        return "无特权模式：仅能读取系统开放的信息，CPU/GPU 频率与温度大概率不可用";
+        return LocaleHelper.str(context, R.string.privilege_local_status);
     }
 
     @Override
-    public String label() {
-        return "无特权";
+    public String label(Context context) {
+        return LocaleHelper.str(context, R.string.privilege_local_label);
     }
 
     @Override
-    public ShellResult run(String script, long timeoutMs) {
+    public ShellResult run(Context context, String script, long timeoutMs) {
         // 不执行脚本，改为直接尝试读几个常见节点，输出与脚本一致的 key|value 格式
         StringBuilder out = new StringBuilder();
         out.append("@BEGIN\n");

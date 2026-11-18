@@ -41,7 +41,7 @@
             <Button
                 android:id="@+id/btn_scan_vrchat"
                 style="@style/Button"
-                android:text="扫描局域网中的 VRChat 电脑" />
+                android:text="@string/action_scan_vrchat" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -73,7 +73,7 @@
             <TextView
                 android:id="@+id/text_local_ip"
                 style="@style/Hint"
-                android:text="本机局域网 IP：获取中…" />
+                android:text="@string/local_ip_loading" />
 
             <TextView
                 android:id="@+id/text_launch_arg"
@@ -84,7 +84,7 @@
                 android:id="@+id/check_ascii"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="仅发送 ASCII（中文会变问号，但一定能显示）"
+                android:text="@string/check_ascii"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
@@ -93,7 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="立即发送（关闭则只填进 VRChat 输入框）"
+                android:text="@string/check_send_immediately"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
@@ -101,7 +101,7 @@
                 android:id="@+id/check_notification_sound"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="播放提示音"
+                android:text="@string/check_notification_sound"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -118,12 +118,12 @@
             <TextView
                 android:id="@+id/text_privilege_mode"
                 style="@style/Body"
-                android:text="当前方式：Shizuku" />
+                android:text="" />
 
             <TextView
                 android:id="@+id/text_privilege_status"
                 style="@style/Hint"
-                android:text="尚未检测" />
+                android:text="@string/privilege_not_checked" />
 
             <TextView
                 android:id="@+id/text_root_hint"
@@ -149,7 +149,7 @@
                     android:layout_width="0dp"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="重新检测" />
+                    android:text="@string/action_recheck" />
             </LinearLayout>
 
             <Button
@@ -183,7 +183,7 @@
                     style="@style/Button"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:text="全选" />
+                    android:text="@string/action_select_all" />
 
                 <Button
                     android:id="@+id/btn_all_off"
@@ -191,7 +191,7 @@
                     android:layout_width="0dp"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="全不选" />
+                    android:text="@string/action_select_none" />
             </LinearLayout>
         </LinearLayout>
 
@@ -203,12 +203,12 @@
             <TextView
                 android:id="@+id/text_running_state"
                 style="@style/Body"
-                android:text="未在上报" />
+                android:text="@string/not_running" />
 
             <TextView
                 android:id="@+id/text_foreground_app"
                 style="@style/Hint"
-                android:text="前台应用：检测中…" />
+                android:text="" />
 
             <LinearLayout
                 android:layout_width="match_parent"

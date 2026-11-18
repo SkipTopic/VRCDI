@@ -1,5 +1,10 @@
 package com.vrcdevicecheck.osc.update;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -73,26 +78,26 @@ public final class UpdateChecker {
         }
     }
 
-    public static Release fetchLatest(String source) throws Exception {
+    public static Release fetchLatest(Context context, String source) throws Exception {
         String base = SOURCE_GITEE.equals(source) ? GITEE_API : GITHUB_API;
         try {
             // 正常路径：/releases/latest
-            return parse(httpGet(base + "/latest"));
+            return parse(httpGet(context, base + "/latest"));
         } catch (Exception latestError) {
             // GitHub 的 /latest 会跳过 draft 和 pre-release：
             // 如果最新版被勾了「Set as a pre-release」，这里就是 404。
             // 退回列表接口，取第一个非 draft 的发行版（预发布也算）。
-            Release fromList = fetchFirstFromList(base);
+            Release fromList = fetchFirstFromList(context, base);
             if (fromList != null) return fromList;
-            throw new Exception("没有找到可用的发行版（可能被标记为草稿或预发布）："
-                    + latestError.getMessage());
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_no_release,
+                    latestError.getMessage()));
         }
     }
 
     /** GET /releases?per_page=10，取第一个非 draft 的发行版；失败返回 null */
-    private static Release fetchFirstFromList(String base) {
+    private static Release fetchFirstFromList(Context context, String base) {
         try {
-            String json = httpGet(base + "?per_page=10");
+            String json = httpGet(context, base + "?per_page=10");
             JSONArray array = new JSONArray(json);
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.optJSONObject(i);
@@ -130,7 +135,7 @@ public final class UpdateChecker {
                 list);
     }
 
-    private static String httpGet(String url) throws Exception {
+    private static String httpGet(Context context, String url) throws Exception {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
@@ -139,7 +144,9 @@ public final class UpdateChecker {
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setRequestProperty("Accept", "application/json");
             int code = conn.getResponseCode();
-            if (code != 200) throw new Exception("服务器返回 HTTP " + code);
+            if (code != 200) {
+                throw new Exception(LocaleHelper.str(context, R.string.update_err_http, code));
+            }
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(conn.getInputStream(), Charset.forName("UTF-8")));
             try {

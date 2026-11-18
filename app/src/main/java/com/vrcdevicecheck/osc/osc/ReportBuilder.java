@@ -1,5 +1,8 @@
 package com.vrcdevicecheck.osc.osc;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
@@ -64,16 +67,19 @@ public final class ReportBuilder {
             return hardTruncated || !dropped.isEmpty();
         }
 
-        /** 界面提示文案：只提示「超长被省略」，不把自动隐藏算进去 */
-        public String limitHint() {
-            if (hardTruncated) return "已超过 144 字符，末尾被强制截断";
+        /**
+         * 界面提示文案：只提示「超长被省略」，不把自动隐藏算进去。
+         * 注意上报正文本身不本地化，只有这条提示跟着界面语言走。
+         */
+        public String limitHint(Context context) {
+            if (hardTruncated) return context.getString(R.string.hint_hard_truncated);
             if (dropped.isEmpty()) return null;
-            StringBuilder sb = new StringBuilder("超过 144 字符，已自动省略：");
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dropped.size(); i++) {
-                if (i > 0) sb.append("、");
-                sb.append(dropped.get(i).label);
+                if (i > 0) sb.append(context.getString(R.string.list_separator));
+                sb.append(dropped.get(i).label(context));
             }
-            return sb.toString();
+            return context.getString(R.string.hint_dropped, sb.toString());
         }
     }
 

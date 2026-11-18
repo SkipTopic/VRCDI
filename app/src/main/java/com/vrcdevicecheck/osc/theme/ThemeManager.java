@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -72,17 +73,17 @@ public final class ThemeManager {
      */
     private static List<Theme> buildBuiltIns() {
         List<Theme> list = new ArrayList<>();
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "crimson", "胭脂红",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "crimson", R.string.theme_builtin_crimson,
                 0xFFFCEAEA, 0xFFFFFFFF, 0xFF3D0F12, 0xFF8B464C));
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "mist", "雾蓝",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "mist", R.string.theme_builtin_mist,
                 0xFFE8F1FA, 0xFFFFFFFF, 0xFF102B45, 0xFF4B6E8C));
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "sakura", "樱粉",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "sakura", R.string.theme_builtin_sakura,
                 0xFFFCEFF3, 0xFFFFFFFF, 0xFF3B1522, 0xFF82495C));
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "pine", "松绿",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "pine", R.string.theme_builtin_pine,
                 0xFFEAF4EC, 0xFFFFFFFF, 0xFF14301D, 0xFF4A6B54));
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "amber", "暖橙",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "amber", R.string.theme_builtin_amber,
                 0xFFFDF3E6, 0xFFFFFFFF, 0xFF3D2510, 0xFF7D5633));
-        list.add(Theme.builtIn(BUILTIN_PREFIX + "violet", "黛紫",
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "violet", R.string.theme_builtin_violet,
                 0xFFF1EDFB, 0xFFFFFFFF, 0xFF241A3E, 0xFF5C4B7E));
         return Collections.unmodifiableList(list);
     }
@@ -143,13 +144,19 @@ public final class ThemeManager {
     public static Theme install(Context context, InputStream input) throws IOException {
         File temp = new File(context.getCacheDir(), "theme_import_" + System.currentTimeMillis());
         deleteRecursive(temp);
-        if (!temp.mkdirs()) throw new IOException("无法创建临时目录");
+        if (!temp.mkdirs()) {
+            throw new IOException(LocaleHelper.str(context, R.string.theme_err_mkdir_temp));
+        }
         try {
-            ArchiveExtractor.extract(input, temp);
+            ArchiveExtractor.extract(context, input, temp);
             File root = findThemeRoot(temp);
-            if (root == null) throw new IOException("压缩包里没有 theme.json");
+            if (root == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_no_theme_json));
+            }
             Theme parsed = Theme.load(root, "temp");
-            if (parsed == null) throw new IOException("theme.json 解析失败");
+            if (parsed == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_parse_theme_json));
+            }
 
             String id = sanitize(parsed.name);
             if (id.isEmpty()) id = "theme_" + System.currentTimeMillis();
@@ -157,10 +164,12 @@ public final class ThemeManager {
             File dest = new File(themesDir(context), id);
             deleteRecursive(dest);
             if (!root.renameTo(dest)) {
-                copyRecursive(root, dest);
+                copyRecursive(context, root, dest);
             }
             Theme saved = Theme.load(dest, id);
-            if (saved == null) throw new IOException("主题保存失败");
+            if (saved == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_save));
+            }
             return saved;
         } finally {
             deleteRecursive(temp);
@@ -317,13 +326,15 @@ public final class ThemeManager {
         return sb.toString();
     }
 
-    private static void copyRecursive(File from, File to) throws IOException {
+    private static void copyRecursive(Context context, File from, File to) throws IOException {
         if (from.isDirectory()) {
-            if (!to.isDirectory() && !to.mkdirs()) throw new IOException("无法创建目录");
+            if (!to.isDirectory() && !to.mkdirs()) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_mkdir));
+            }
             File[] children = from.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    copyRecursive(child, new File(to, child.getName()));
+                    copyRecursive(context, child, new File(to, child.getName()));
                 }
             }
             return;

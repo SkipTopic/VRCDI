@@ -1,5 +1,10 @@
 package com.vrcdevicecheck.osc.theme;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -22,7 +27,7 @@ final class ArchiveExtractor {
     private ArchiveExtractor() {
     }
 
-    static void extract(InputStream raw, File dest) throws IOException {
+    static void extract(Context context, InputStream raw, File dest) throws IOException {
         BufferedInputStream in = new BufferedInputStream(raw);
         in.mark(4);
         int b1 = in.read();
@@ -33,7 +38,8 @@ final class ArchiveExtractor {
         } else if (b1 == 0x1F && b2 == 0x8B) {
             extractTarGz(in, dest);
         } else {
-            throw new IOException("无法识别的压缩格式，只支持 zip / tar.gz");
+            throw new IOException(
+                    LocaleHelper.str(context, R.string.theme_err_archive_format));
         }
     }
 

@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -67,7 +66,7 @@ import java.util.Set;
  * 使用 android.app.Activity 而非 AppCompatActivity：本工程不引入 AndroidX，
  * 这样在 Android Studio 4.2 + compileSdk 30 环境下依赖冲突面最小。
  */
-public class MainActivity extends Activity implements ReporterService.Listener {
+public class MainActivity extends BaseActivity implements ReporterService.Listener {
 
     /** API 33 才有通知运行时权限；compileSdk 30 里没有这个常量，所以用字面量 */
     private static final String PERMISSION_POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
@@ -181,7 +180,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             public void run() {
                 UpdateChecker.Release release;
                 try {
-                    release = UpdateChecker.fetchLatest(source);
+                    release = UpdateChecker.fetchLatest(MainActivity.this, source);
                 } catch (Throwable t) {
                     return;
                 }
@@ -202,18 +201,20 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private void showUpdateAvailableDialog(final UpdateChecker.Release release) {
         String body = release.body == null ? "" : release.body.trim();
         if (body.length() > 800) body = body.substring(0, 800) + "…";
-        String message = body.isEmpty() ? "有新版本可用：" + release.tag : body;
+        String message = body.isEmpty()
+                ? getString(R.string.update_dialog_body, release.tag)
+                : body;
 
         new AlertDialog.Builder(this)
-                .setTitle("发现新版本 " + release.tag)
+                .setTitle(getString(R.string.update_dialog_title, release.tag))
                 .setMessage(message)
-                .setPositiveButton("去更新", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.update_go, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         startActivity(new Intent(MainActivity.this, UpdateSettingsActivity.class));
                     }
                 })
-                .setNegativeButton("以后再说", null)
+                .setNegativeButton(R.string.update_later, null)
                 .show();
     }
 
@@ -281,8 +282,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         textLocalIp.setVisibility(local ? View.GONE : View.VISIBLE);
         textLaunchArg.setVisibility(local ? View.GONE : View.VISIBLE);
         textIpModeHint.setText(local
-                ? "发送到 127.0.0.1：VRChat 与 VRCDI 在同一台设备（Quest 独立运行选这个）"
-                : "填写 VRChat 所在设备的 IP，例如 PC 的局域网地址 192.168.1.10");
+                ? getString(R.string.ip_mode_hint_local)
+                : getString(R.string.ip_mode_hint_custom));
     }
 
     /** 按字段枚举生成勾选框，避免逐段重复 XML */
@@ -291,7 +292,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         fieldBoxes.clear();
         for (final ReportField field : ReportField.values()) {
             CheckBox box = new CheckBox(this);
-            box.setText(field.label);
+            box.setText(field.label(this));
             box.setTag(field);
             box.setTextColor(getColor(R.color.text_primary));
             box.setTextSize(14f);
@@ -328,7 +329,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         containerFields.addView(textWeatherHint);
 
         checkHideUnavailable = new CheckBox(this);
-        checkHideUnavailable.setText("自动屏蔽不可用字段（节省 144 字符）");
+        checkHideUnavailable.setText(R.string.check_hide_unavailable);
         checkHideUnavailable.setTextSize(13f);
         checkHideUnavailable.setTextColor(getColor(R.color.text_secondary));
         checkHideUnavailable.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -351,7 +352,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView label = new TextView(this);
-        label.setText("上报型号类型");
+        label.setText(R.string.label_model_mode);
         label.setTextSize(11f);
         label.setTextColor(getColor(R.color.text_secondary));
         container.addView(label);
@@ -367,10 +368,10 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         spinnerModelMode = new Spinner(this);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
-                new String[]{ModelDisplayMode.REAL_MODEL.label, ModelDisplayMode.PRODUCT_NAME.label});
+                new String[]{ModelDisplayMode.REAL_MODEL.label(this), ModelDisplayMode.PRODUCT_NAME.label(this)});
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerModelMode.setAdapter(adapter);
-        spinnerModelMode.setContentDescription("上报型号类型");
+        spinnerModelMode.setContentDescription(getString(R.string.label_model_mode));
         spinnerModelMode.setSelection(
                 settings.getModelDisplayMode() == ModelDisplayMode.REAL_MODEL ? 0 : 1);
         spinnerModelMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -421,8 +422,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             if (textWeatherHint != null) {
                 String weatherCity = settings.getWeatherCityLabel();
                 textWeatherHint.setText(weatherCity.isEmpty()
-                        ? "天气类字段需要先在「设置 → 天气城市设置」选择城市"
-                        : "天气城市：" + weatherCity + "（每小时最多更新一次）");
+                        ? getString(R.string.weather_hint_no_city)
+                        : getString(R.string.weather_hint_city, weatherCity));
             }
             if (checkHideUnavailable != null) {
                 checkHideUnavailable.setChecked(settings.isHideUnavailable());
@@ -504,10 +505,10 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             public void onClick(View v) {
                 if (ReporterService.isRunning()) {
                     ReporterService.sendNow(MainActivity.this);
-                    toast("已触发一次立即发送");
+                    toast(getString(R.string.toast_sent_now));
                 } else {
                     collectOnce();
-                    toast("当前未在上报，已采集一次；填写 IP 后启动上报即会自动发送");
+                    toast(getString(R.string.toast_collected_not_running));
                 }
             }
         });
@@ -589,7 +590,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private void scanForVrchat() {
         if (scanning) return;
         scanning = true;
-        toast("正在扫描局域网 9000 端口，请稍候…");
+        toast(getString(R.string.scanning_toast));
 
         runInBackground(new Runnable() {
             @Override
@@ -614,8 +615,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
 
     private void showScanResult(List<String> candidates) {
         if (candidates == null || candidates.isEmpty()) {
-            toast("没有找到开启 OSC 的 VRChat：确认电脑和手机在同一 Wi-Fi、VRChat 已开启 OSC、"
-                    + "PC 防火墙放行 9000；也可以手动选「自定义...」填电脑 IP");
+            toast(getString(R.string.scan_none));
             return;
         }
         if (candidates.size() == 1) {
@@ -624,28 +624,28 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         }
         final String[] items = candidates.toArray(new String[0]);
         new AlertDialog.Builder(this)
-                .setTitle("扫描到这些设备")
+                .setTitle(R.string.scan_title)
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         confirmConnect(items[which]);
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
     private void confirmConnect(final String ip) {
         new AlertDialog.Builder(this)
-                .setTitle("连接 VRChat")
-                .setMessage("在 " + ip + ":9000 发现可能运行 VRChat 的电脑，是否连接并开始上报？")
-                .setPositiveButton("连接", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.connect_title)
+                .setMessage(getString(R.string.connect_message, ip))
+                .setPositiveButton(R.string.connect_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         connectTo(ip);
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -660,7 +660,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         } else {
             ReporterService.start(this);
         }
-        toast("已连接 " + ip + "，开始上报");
+        toast(getString(R.string.toast_connected, ip));
     }
 
     // ---------------- 菜单：设置 ----------------
@@ -685,7 +685,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         final PrivilegeMode[] modes = new PrivilegeMode[]{
                 PrivilegeMode.SHIZUKU, PrivilegeMode.ROOT, PrivilegeMode.NONE};
         String[] labels = new String[]{
-                modes[0].label, modes[1].label, "免授权（仅读系统开放信息）"};
+                modes[0].label(this), modes[1].label(this),
+                getString(R.string.privilege_none_dialog)};
         int checked = 0;
         for (int i = 0; i < modes.length; i++) {
             if (modes[i] == settings.getPrivilegeMode()) checked = i;
@@ -700,7 +701,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                         applyPrivilegeMode(modes[which]);
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -718,14 +719,22 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         String cpu = snapshot == null ? null : snapshot.cpuName;
         String gpu = snapshot == null ? null : snapshot.gpuName;
 
+        String unknown = getString(R.string.common_unknown);
+        String na = getString(R.string.not_available);
         StringBuilder sb = new StringBuilder();
-        sb.append("品牌：").append(brand == null ? "未知" : brand).append('\n');
-        sb.append("型号：").append(model == null ? "未知" : model);
-        if (series != null && !series.trim().isEmpty()) sb.append("（").append(series).append("）");
+        sb.append(getString(R.string.about_brand, brand == null ? unknown : brand)).append('\n');
+        if (series != null && !series.trim().isEmpty()) {
+            sb.append(getString(R.string.about_model_series,
+                    model == null ? unknown : model, series));
+        } else {
+            sb.append(getString(R.string.about_model, model == null ? unknown : model));
+        }
         sb.append('\n');
-        sb.append("CPU：").append(cpu == null || cpu.trim().isEmpty() ? "不可用" : cpu).append('\n');
-        sb.append("GPU：").append(gpu == null || gpu.trim().isEmpty() ? "不可用" : gpu).append('\n');
-        sb.append("安卓API版本：API").append(Build.VERSION.SDK_INT);
+        sb.append(getString(R.string.about_cpu,
+                cpu == null || cpu.trim().isEmpty() ? na : cpu)).append('\n');
+        sb.append(getString(R.string.about_gpu,
+                gpu == null || gpu.trim().isEmpty() ? na : gpu)).append('\n');
+        sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
         String versionName = "2.3.8 Omega";
@@ -738,12 +747,12 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         } catch (PackageManager.NameNotFoundException ignored) {
             // 取不到就用默认值
         }
-        version.setText(versionName + " (Build " + versionCode + ")");
+        version.setText(getString(R.string.about_version_value, versionName, versionCode));
 
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.about_title))
                 .setView(view)
-                .setPositiveButton("关闭", null)
+                .setPositiveButton(R.string.common_close, null)
                 .show();
     }
 
@@ -760,11 +769,11 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         }
         if (mode == PrivilegeMode.SHIZUKU) {
             if (!ShizukuShell.ping()) {
-                textPrivilegeStatus.setText("Shizuku 未运行：请打开 Shizuku 应用启动服务（Android 11+ 可用无线调试）");
+                textPrivilegeStatus.setText(R.string.privilege_shizuku_not_running);
                 return;
             }
             if (!ShizukuShell.granted()) {
-                textPrivilegeStatus.setText("正在请求 Shizuku 授权…");
+                textPrivilegeStatus.setText(R.string.privilege_shizuku_requesting);
                 ShizukuShell.requestPermission();
                 return;
             }
@@ -777,20 +786,20 @@ public class MainActivity extends Activity implements ReporterService.Listener {
      * 已授权 -> 直接用；未授权 -> 判断面具类型，内核级跳转超级用户列表，Magisk 系直接申请。
      */
     private void detectAndRequestRoot() {
-        textPrivilegeStatus.setText("正在检测 root 环境…");
+        textPrivilegeStatus.setText(R.string.privilege_root_detecting);
         runInBackground(new Runnable() {
             @Override
             public void run() {
                 Integer uid = RootShell.probe();
                 if (uid != null) {
-                    postStatus("Root 已授权（uid=0）", null);
+                    postStatus(getString(R.string.privilege_root_detected_uid), null);
                     collectOnce();
                     return;
                 }
 
                 List<String> paths = new ArrayList<>();
                 if (ShizukuShell.granted()) {
-                    ShellResult result = new ShizukuShell().run(RootController.DETECT_SCRIPT, 3000L);
+                    ShellResult result = new ShizukuShell().run(MainActivity.this, RootController.DETECT_SCRIPT, 3000L);
                     if (result != null && result.isOk()) {
                         for (String line : result.stdout.split("\n")) {
                             String trimmed = line.trim();
@@ -806,16 +815,18 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                     // 内核级面具（KernelSU / APatch）：跳转到管理器让用户手动授权
                     final boolean opened = RootController.openSuperuserPage(MainActivity.this, manager);
                     postStatus(state.detail, opened
-                            ? RootController.manualGrantHint(manager)
-                            : "没有检测到 " + manager.label + " 应用，请手动打开它的超级用户列表给 VRCDI 授权");
+                            ? RootController.manualGrantHint(MainActivity.this, manager)
+                            : getString(R.string.root_manager_missing, RootController.label(MainActivity.this, manager)));
                     return;
                 }
 
                 // Magisk / Alpha / Kitsune：直接执行 su，触发系统授权弹窗（会阻塞几秒）
-                postStatus("正在申请 root 授权，请在弹窗中点允许…", null);
+                postStatus(getString(R.string.privilege_root_requesting), null);
                 boolean granted = RootController.requestRootBlocking();
-                postStatus(granted ? "Root 已授权" : "root 授权被拒绝或超时",
-                        granted ? null : RootController.manualGrantHint(manager));
+                postStatus(granted
+                                ? getString(R.string.privilege_root_granted)
+                                : getString(R.string.privilege_root_timeout),
+                        granted ? null : RootController.manualGrantHint(MainActivity.this, manager));
                 if (granted) collectOnce();
             }
         });
@@ -837,7 +848,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
 
     private void refreshPrivilegeTexts() {
         PrivilegeMode mode = settings.getPrivilegeMode();
-        textPrivilegeMode.setText("当前方式：" + mode.label);
+        textPrivilegeMode.setText(getString(R.string.privilege_current, mode.label(this)));
         textPrivilegeStatus.setText(PrivilegeController.shellFor(mode).statusText(this));
     }
 
@@ -874,7 +885,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                         }
                     });
                 } catch (Throwable t) {
-                    toast("采集失败：" + t.getClass().getSimpleName());
+                    toast(getString(R.string.toast_collect_failed, t.getClass().getSimpleName()));
                 }
             }
         });
@@ -899,16 +910,15 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         if (isFinishing() || weatherPromptShown) return;
         weatherPromptShown = true;
         new AlertDialog.Builder(this)
-                .setTitle("先选择天气城市")
-                .setMessage("天气、气温、湿度需要知道你所在的城市。\n"
-                        + "请选择省份和城市，例如：江西省 → 上饶市。")
-                .setPositiveButton("去选择", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.weather_prompt_title)
+                .setMessage(R.string.weather_prompt_message)
+                .setPositiveButton(R.string.go_choose, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         startActivity(new Intent(MainActivity.this, WeatherCityActivity.class));
                     }
                 })
-                .setNegativeButton("稍后", null)
+                .setNegativeButton(R.string.common_later, null)
                 .show();
     }
 
@@ -916,8 +926,9 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
         if (snapshot == null) snapshot = localSnapshot;
         if (snapshot == null) {
-            textPreview.setText("尚未采集，点「重新采集」或启动上报");
-            textPreviewCount.setText("0/144");
+            textPreview.setText(R.string.preview_empty);
+            textPreviewCount.setText(getString(R.string.preview_count,
+                    0, ReportBuilder.CHATBOX_LIMIT));
             textPreviewHint.setVisibility(View.GONE);
             return;
         }
@@ -930,12 +941,12 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                 cachedWeather,
                 settings.isHideUnavailable());
         textPreview.setText(report.text);
-        textPreviewCount.setText(report.charCount() + "/" + ReportBuilder.CHATBOX_LIMIT);
-        String hint = report.limitHint();
+        textPreviewCount.setText(getString(R.string.preview_count,
+                report.charCount(), ReportBuilder.CHATBOX_LIMIT));
+        String hint = report.limitHint(this);
         if (settings.getEnabledFields().contains(ReportField.VRCHAT_FPS)
                 && report.text.contains("FPS: 不可用")) {
-            String extra = "帧率需要 VRChat 在前台时采集，并且使用 Shizuku / Root 通道；"
-                    + "在本应用界面点「重新采集」时 VRChat 不在前台，读不到是正常的。";
+            String extra = getString(R.string.hint_fps_need_foreground);
             hint = hint == null ? extra : hint + "\n" + extra;
         }
         boolean weatherEnabled = false;
@@ -943,18 +954,18 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             if (field.isWeather()) weatherEnabled = true;
         }
         if (weatherEnabled && settings.getWeatherCity().isEmpty()) {
-            String extra = "天气类字段需要先选择城市：设置 → 天气城市设置。";
+            String extra = getString(R.string.hint_weather_need_city);
             hint = hint == null ? extra : hint + "\n" + extra;
         } else if (weatherEnabled && cachedWeather == null) {
-            String extra = "天气数据还没取到：启动上报后会自动获取，同一城市每小时最多请求一次。";
+            String extra = getString(R.string.hint_weather_no_data);
             hint = hint == null ? extra : hint + "\n" + extra;
         }
         if (settings.isHideUnavailable() && !report.hidden.isEmpty()) {
-            String extra = "已自动隐藏 " + report.hidden.size() + " 个不可用字段（不占 144 字符）";
+            String extra = getString(R.string.hint_hidden_count, report.hidden.size());
             hint = hint == null ? extra : hint + "\n" + extra;
         }
         if (report.text.isEmpty() && !settings.getEnabledFields().isEmpty()) {
-            hint = "所选字段当前都不可用，已自动隐藏所有内容。";
+            hint = getString(R.string.hint_all_hidden);
         }
         if (hint == null) {
             textPreviewHint.setVisibility(View.GONE);
@@ -982,15 +993,15 @@ public class MainActivity extends Activity implements ReporterService.Listener {
     private void refreshRunningState() {
         boolean running = ReporterService.isRunning();
         textRunningState.setText(running
-                ? "正在上报：每 " + settings.getIntervalSec() + " 秒一次"
-                : "未在上报");
+                ? getString(R.string.running_state, settings.getIntervalSec())
+                : getString(R.string.not_running));
         btnToggle.setText(running ? getString(R.string.action_stop) : getString(R.string.action_start));
     }
 
     private void refreshLog() {
         List<ReporterService.LogEntry> logs = ReporterService.getLogs();
         if (logs.isEmpty()) {
-            textLog.setText("暂无记录");
+            textLog.setText(R.string.log_empty);
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -1012,24 +1023,31 @@ public class MainActivity extends Activity implements ReporterService.Listener {
      */
     private void refreshForegroundApp() {
         if (!ForegroundApp.hasUsageAccess(this)) {
-            textForegroundApp.setText("前台应用：未授权「使用情况访问」，点这里去开启");
+            textForegroundApp.setText(R.string.foreground_unauthed);
             textForegroundApp.setTextColor(getColor(R.color.warn));
             return;
         }
         String pkg = ForegroundApp.current(this);
         if (pkg == null) {
-            textForegroundApp.setText("前台应用：未检测到（最近没有切换记录）");
+            textForegroundApp.setText(R.string.foreground_unknown);
             textForegroundApp.setTextColor(getColor(R.color.text_secondary));
             return;
         }
         boolean own = getPackageName().equals(pkg);
-        String name = ForegroundApp.label(this, pkg);
-        StringBuilder sb = new StringBuilder("前台应用：").append(name);
-        if (!own && !pkg.equals(name)) sb.append("（").append(pkg).append("）");
+        String name = ForegroundApp.displayLabel(this, pkg);
+        StringBuilder sb = new StringBuilder();
+        if (!own && !pkg.equals(name)) {
+            sb.append(getString(R.string.foreground_value_pkg, name, pkg));
+        } else {
+            sb.append(getString(R.string.foreground_value, name));
+        }
         if (own) {
             // 界面自己在前台时，顺便告诉用户此前用的是什么，避免只看到"VRCDI"以为没生效
             String other = ForegroundApp.lastOther(this);
-            if (other != null) sb.append(" · 此前：").append(ForegroundApp.label(this, other));
+            if (other != null) {
+                sb.append(getString(R.string.foreground_previous,
+                        ForegroundApp.displayLabel(this, other)));
+            }
         }
         textForegroundApp.setText(sb.toString());
         textForegroundApp.setTextColor(getColor(R.color.text_secondary));
@@ -1037,14 +1055,14 @@ public class MainActivity extends Activity implements ReporterService.Listener {
 
     private void openUsageAccessSettings() {
         if (ForegroundApp.hasUsageAccess(this)) {
-            toast("已获得「使用情况访问」权限");
+            toast(getString(R.string.toast_usage_granted));
             refreshForegroundApp();
             return;
         }
         try {
             startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
         } catch (Throwable t) {
-            toast("无法打开「使用情况访问」设置，请在系统设置里手动授予");
+            toast(getString(R.string.toast_usage_failed));
         }
     }
 
@@ -1073,8 +1091,9 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                     @Override
                     public void run() {
                         textLocalIp.setText(ips.isEmpty()
-                                ? "本机局域网 IP：未获取到（请确认已连 Wi-Fi）"
-                                : "本机局域网 IP：" + join(ips, "、"));
+                                ? getString(R.string.local_ip_none)
+                                : getString(R.string.local_ip_value,
+                                        join(ips, getString(R.string.list_separator))));
                         refreshLaunchArg();
                     }
                 });
@@ -1089,9 +1108,9 @@ public class MainActivity extends Activity implements ReporterService.Listener {
      */
     private void refreshLaunchArg() {
         String ip = settings.getTargetIp();
-        String target = (ip == null || ip.trim().isEmpty()) ? "<PC的局域网IP>" : ip.trim();
-        textLaunchArg.setText("VRChat 启动参数（Steam 里加）：--osc=9000:" + target + ":9001\n"
-                + "同一局域网 + PC 防火墙放行 UDP 9000，然后在动作菜单里开启 OSC");
+        String target = (ip == null || ip.trim().isEmpty())
+                ? getString(R.string.launch_arg_placeholder) : ip.trim();
+        textLaunchArg.setText(getString(R.string.launch_arg, target));
     }
 
     // ---------------- 系统交互 ----------------
@@ -1106,23 +1125,22 @@ public class MainActivity extends Activity implements ReporterService.Listener {
         if (settings.isBatteryHintShown()) return;
         settings.setBatteryHintShown(true);
         new AlertDialog.Builder(this)
-                .setTitle("建议加入电池优化白名单")
-                .setMessage("前台服务能保证大部分场景下不被杀，但国产系统的省电策略更激进。"
-                        + "建议在接下来的系统页面里把 VRCDI 设为「不优化」，否则息屏后可能停止上报。")
-                .setPositiveButton("去设置", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.battery_hint_title)
+                .setMessage(R.string.battery_hint_message)
+                .setPositiveButton(R.string.go_settings, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         openBatteryWhitelist();
                     }
                 })
-                .setNegativeButton("以后再说", null)
+                .setNegativeButton(R.string.update_later, null)
                 .show();
     }
 
     private void openBatteryWhitelist() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm != null && pm.isIgnoringBatteryOptimizations(getPackageName())) {
-            toast("已在电池优化白名单中");
+            toast(getString(R.string.toast_battery_already));
             return;
         }
         try {
@@ -1133,7 +1151,7 @@ public class MainActivity extends Activity implements ReporterService.Listener {
             try {
                 startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
             } catch (Throwable ignored) {
-                toast("无法打开电池优化设置，请在系统设置里手动把 VRCDI 设为不优化");
+                toast(getString(R.string.toast_battery_failed));
             }
         }
     }
@@ -1147,8 +1165,8 @@ public class MainActivity extends Activity implements ReporterService.Listener {
                     if (requestCode != ShizukuShell.REQUEST_CODE_PERMISSION) return;
                     boolean granted = grantResult == PackageManager.PERMISSION_GRANTED;
                     textPrivilegeStatus.setText(granted
-                            ? "Shizuku 已授权（shell 权限，uid=2000）"
-                            : "Shizuku 授权被拒绝");
+                            ? getString(R.string.privilege_shizuku_granted)
+                            : getString(R.string.privilege_shizuku_denied));
                     if (granted) collectOnce();
                 }
             };

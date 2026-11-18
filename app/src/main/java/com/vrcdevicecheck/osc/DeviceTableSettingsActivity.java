@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,7 +37,7 @@ import java.util.List;
  * 创建设备表时填品牌名称 + 选一个 JSON 文件，确认后文件会被原样复制到
  * files/device_tables/&lt;品牌&gt;.json，之后应用只从自己的目录读取。
  */
-public class DeviceTableSettingsActivity extends Activity {
+public class DeviceTableSettingsActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_TABLE_FILE = 51;
 
@@ -53,7 +52,7 @@ public class DeviceTableSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("设备表设置");
+        setTitle(R.string.device_table_title);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -61,13 +60,13 @@ public class DeviceTableSettingsActivity extends Activity {
         root.setPadding(padding, padding, padding, padding);
 
         TextView section = new TextView(this);
-        section.setText("品牌设备表");
+        section.setText(R.string.device_table_section);
         section.setTextSize(15f);
         section.setTypeface(Typeface.DEFAULT_BOLD);
         root.addView(section);
 
         emptyView = new TextView(this);
-        emptyView.setText("还没有品牌设备表，点下面的按钮创建");
+        emptyView.setText(R.string.device_table_empty);
         emptyView.setTextSize(13f);
         emptyView.setPadding(0, dp(12), 0, 0);
         root.addView(emptyView);
@@ -78,7 +77,7 @@ public class DeviceTableSettingsActivity extends Activity {
         listView.setEmptyView(emptyView);
 
         Button create = new Button(this);
-        create.setText("按品牌创建设备表");
+        create.setText(R.string.device_table_create);
         create.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -112,8 +111,8 @@ public class DeviceTableSettingsActivity extends Activity {
         List<String> lines = new ArrayList<>();
         for (DeviceModelTables.BrandTableInfo info : tables) {
             lines.add(info.count >= 0
-                    ? info.brand + "（" + info.count + " 条）"
-                    : info.brand + "（无法解析）");
+                    ? getString(R.string.device_table_count, info.brand, info.count)
+                    : getString(R.string.device_table_unparsable, info.brand));
         }
         adapter.clear();
         adapter.addAll(lines);
@@ -124,16 +123,16 @@ public class DeviceTableSettingsActivity extends Activity {
         if (position < 0 || position >= tables.size()) return;
         final DeviceModelTables.BrandTableInfo info = tables.get(position);
         new AlertDialog.Builder(this)
-                .setTitle("删除设备表")
-                .setMessage("确定删除品牌「" + info.brand + "」的设备表吗？")
-                .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.device_table_delete_title)
+                .setMessage(getString(R.string.device_table_delete_message, info.brand))
+                .setPositiveButton(R.string.common_delete, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         DeviceModelTables.deleteBrand(DeviceTableSettingsActivity.this, info.brand);
                         refresh();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -146,19 +145,19 @@ public class DeviceTableSettingsActivity extends Activity {
         box.setPadding(padding, dp(8), padding, 0);
 
         final EditText brandInput = new EditText(this);
-        brandInput.setHint("品牌名称，例如 ZTE / 华为");
+        brandInput.setHint(R.string.device_table_brand_hint);
         box.addView(brandInput, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         pendingFileLabel = new TextView(this);
-        pendingFileLabel.setText("设备表文件：未选择");
+        pendingFileLabel.setText(R.string.device_table_file_none);
         pendingFileLabel.setTextSize(12f);
         pendingFileLabel.setPadding(0, dp(8), 0, 0);
         box.addView(pendingFileLabel);
 
         Button pick = new Button(this);
-        pick.setText("选择设备表文件（JSON）");
+        pick.setText(R.string.device_table_pick);
         pick.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -170,10 +169,10 @@ public class DeviceTableSettingsActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("按品牌创建设备表")
+                .setTitle(R.string.device_table_create)
                 .setView(box)
-                .setPositiveButton("确定", null)
-                .setNegativeButton("取消", null)
+                .setPositiveButton(R.string.common_confirm, null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .create();
 
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -184,11 +183,11 @@ public class DeviceTableSettingsActivity extends Activity {
                     public void onClick(View v) {
                         String brand = brandInput.getText().toString().trim();
                         if (brand.isEmpty()) {
-                            toast("请先填写品牌名称");
+                            toast(getString(R.string.device_table_need_brand));
                             return;
                         }
                         if (pendingUri == null) {
-                            toast("请先选择设备表文件");
+                            toast(getString(R.string.device_table_need_file));
                             return;
                         }
                         dialog.dismiss();
@@ -207,10 +206,10 @@ public class DeviceTableSettingsActivity extends Activity {
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_MIME_TYPES,
                     new String[]{"application/json", "text/plain", "text/*", "application/octet-stream"});
-            startActivityForResult(Intent.createChooser(intent, "选择设备表 JSON 文件"),
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.device_table_pick_title)),
                     REQUEST_CODE_TABLE_FILE);
         } catch (Throwable t) {
-            toast("没有找到可用的文件选择器");
+            toast(getString(R.string.common_no_file_picker));
         }
     }
 
@@ -221,7 +220,7 @@ public class DeviceTableSettingsActivity extends Activity {
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
         pendingUri = data.getData();
         if (pendingFileLabel != null) {
-            pendingFileLabel.setText("设备表文件：" + displayName(pendingUri));
+            pendingFileLabel.setText(getString(R.string.device_table_file_selected, displayName(pendingUri)));
         }
     }
 
@@ -242,10 +241,10 @@ public class DeviceTableSettingsActivity extends Activity {
                     @Override
                     public void run() {
                         if (imported == null) {
-                            toast("导入失败：文件不是有效的设备表 JSON");
+                            toast(getString(R.string.device_table_import_failed));
                             return;
                         }
-                        toast("已创建「" + imported.brand + "」设备表，共 " + imported.count + " 条");
+                        toast(getString(R.string.device_table_created, imported.brand, imported.count));
                         refresh();
                     }
                 });
@@ -271,7 +270,7 @@ public class DeviceTableSettingsActivity extends Activity {
             // 拿不到就用路径末段
         }
         String path = uri.getLastPathSegment();
-        return path == null ? "已选择文件" : path;
+        return path == null ? getString(R.string.common_selected_file) : path;
     }
 
     private String readText(Uri uri) throws Exception {

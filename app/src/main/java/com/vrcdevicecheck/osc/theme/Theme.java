@@ -31,8 +31,11 @@ import java.nio.charset.Charset;
 public final class Theme {
 
     public final String id;
+    /** theme.json 里写的名字；内置配色为空，改由 nameRes 提供本地化文案 */
     public final String name;
     public final File dir;
+    /** 内置配色的名字资源；导入主题为 0 */
+    public final int nameRes;
 
     /** 0 表示 theme.json 里没写，沿用应用默认配色 */
     public final int background;
@@ -45,12 +48,13 @@ public final class Theme {
     public final String buttonImage;
     public final String buttonPressedImage;
 
-    private Theme(String id, String name, File dir,
+    private Theme(String id, String name, File dir, int nameRes,
                   int background, int card, int text, int textSecondary,
                   String backgroundImage, String buttonImage, String buttonPressedImage) {
         this.id = id;
         this.name = name;
         this.dir = dir;
+        this.nameRes = nameRes;
         this.background = background;
         this.card = card;
         this.text = text;
@@ -64,9 +68,16 @@ public final class Theme {
      * 内置配色：没有目录、没有图片，只有四个颜色。
      * 适合「就是换个底色」的需求，不需要用户去做主题包。
      */
-    static Theme builtIn(String id, String name,
+    static Theme builtIn(String id, int nameRes,
                          int background, int card, int text, int textSecondary) {
-        return new Theme(id, name, null, background, card, text, textSecondary, null, null, null);
+        return new Theme(id, "", null, nameRes, background, card, text, textSecondary,
+                null, null, null);
+    }
+
+    /** 界面显示的名字：内置配色按界面语言取资源，导入主题用 theme.json 里的原名 */
+    public String displayName(Context context) {
+        if (nameRes != 0 && context != null) return context.getString(nameRes);
+        return name;
     }
 
     /** 内置配色不占文件系统，不能删除，也不需要重新导入 */
@@ -90,6 +101,7 @@ public final class Theme {
                     id,
                     name,
                     dir,
+                    0,
                     color(colors, "background"),
                     color(colors, "card"),
                     color(colors, "text"),

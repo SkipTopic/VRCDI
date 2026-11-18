@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -29,11 +28,15 @@ import com.vrcdevicecheck.osc.theme.ThemeManager;
  * - 「启动上报时立即发送一次」开关，控制点启动后要不要先补一条；
  * - 保存后若服务正在上报，立刻按新间隔重排，不用等旧周期走完。
  */
-public class ReportIntervalActivity extends Activity {
+public class ReportIntervalActivity extends BaseActivity {
 
     private static final int[] PRESETS = {2, 5, 10, 30, 60};
-    private static final String[] PRESET_LABELS = {
-            "2 秒（最快）", "5 秒", "10 秒（默认）", "30 秒", "60 秒"
+    private static final int[] PRESET_LABELS = {
+            R.string.interval_preset_2,
+            R.string.interval_preset_5,
+            R.string.interval_preset_10,
+            R.string.interval_preset_30,
+            R.string.interval_preset_60
     };
 
     private AppSettings settings;
@@ -49,7 +52,7 @@ public class ReportIntervalActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         settings = new AppSettings(this);
-        setTitle("上报时间设置");
+        setTitle(R.string.interval_title);
         buildUi();
         loadValues();
         ThemeManager.apply(this);
@@ -70,16 +73,15 @@ public class ReportIntervalActivity extends Activity {
 
         // 将要生效的设置（随选择实时变化）
         LinearLayout previewCard = newCard();
-        previewCard.addView(cardTitle("将要生效的设置"));
+        previewCard.addView(cardTitle(getString(R.string.interval_preview_card)));
         preview = body("");
         previewCard.addView(preview);
         root.addView(previewCard);
 
         // 间隔
         LinearLayout intervalCard = newCard();
-        intervalCard.addView(cardTitle("上报间隔"));
-        intervalCard.addView(hint("两次上报之间的等待时间。间隔越短，Chatbox 刷新越快，"
-                + "但采集和发送更频繁，也更耗电；太快还有可能被 VRChat 限频。"));
+        intervalCard.addView(cardTitle(getString(R.string.interval_card)));
+        intervalCard.addView(hint(getString(R.string.interval_card_hint)));
 
         group = new RadioGroup(this);
         group.setOrientation(RadioGroup.VERTICAL);
@@ -98,7 +100,7 @@ public class ReportIntervalActivity extends Activity {
 
         RadioButton custom = new RadioButton(this);
         custom.setId(View.generateViewId());
-        custom.setText("自定义");
+        custom.setText(R.string.interval_custom);
         custom.setTextSize(14f);
         custom.setTextColor(getColor(R.color.text_primary));
         custom.setPadding(0, dp(6), 0, dp(6));
@@ -109,7 +111,7 @@ public class ReportIntervalActivity extends Activity {
 
         customInput = new EditText(this);
         customInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        customInput.setHint("输入秒数（2–3600）");
+        customInput.setHint(R.string.interval_custom_hint);
         customInput.setTextSize(14f);
         customInput.setTextColor(getColor(R.color.text_primary));
         customInput.setHintTextColor(getColor(R.color.text_secondary));
@@ -119,25 +121,23 @@ public class ReportIntervalActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        intervalCard.addView(hint("可选范围 2–3600 秒。2 秒是允许的最快值；"
-                + "VRChat 目前限制 5 秒内最多 5 条，遇到 Chatbox 不刷新就适当调大间隔。"));
+        intervalCard.addView(hint(getString(R.string.interval_range_hint)));
         root.addView(intervalCard);
 
         // 启动行为
         LinearLayout startCard = newCard();
-        startCard.addView(cardTitle("启动行为"));
+        startCard.addView(cardTitle(getString(R.string.interval_start_card)));
         sendOnStart = new CheckBox(this);
-        sendOnStart.setText("启动上报时立即发送一次");
+        sendOnStart.setText(R.string.interval_send_on_start);
         sendOnStart.setTextSize(14f);
         sendOnStart.setTextColor(getColor(R.color.text_primary));
         startCard.addView(sendOnStart);
-        startCard.addView(hint("打开后，点「启动上报」会马上采集并发送一条，"
-                + "之后按上面的间隔循环；关闭则先等一个完整间隔再发第一条。"));
+        startCard.addView(hint(getString(R.string.interval_send_on_start_hint)));
         root.addView(startCard);
 
         // 操作按钮
         Button save = new Button(this);
-        save.setText("保存");
+        save.setText(R.string.common_save);
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -149,7 +149,7 @@ public class ReportIntervalActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         Button reset = new Button(this);
-        reset.setText("恢复默认（10 秒）");
+        reset.setText(R.string.interval_reset);
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -157,7 +157,7 @@ public class ReportIntervalActivity extends Activity {
                 settings.setSendOnStart(true);
                 ReporterService.onIntervalChanged();
                 loadValues();
-                toast("已恢复默认：每 10 秒一次，启动时立即发送");
+                toast(getString(R.string.interval_reset_done));
             }
         });
         root.addView(reset, new LinearLayout.LayoutParams(
@@ -319,20 +319,21 @@ public class ReportIntervalActivity extends Activity {
     private void updatePreview() {
         Integer value = selectedIntervalOrNull();
         if (value == null) {
-            preview.setText("间隔无效：请输入 " + AppSettings.MIN_INTERVAL + "–"
-                    + AppSettings.MAX_INTERVAL + " 之间的整数秒");
+            preview.setText(getString(R.string.interval_invalid_preview,
+                    AppSettings.MIN_INTERVAL, AppSettings.MAX_INTERVAL));
             return;
         }
         String tail = sendOnStart.isChecked()
-                ? "；点「启动上报」时立即先发一条，再按间隔循环"
-                : "；点「启动上报」后先等一个间隔，再发第一条";
-        preview.setText("每 " + value + " 秒上报一次" + tail);
+                ? getString(R.string.interval_tail_immediate)
+                : getString(R.string.interval_tail_wait);
+        preview.setText(getString(R.string.interval_preview_ok, value, tail));
     }
 
     private void save() {
         Integer value = selectedIntervalOrNull();
         if (value == null) {
-            toast("请输入 " + AppSettings.MIN_INTERVAL + "–" + AppSettings.MAX_INTERVAL + " 之间的整数秒");
+            toast(getString(R.string.interval_invalid_toast,
+                    AppSettings.MIN_INTERVAL, AppSettings.MAX_INTERVAL));
             customInput.requestFocus();
             return;
         }
@@ -342,8 +343,9 @@ public class ReportIntervalActivity extends Activity {
         // 服务在跑就立即按新间隔重排；没跑则只保存，下次启动生效
         ReporterService.onIntervalChanged();
 
-        String suffix = ReporterService.isRunning() ? "，已立即生效" : "";
-        toast("已保存：每 " + value + " 秒上报一次" + suffix);
+        String suffix = ReporterService.isRunning()
+                ? getString(R.string.interval_saved_immediate) : "";
+        toast(getString(R.string.interval_saved, value, suffix));
         finish();
     }
 

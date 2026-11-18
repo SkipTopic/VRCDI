@@ -1,18 +1,27 @@
 package com.vrcdevicecheck.osc.data;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+
 /** 权限申请方式 */
 public enum PrivilegeMode {
 
-    SHIZUKU("shizuku", "Shizuku"),
-    ROOT("root", "Root"),
-    NONE("none", "无特权（仅读取系统开放的信息）");
+    SHIZUKU("shizuku", R.string.privilege_shizuku),
+    ROOT("root", R.string.privilege_root),
+    NONE("none", R.string.privilege_none);
 
     public final String key;
-    public final String label;
+    /** 界面显示用的文案资源 */
+    public final int labelRes;
 
-    PrivilegeMode(String key, String label) {
+    PrivilegeMode(String key, int labelRes) {
         this.key = key;
-        this.label = label;
+        this.labelRes = labelRes;
+    }
+
+    public String label(Context context) {
+        return context == null ? "" : context.getString(labelRes);
     }
 
     public static PrivilegeMode fromKey(String key) {
