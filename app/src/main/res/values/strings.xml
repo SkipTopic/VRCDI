@@ -187,7 +187,7 @@
     <string name="settings_app_table">应用表设置</string>
     <string name="settings_cpu_map">CPU 映射表设置</string>
     <string name="settings_theme">主题</string>
-    <string name="settings_language">语言</string>
+    <string name="settings_language">语言 / English</string>
     <string name="settings_update">软件更新设置</string>
     <string name="settings_about">关于VRCDI</string>
     <string name="settings_exit">退出</string>
@@ -198,6 +198,8 @@
     <string name="language_dialog_title">语言 / Language</string>
     <string name="language_zh">简体中文</string>
     <string name="language_en">English</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ru">Русский</string>
     <string name="language_restarting">已切换语言，正在重启应用…</string>
 
     <!-- ==================== 上报时间设置 ==================== -->

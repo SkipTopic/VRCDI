@@ -256,7 +256,7 @@ public final class WeatherRepository {
         String value = query == null ? "" : query.trim();
         if (value.isEmpty()) return new SearchResult(null, "");
 
-        String language = LocaleHelper.isEnglish(context) ? "en" : "zh";
+        String language = LocaleHelper.isChinese(context) ? "zh" : "en";
         List<Place> collected = new ArrayList<>();
         String firstError = "";
         boolean anyOk = false;

@@ -24,6 +24,8 @@ public final class LocaleHelper {
 
     public static final String LANG_ZH = "zh";
     public static final String LANG_EN = "en";
+    public static final String LANG_JA = "ja";
+    public static final String LANG_RU = "ru";
 
     private static final String PREFS = "vrcdi_locale";
     private static final String KEY_LANGUAGE = "language";
@@ -46,7 +48,7 @@ public final class LocaleHelper {
             if (app == null) app = context;
             SharedPreferences sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             String stored = sp.getString(KEY_LANGUAGE, LANG_ZH);
-            if (LANG_EN.equals(stored)) value = LANG_EN;
+            value = normalize(stored);
         }
         cachedLanguage = value;
         return value;
@@ -56,8 +58,21 @@ public final class LocaleHelper {
         return LANG_EN.equals(getLanguage(context));
     }
 
+    /** 中文界面才用中文数据（地名、天气文案）；日文/俄文界面统一用英文数据 */
+    public static boolean isChinese(Context context) {
+        return LANG_ZH.equals(getLanguage(context));
+    }
+
+    /** 只接受已知的四种语言，其余一律回到中文 */
+    private static String normalize(String language) {
+        if (LANG_EN.equals(language)) return LANG_EN;
+        if (LANG_JA.equals(language)) return LANG_JA;
+        if (LANG_RU.equals(language)) return LANG_RU;
+        return LANG_ZH;
+    }
+
     public static void setLanguage(Context context, String language) {
-        String value = LANG_EN.equals(language) ? LANG_EN : LANG_ZH;
+        String value = normalize(language);
         context.getApplicationContext()
                 .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit().putString(KEY_LANGUAGE, value).apply();
@@ -67,7 +82,10 @@ public final class LocaleHelper {
     }
 
     public static Locale localeOf(String language) {
-        return LANG_EN.equals(language) ? Locale.US : Locale.SIMPLIFIED_CHINESE;
+        if (LANG_EN.equals(language)) return Locale.US;
+        if (LANG_JA.equals(language)) return Locale.JAPAN;
+        if (LANG_RU.equals(language)) return Locale.forLanguageTag("ru-RU");
+        return Locale.SIMPLIFIED_CHINESE;
     }
 
     /** 给 Activity / Service 的 attachBaseContext 用：不改缓存，只套一层 locale */

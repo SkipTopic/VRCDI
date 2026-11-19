@@ -64,7 +64,7 @@ public final class WeatherInfo {
 
     /** 设置页/Toast 用的一行摘要，天气文案跟着界面语言走 */
     public String summary(Context context) {
-        boolean english = LocaleHelper.isEnglish(context);
+        boolean english = !LocaleHelper.isChinese(context);
         String condition = english ? conditionEn : conditionZh;
         StringBuilder sb = new StringBuilder();
         if (condition != null && !condition.isEmpty()) sb.append(condition);
@@ -84,7 +84,7 @@ public final class WeatherInfo {
 
     /** 数据源名字。和风天气在英文界面显示 QWeather，其余用服务自己的品牌名 */
     public String providerLabel(Context context) {
-        if (LocaleHelper.isEnglish(context) && "和风天气".equals(provider)) {
+        if (!LocaleHelper.isChinese(context) && "和风天气".equals(provider)) {
             return LocaleHelper.str(context, R.string.wprovider_qweather_en);
         }
         return provider;

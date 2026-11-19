@@ -40,7 +40,7 @@ public final class WorldCities {
 
         /** 中文界面优先中文名，英文界面优先英文名；缺哪个用另一个顶上 */
         public String displayName(Context context) {
-            if (LocaleHelper.isEnglish(context)) {
+            if (!LocaleHelper.isChinese(context)) {
                 return nameEn.isEmpty() ? nameZh : nameEn;
             }
             return nameZh.isEmpty() ? nameEn : nameZh;
@@ -61,7 +61,7 @@ public final class WorldCities {
         }
 
         public String displayName(Context context) {
-            if (LocaleHelper.isEnglish(context)) {
+            if (!LocaleHelper.isChinese(context)) {
                 return nameEn.isEmpty() ? nameZh : nameEn;
             }
             return nameZh.isEmpty() ? nameEn : nameZh;

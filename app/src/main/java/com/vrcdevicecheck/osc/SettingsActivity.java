@@ -132,11 +132,21 @@ public class SettingsActivity extends BaseActivity {
         super.onStop();
     }
 
-    /** 语言：中文 / English。默认中文，切换后立刻重启让所有界面重建 */
+    /** 语言：中文 / English / 日本語 / Русский。默认中文，切换后立刻重启让所有界面重建 */
     private void showLanguageDialog() {
-        final String[] values = {LocaleHelper.LANG_ZH, LocaleHelper.LANG_EN};
-        final String[] labels = {getString(R.string.language_zh), getString(R.string.language_en)};
-        int checked = LocaleHelper.isEnglish(this) ? 1 : 0;
+        final String[] values = {
+                LocaleHelper.LANG_ZH, LocaleHelper.LANG_EN,
+                LocaleHelper.LANG_JA, LocaleHelper.LANG_RU};
+        final String[] labels = {
+                getString(R.string.language_zh),
+                getString(R.string.language_en),
+                getString(R.string.language_ja),
+                getString(R.string.language_ru)};
+        String current = LocaleHelper.getLanguage(this);
+        int checked = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(current)) checked = i;
+        }
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.language_dialog_title)
