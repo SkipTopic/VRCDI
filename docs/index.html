@@ -23,9 +23,9 @@
   "description": "通过 Shizuku / Root 读取安卓设备的 CPU、GPU、内存、电量与前台应用，用 OSC 发送到 VRChat 的 Chatbox。",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Android 10+",
-  "softwareVersion": "2.5.0 Omega",
+  "softwareVersion": "4.4.4 Beta",
   "url": "https://wanliustudio.github.io/VRCDI/",
-  "downloadUrl": "https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk",
+  "downloadUrl": "https://github.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/VRCDI-4.4.4-beta.apk",
   "codeRepository": "https://github.com/WanliuStudio/VRCDI",
   "sameAs": [
     "https://github.com/WanliuStudio/VRCDI",
@@ -351,6 +351,7 @@
       <a href="#features">功能</a>
       <a href="#usage">使用</a>
       <a href="#notes">说明</a>
+      <a href="#join">加入我们</a>
       <a id="nav-releases" href="https://github.com/WanliuStudio/VRCDI/releases" target="_blank" rel="noopener">更新日志</a>
     </nav>
   </div>
@@ -371,14 +372,14 @@
       <span>Android 10+</span>
       <span>纯 Java · 无 AndroidX 界面</span>
       <span>Shizuku / Root / 免授权</span>
-      <span id="badge-version">2.5.0 Omega (Build 150)</span>
+      <span id="badge-version">4.4.4 Beta (Build 373)</span>
     </div>
 
     <div class="actions">
-      <a class="btn primary" id="dl-gitee" href="https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk" target="_blank" rel="noopener">
+      <a class="btn primary" id="dl-gitee" href="https://gitee.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/VRCDI-4.4.4-beta.apk" target="_blank" rel="noopener">
         国内下载 <small>Gitee</small>
       </a>
-      <a class="btn" id="dl-github" href="https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk" target="_blank" rel="noopener">
+      <a class="btn" id="dl-github" href="https://github.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/VRCDI-4.4.4-beta.apk" target="_blank" rel="noopener">
         GitHub 下载 <small>Releases</small>
       </a>
     </div>
@@ -487,7 +488,33 @@
     </div>
 
     <div class="notice" style="margin-top:18px;">
-      <strong>下载提示：</strong>当前提供的是 debug 签名包，方便直接安装体验；正式签名包会在后续版本提供。安装前请确认系统为 Android 10（API 29）及以上。
+      <strong>下载提示：</strong>当前 4.4.4 Beta 仍是 debug 签名包，可直接覆盖旧版本安装；
+      后续正式版将改用发布私钥签名，届时需要先卸载 Beta 再安装正式版（应用内会提示）。
+      安装前请确认系统为 Android 10（API 29）及以上。
+    </div>
+  </section>
+
+  <section id="join">
+    <h2>加入我们</h2>
+    <p class="lead">遇到问题、想参与测试或反馈建议，欢迎加入社区。</p>
+
+    <div class="grid">
+      <div class="card">
+        <span class="tag">Discord</span>
+        <h3>Discord 服务器</h3>
+        <p>海外网络推荐，测试版发布、实时交流与问题反馈。</p>
+        <a class="btn primary" href="https://discord.gg/ayjFK4KwC" target="_blank" rel="noopener">加入 Discord</a>
+      </div>
+
+      <div class="card">
+        <span class="tag">QQ</span>
+        <h3>QQ 群</h3>
+        <p>国内用户推荐，群号：</p>
+        <p class="hash" style="margin:0;text-align:left;">
+          群号：<code id="qq-number">1134428559</code>
+          <button type="button" id="copy-qq">复制</button>
+        </p>
+      </div>
     </div>
   </section>
 
@@ -510,16 +537,16 @@
    *
    * 1. giteeDownload / githubDownload 换成真实的「附件直链」。
    *    GitHub：Releases → 右键 APK → 复制链接，形如
-   *            https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/文件名.apk
+   *            https://github.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/文件名.apk
    *    Gitee ：发行版 → 右键附件 → 复制链接，形如
-   *            https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/文件名.apk
+   *            https://gitee.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/文件名.apk
    * 2. sha256 换成你上传的那个 APK 的哈希（重新构建后要重新算）。
    */
   const CONFIG = {
-    version: '2.5.0 Omega (Build 150)',
-    sha256: '692eb314d6019a640bb80f9f29b84449bc008267e5b7756e56f2d6b5df635e3b',
-    giteeDownload: 'https://gitee.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk',
-    githubDownload: 'https://github.com/WanliuStudio/VRCDI/releases/download/2.5.0-Omega/VRCDI-2.5.0-omega.apk',
+    version: '4.4.4 Beta (Build 373)',
+    sha256: '41d05fa9807acfd0af28a0f2ba621d68ac267346dbb3a35ab1c81bdd24a3eda0',
+    giteeDownload: 'https://gitee.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/VRCDI-4.4.4-beta.apk',
+    githubDownload: 'https://github.com/WanliuStudio/VRCDI/releases/download/4.4.4-Beta/VRCDI-4.4.4-beta.apk',
     giteeRepo: 'https://gitee.com/WanliuStudio/VRCDI',
     githubRepo: 'https://github.com/WanliuStudio/VRCDI',
     releases: 'https://github.com/WanliuStudio/VRCDI/releases'
@@ -537,11 +564,18 @@
   byId('sha256').textContent = CONFIG.sha256;
 
   byId('copy-sha').addEventListener('click', function () {
-    const text = CONFIG.sha256;
+    copyText(CONFIG.sha256, byId('copy-sha'));
+  });
+
+  byId('copy-qq').addEventListener('click', function () {
+    copyText('1134428559', byId('copy-qq'));
+  });
+
+  function copyText(text, btn) {
     const done = function () {
-      const btn = byId('copy-sha');
+      const original = btn.textContent;
       btn.textContent = '已复制';
-      setTimeout(function () { btn.textContent = '复制'; }, 1500);
+      setTimeout(function () { btn.textContent = original; }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, done);
@@ -554,7 +588,7 @@
       document.body.removeChild(input);
       done();
     }
-  });
+  }
 </script>
 
 </body>
