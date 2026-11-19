@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.vrcdevicecheck.osc.util.JsonRepair;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -100,29 +101,86 @@ public final class AppNames {
         }
     }
 
-    /** @return 解析是否成功（空表也算成功） */
+    /**
+     * 尽量宽容地解析应用表，支持：
+     *   - {"apps":{...}} 或直接 {包名: 名字}；
+     *   - 数组：[{"package":"com.x","name":"X"}, ...]；
+     *   - 纯文本每行一条：com.x=名字 或 com.x: 名字。
+     * 无法识别的行/条会跳过，不影响其他条目。
+     *
+     * @return 解析是否成功（空表也算成功）
+     */
     private static boolean parseInto(Map<String, String> target, String json) {
         if (json == null) return false;
         String text = JsonRepair.repair(json);
-        if (text == null || text.isEmpty()) return false;
-        if (!text.startsWith("{")) return false;
+        if (text == null) return false;
+        text = text.trim();
+        if (text.isEmpty()) return false;
         try {
-            JSONObject root = new JSONObject(text);
-            JSONObject apps = root.optJSONObject("apps");
-            JSONObject source = apps != null ? apps : root;
-            Iterator<String> keys = source.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                if (key.startsWith("_")) continue;
-                if (!key.contains(".")) continue;   // 包名一定带点，过滤说明字段
-                String value = source.optString(key, "").trim();
-                if (value.isEmpty()) continue;
-                target.put(key, value);
+            if (text.startsWith("{")) {
+                JSONObject root = new JSONObject(text);
+                JSONObject apps = root.optJSONObject("apps");
+                JSONObject source = apps != null ? apps : root;
+                Iterator<String> keys = source.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    if (key.startsWith("_")) continue;
+                    if (!key.contains(".")) continue;   // 包名一定带点，过滤说明字段
+                    String value = source.optString(key, "").trim();
+                    if (value.isEmpty()) continue;
+                    target.put(key, value);
+                }
+                return true;
             }
-            return true;
+            if (text.startsWith("[")) {
+                JSONArray array = new JSONArray(text);
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject obj = array.optJSONObject(i);
+                    if (obj == null) continue;
+                    String pkg = first(obj, "package", "pkg", "key", "id");
+                    String name = first(obj, "name", "value", "label", "title", "app_name");
+                    if (pkg.contains(".") && !name.isEmpty()) target.put(pkg, name);
+                }
+                return true;
+            }
+            // 纯文本：每行 key=value / key:value
+            boolean any = false;
+            for (String raw : text.split("\n")) {
+                String line = raw.trim();
+                if (line.isEmpty() || line.startsWith("#") || line.startsWith("//")) continue;
+                any = true;
+                int sep = line.indexOf('=');
+                if (sep < 0) sep = line.indexOf(':');
+                if (sep < 0) sep = line.indexOf('\t');
+                if (sep <= 0) continue;
+                String pkg = stripQuotes(line.substring(0, sep).trim());
+                String name = stripQuotes(line.substring(sep + 1).trim());
+                if (pkg.contains(".") && !name.isEmpty()) target.put(pkg, name);
+            }
+            return any;
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    private static String first(JSONObject obj, String... keys) {
+        for (String key : keys) {
+            String value = obj.optString(key, "").trim();
+            if (!value.isEmpty()) return value;
+        }
+        return "";
+    }
+
+    private static String stripQuotes(String value) {
+        String text = value.trim();
+        if (text.length() >= 2) {
+            char first = text.charAt(0);
+            char last = text.charAt(text.length() - 1);
+            if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                text = text.substring(1, text.length() - 1).trim();
+            }
+        }
+        return text;
     }
 
     private static String readAsset(Context context) {

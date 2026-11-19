@@ -28,3 +28,4 @@ keystore.properties
 .DS_Store
 *.log
 *.hprof
+indexnow.json

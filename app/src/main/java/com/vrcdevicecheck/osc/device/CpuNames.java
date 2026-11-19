@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.vrcdevicecheck.osc.util.JsonRepair;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -104,27 +105,76 @@ public final class CpuNames {
         }
     }
 
+    /** 宽容解析：支持 {"cpus":{...}}、直接映射、数组 [{"key":..,"value":..}]、每行 key=value */
     private static boolean parseInto(Map<String, String> target, String json) {
         if (json == null) return false;
         String text = JsonRepair.repair(json);
-        if (text == null || text.isEmpty()) return false;
-        if (!text.startsWith("{")) return false;
+        if (text == null) return false;
+        text = text.trim();
+        if (text.isEmpty()) return false;
         try {
-            JSONObject root = new JSONObject(text);
-            JSONObject cpus = root.optJSONObject("cpus");
-            JSONObject source = cpus != null ? cpus : root;
-            Iterator<String> keys = source.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                if (key.startsWith("_")) continue;
-                String value = source.optString(key, "").trim();
-                if (key.trim().isEmpty() || value.isEmpty()) continue;
-                target.put(key, value);
+            if (text.startsWith("{")) {
+                JSONObject root = new JSONObject(text);
+                JSONObject cpus = root.optJSONObject("cpus");
+                JSONObject source = cpus != null ? cpus : root;
+                Iterator<String> keys = source.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    if (key.startsWith("_")) continue;
+                    String value = source.optString(key, "").trim();
+                    if (key.trim().isEmpty() || value.isEmpty()) continue;
+                    target.put(key, value);
+                }
+                return true;
             }
-            return true;
+            if (text.startsWith("[")) {
+                JSONArray array = new JSONArray(text);
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject obj = array.optJSONObject(i);
+                    if (obj == null) continue;
+                    String key = first(obj, "code", "key", "codename", "platform", "id", "name");
+                    String value = first(obj, "model", "value", "display", "display_name", "title");
+                    if (!key.isEmpty() && !value.isEmpty()) target.put(key, value);
+                }
+                return true;
+            }
+            boolean any = false;
+            for (String raw : text.split("\n")) {
+                String line = raw.trim();
+                if (line.isEmpty() || line.startsWith("#") || line.startsWith("//")) continue;
+                any = true;
+                int sep = line.indexOf('=');
+                if (sep < 0) sep = line.indexOf(':');
+                if (sep < 0) sep = line.indexOf('\t');
+                if (sep <= 0) continue;
+                String key = stripQuotes(line.substring(0, sep).trim());
+                String value = stripQuotes(line.substring(sep + 1).trim());
+                if (!key.isEmpty() && !value.isEmpty()) target.put(key, value);
+            }
+            return any;
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    private static String first(JSONObject obj, String... keys) {
+        for (String key : keys) {
+            String value = obj.optString(key, "").trim();
+            if (!value.isEmpty()) return value;
+        }
+        return "";
+    }
+
+    private static String stripQuotes(String value) {
+        String text = value.trim();
+        if (text.length() >= 2) {
+            char first = text.charAt(0);
+            char last = text.charAt(text.length() - 1);
+            if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                text = text.substring(1, text.length() - 1).trim();
+            }
+        }
+        return text;
     }
 
     private static String readAsset(Context context) {

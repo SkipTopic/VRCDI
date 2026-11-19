@@ -21,6 +21,7 @@ import com.vrcdevicecheck.osc.priv.RootShell;
 import com.vrcdevicecheck.osc.priv.ShizukuShell;
 import com.vrcdevicecheck.osc.service.ReporterService;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
+import com.vrcdevicecheck.osc.util.AboutLinks;
 import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import rikka.shizuku.Shizuku;
@@ -270,6 +271,7 @@ public class SettingsActivity extends BaseActivity {
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_about, null);
         TextView device = view.findViewById(R.id.text_about_device);
         TextView version = view.findViewById(R.id.text_about_version);
+        AboutLinks.bind(view.findViewById(R.id.text_about_links));
 
         DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
         String brand = snapshot != null && snapshot.brand != null ? snapshot.brand : Build.BRAND;
@@ -297,7 +299,7 @@ public class SettingsActivity extends BaseActivity {
         sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
-        String versionName = "2.3.8 Omega";
+        String versionName = "4.4.4 Beta";
         int versionCode = 0;
         try {
             android.content.pm.PackageInfo info =

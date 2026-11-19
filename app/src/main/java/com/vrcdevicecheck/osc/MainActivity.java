@@ -37,6 +37,7 @@ import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceInfoRepository;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.device.ForegroundApp;
+import com.vrcdevicecheck.osc.device.VrSupport;
 import com.vrcdevicecheck.osc.net.LanScanner;
 import com.vrcdevicecheck.osc.osc.ReportBuilder;
 import com.vrcdevicecheck.osc.priv.PrivilegeController;
@@ -47,6 +48,7 @@ import com.vrcdevicecheck.osc.priv.ShellResult;
 import com.vrcdevicecheck.osc.priv.ShizukuShell;
 import com.vrcdevicecheck.osc.service.ReporterService;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
+import com.vrcdevicecheck.osc.util.AboutLinks;
 import com.vrcdevicecheck.osc.util.LocaleHelper;
 import com.vrcdevicecheck.osc.update.UpdateChecker;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
@@ -205,6 +207,15 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         String message = body.isEmpty()
                 ? getString(R.string.update_dialog_body, release.tag)
                 : body;
+        String current = currentVersionName().toLowerCase(java.util.Locale.US);
+        int major = UpdateChecker.majorVersion(current);
+        boolean legacyDebug = major >= 0 && major < 4;
+        boolean beta = current.contains("beta");
+        if (!release.prerelease && (legacyDebug || beta)) {
+            message = message + "\n\n———\n"
+                    + "正式版使用发布私钥签名，与当前版本不一致。安装前需要先卸载 VRCDI，"
+                    + "否则会提示安装失败；卸载会清除已导入的表与主题。";
+        }
 
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.update_dialog_title, release.tag))
@@ -223,7 +234,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Throwable t) {
-            return "2.3.8 Omega";
+            return "4.4.4 Beta";
         }
     }
 
@@ -297,6 +308,13 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             box.setTag(field);
             box.setTextColor(getColor(R.color.text_primary));
             box.setTextSize(14f);
+            // VR 一体机用手柄射线点按，行高太小容易点空；统一抬高点击区域
+            if (VrSupport.isVrDevice()) {
+                int minHeight = Math.round(getResources().getDisplayMetrics().density * 48);
+                box.setMinHeight(minHeight);
+                int vertical = Math.round(getResources().getDisplayMetrics().density * 6);
+                box.setPadding(box.getPaddingLeft(), vertical, box.getPaddingRight(), vertical);
+            }
             box.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -710,6 +728,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_about, null);
         TextView device = view.findViewById(R.id.text_about_device);
         TextView version = view.findViewById(R.id.text_about_version);
+        AboutLinks.bind(view.findViewById(R.id.text_about_links));
 
         DeviceSnapshot snapshot = ReporterService.getLatestSnapshot();
         if (snapshot == null) snapshot = localSnapshot;
@@ -738,7 +757,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
-        String versionName = "2.3.8 Omega";
+        String versionName = "4.4.4 Beta";
         int versionCode = 0;
         try {
             android.content.pm.PackageInfo info =
@@ -850,7 +869,12 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     private void refreshPrivilegeTexts() {
         PrivilegeMode mode = settings.getPrivilegeMode();
         textPrivilegeMode.setText(getString(R.string.privilege_current, mode.label(this)));
-        textPrivilegeStatus.setText(PrivilegeController.shellFor(mode).statusText(this));
+        String status = PrivilegeController.shellFor(mode).statusText(this);
+        if (VrSupport.isVrDevice()) {
+            status = status + "\n（VR 一体机：Shizuku / Root 通常不可用，建议选「免授权」；"
+                    + "温度、帧率等依赖特权通道的数据可能读不到）";
+        }
+        textPrivilegeStatus.setText(status);
     }
 
     private void postStatus(final String status, final String hint) {

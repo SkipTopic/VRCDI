@@ -149,7 +149,7 @@ public class DeviceInfoRepository {
             RawFacts degradedFacts = RawFacts.empty().withGpuRenderer(GpuInfo.renderer());
             DeviceSnapshot degraded = SnapshotMapper.map(
                     degradedFacts, java, null, modelTable,
-                    LocaleHelper.str(context, R.string.channel_degraded, channel), foregroundAppName());
+                    LocaleHelper.str(context, R.string.channel_degraded, channel), foregroundAppName(shell));
             return new CollectResult(degraded, warning);
         }
 
@@ -176,7 +176,7 @@ public class DeviceInfoRepository {
             }
         }
 
-        DeviceSnapshot snapshot = SnapshotMapper.map(facts, java, baseline, modelTable, channel, foregroundAppName());
+        DeviceSnapshot snapshot = SnapshotMapper.map(facts, java, baseline, modelTable, channel, foregroundAppName(shell));
         if (!facts.cpuStat.isEmpty()) previousCpuStat = facts.cpuStat;
         return new CollectResult(snapshot, null);
     }
@@ -190,10 +190,30 @@ public class DeviceInfoRepository {
      * 采集瞬间的前台应用名，作为可上报的「前台应用」字段。
      * 没授予「使用情况访问」时返回 null，界面与 Chatbox 都显示"不可用"，不猜。
      */
-    private String foregroundAppName() {
+    private String foregroundAppName(PrivilegedShell shell) {
         try {
-            if (!ForegroundApp.hasUsageAccess(context)) return null;
-            return ForegroundApp.label(context, ForegroundApp.current(context));
+            if (ForegroundApp.hasUsageAccess(context)) {
+                String pkg = ForegroundApp.current(context);
+                if (pkg != null) return ForegroundApp.label(context, pkg);
+            }
+            // VR 一体机上「使用情况访问」往往没有入口或事件不全，用 dumpsys 兜底
+            String viaShell = foregroundAppViaShell(shell);
+            if (viaShell != null) return ForegroundApp.label(context, viaShell);
+            return null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 仅 VR 设备尝试：从 dumpsys activity 里取当前 resumed 包名（需要 Shizuku/Root） */
+    private String foregroundAppViaShell(PrivilegedShell shell) {
+        if (shell == null || !VrSupport.isVrDevice()) return null;
+        try {
+            com.vrcdevicecheck.osc.priv.ShellResult result = shell.run(context,
+                    "dumpsys activity activities 2>/dev/null | grep -m1 -E 'mResumedActivity|topResumedActivity'",
+                    3000L);
+            if (result == null || !result.isOk()) return null;
+            return VrSupport.parseForegroundPackage(result.stdout);
         } catch (Throwable t) {
             return null;
         }

@@ -57,13 +57,17 @@ public final class UpdateChecker {
         public final String body;
         public final String pageUrl;
         public final List<Asset> assets;
+        /** 是否勾了「pre-release」 */
+        public final boolean prerelease;
 
-        Release(String tag, String name, String body, String pageUrl, List<Asset> assets) {
+        Release(String tag, String name, String body, String pageUrl, List<Asset> assets,
+                boolean prerelease) {
             this.tag = tag == null ? "" : tag;
             this.name = name == null ? "" : name;
             this.body = body == null ? "" : body;
             this.pageUrl = pageUrl == null ? "" : pageUrl;
             this.assets = assets;
+            this.prerelease = prerelease;
         }
 
         /** 优先选 .apk，其次 .apk.zip / .zip；都没有返回 null */
@@ -132,7 +136,8 @@ public final class UpdateChecker {
                 root.optString("name", ""),
                 root.optString("body", ""),
                 root.optString("html_url", ""),
-                list);
+                list,
+                root.optBoolean("prerelease", false));
     }
 
     private static String httpGet(Context context, String url) throws Exception {
@@ -159,6 +164,20 @@ public final class UpdateChecker {
             }
         } finally {
             if (conn != null) conn.disconnect();
+        }
+    }
+
+    /** 版本号主版本：4.4.2 Beta -> 4；解析失败返回 -1 */
+    public static int majorVersion(String version) {
+        if (version == null) return -1;
+        String text = version.trim();
+        int i = 0;
+        while (i < text.length() && Character.isDigit(text.charAt(i))) i++;
+        if (i == 0) return -1;
+        try {
+            return Integer.parseInt(text.substring(0, i));
+        } catch (Throwable t) {
+            return -1;
         }
     }
 

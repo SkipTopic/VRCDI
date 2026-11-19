@@ -205,9 +205,16 @@ public class UpdateSettingsActivity extends BaseActivity {
 
     private void showReleaseNotes(UpdateChecker.Release release) {
         if (release.body.trim().isEmpty()) return;
+        String message = release.body;
+        if (needsSignatureMigration(release)) {
+            message = message + "\n\n———\n"
+                    + "注意：当前版本与目标版本的签名不一致（旧版为 debug 签名，或 Beta 与正式版签名不同）。"
+                    + "安装前需要先卸载 VRCDI，否则系统会提示安装失败。";
+        }
+        final String text = message;
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.update_notes_title, release.tag))
-                .setMessage(release.body)
+                .setMessage(text)
                 .setPositiveButton(R.string.update_got_it, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -217,6 +224,21 @@ public class UpdateSettingsActivity extends BaseActivity {
                 .show();
     }
 
+    /**
+     * 需要卸载重装的情况：
+     *   - 目标正式版用发布私钥签名，而当前是 4.x 之前的 debug 签名包；
+     *   - 当前是 4.x Beta（debug 签名），目标是正式版（私钥签名）。
+     * 注意：2.x/3.x 装 4.x Beta 都是 debug 签名，可以直接覆盖，不需要卸载。
+     */
+    private boolean needsSignatureMigration(UpdateChecker.Release release) {
+        if (release == null || release.prerelease) return false;
+        String current = versionName();
+        int major = UpdateChecker.majorVersion(current);
+        boolean legacyDebug = major >= 0 && major < 4;
+        boolean beta = current.toLowerCase(java.util.Locale.US).contains("beta");
+        return legacyDebug || beta;
+    }
+
     private void downloadAndInstall() {
         if (busy || latest == null) return;
         final UpdateChecker.Asset asset = latest.apkAsset();
@@ -224,7 +246,27 @@ public class UpdateSettingsActivity extends BaseActivity {
             toast(getString(R.string.update_no_apk));
             return;
         }
+        if (needsSignatureMigration(latest)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("安装正式版前需要卸载")
+                    .setMessage("当前版本与目标版本的签名不一致，直接覆盖会安装失败。\n\n"
+                            + "请先卸载 VRCDI，再安装新的 APK。\n"
+                            + "卸载会清除应用数据：已导入的设备表 / 应用表 / CPU 映射表 / 主题需要重新导入。\n\n"
+                            + "是否现在下载新的安装包？")
+                    .setPositiveButton("下载", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startDownload(asset);
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+        startDownload(asset);
+    }
 
+    private void startDownload(final UpdateChecker.Asset asset) {
         busy = true;
         checkButton.setEnabled(false);
         installButton.setEnabled(false);
@@ -285,7 +327,7 @@ public class UpdateSettingsActivity extends BaseActivity {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             return info.versionName;
         } catch (Throwable t) {
-            return "2.3.8 Omega";
+            return "4.4.4 Beta";
         }
     }
 

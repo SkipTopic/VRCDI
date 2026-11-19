@@ -10,6 +10,18 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { stream -> localProperties.load(stream) }
 }
 
+// 签名配置：keystore.properties 不入库，内容形如
+//   storeFile=vrcdi-release.jks
+//   storePassword=...
+//   keyAlias=vrcdi
+//   keyPassword=...
+// 只有 release 构建用它；debug（Beta 测试包）仍用 Android 默认 debug 签名。
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { stream -> keystoreProperties.load(stream) }
+}
+
 android {
     // Android Studio 4.2 自带 SDK 30，这里不用更高的 compileSdk，避免 IDE 提示升级
     compileSdkVersion 30
@@ -20,8 +32,8 @@ android {
         // VRChat 移动端最低兼容 API 29（Android 10），本应用与之对齐
         minSdkVersion 29
         targetSdkVersion 30
-        versionCode 138
-        versionName "2.3.8 Omega"
+        versionCode 373
+        versionName "4.4.4 Beta"
 
         // 空字符串表示没有内置凭据，运行时回落到设置页
         buildConfigField "String", "QWEATHER_HOST", "\"${localProperties.getProperty('qweather.host', '')}\""
@@ -32,12 +44,28 @@ android {
         buildConfig true
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties.getProperty('storeFile'))
+                storePassword keystoreProperties.getProperty('storePassword')
+                keyAlias keystoreProperties.getProperty('keyAlias')
+                keyPassword keystoreProperties.getProperty('keyPassword')
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 只有正式版（assembleRelease）用发布私钥签名
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
+            // Beta / 测试包保持 Android 默认 debug 签名，方便反复安装调试
             minifyEnabled false
         }
     }

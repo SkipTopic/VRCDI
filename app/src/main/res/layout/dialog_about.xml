@@ -43,6 +43,23 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="@string/about_links_label"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/text_about_links"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text_primary"
+        android:textIsSelectable="false"
+        android:textSize="14sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="@string/about_device_label"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />

@@ -226,7 +226,10 @@ public final class DeviceModelTables {
     }
 
     /**
-     * 解析设备表 JSON。顶层可以是 {"devices":[...]}，也可以直接是数组。
+     * 解析设备表 JSON。尽量宽容：
+     *   - 顶层可以是 {"devices":[...]}、{"models":[...]}、{"list":[...]}、{"data":[...]}，
+     *     也可以直接是数组，或者单个 {"model":...,"series":...} 对象；
+     *   - 字段名接受常见别名：model/code/device，series/name/product/market_name。
      * 返回 null 表示格式不对（不是"空表"）。
      */
     public static DeviceModelTable parse(String json) {
@@ -236,7 +239,22 @@ public final class DeviceModelTables {
         try {
             JSONArray devices = null;
             if (text.startsWith("{")) {
-                devices = new JSONObject(text).optJSONArray("devices");
+                JSONObject root = new JSONObject(text);
+                devices = root.optJSONArray("devices");
+                if (devices == null) devices = root.optJSONArray("models");
+                if (devices == null) devices = root.optJSONArray("list");
+                if (devices == null) devices = root.optJSONArray("data");
+                if (devices == null) {
+                    JSONObject single = root.optJSONObject("devices");
+                    if (single != null) {
+                        devices = new JSONArray();
+                        devices.put(single);
+                    }
+                }
+                if (devices == null && root.has("model")) {
+                    devices = new JSONArray();
+                    devices.put(root);
+                }
             } else if (text.startsWith("[")) {
                 // 也接受直接一个数组的写法
                 devices = new JSONArray(text);
@@ -247,12 +265,16 @@ public final class DeviceModelTables {
             for (int i = 0; i < devices.length(); i++) {
                 JSONObject obj = devices.optJSONObject(i);
                 if (obj == null) continue;
-                String model = obj.optString("model").trim();
-                String series = obj.optString("series").trim();
-                String brand = obj.optString("brand").trim();
+
+                String model = firstText(obj, "model", "code", "device", "device_model", "model_code");
+                String series = firstText(obj, "series", "name", "product", "product_name",
+                        "market_name", "series_name");
+                String brand = firstText(obj, "brand", "manufacturer", "vendor");
                 if (model.isEmpty() || series.isEmpty()) continue;
+
+                String matchText = firstText(obj, "match", "type");
                 DeviceModelTable.MatchType match =
-                        "prefix".equalsIgnoreCase(obj.optString("match"))
+                        "prefix".equalsIgnoreCase(matchText)
                                 ? DeviceModelTable.MatchType.PREFIX
                                 : DeviceModelTable.MatchType.EXACT;
                 list.add(new DeviceModelTable.Entry(
@@ -266,6 +288,15 @@ public final class DeviceModelTables {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    /** 依次取第一个非空字段值（兼容不同写法的键名） */
+    private static String firstText(JSONObject obj, String... keys) {
+        for (String key : keys) {
+            String value = obj.optString(key, "").trim();
+            if (!value.isEmpty()) return value;
+        }
+        return "";
     }
 
     private static final Comparator<File> BY_NAME = new Comparator<File>() {

@@ -167,7 +167,8 @@
     <string name="about_title">关于VRCDI</string>
     <string name="about_version_label">软件版本</string>
     <string name="about_author_label">作者：</string>
-    <string name="about_author">WanliuStudio、Qwen 3.8 Pro、DeepSeek-V4.1-Flash</string>
+    <string name="about_author">WanliuStudio、海盗船长暗金（SkipTopic）、Qwen 3.8 Pro、DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">项目地址：</string>
     <string name="about_device_label">你的设备：</string>
     <string name="about_brand">品牌：%1$s</string>
     <string name="about_model">型号：%1$s</string>

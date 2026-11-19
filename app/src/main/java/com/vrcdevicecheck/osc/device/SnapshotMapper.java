@@ -355,10 +355,10 @@ public final class SnapshotMapper {
         String code = firstNonBlank(facts.props.get("ro.product.model"),
                 java == null ? null : java.model);
         String fromTable = (code == null || table == null) ? null : table.lookupBrand(code);
-        return firstNonBlank(fromTable,
+        return VrSupport.normalizeBrand(firstNonBlank(fromTable,
                 facts.props.get("ro.product.brand"),
                 facts.props.get("ro.product.manufacturer"),
-                java == null ? null : java.brand);
+                java == null ? null : java.brand));
     }
 
     public static String model(RawFacts facts, JavaSideInfo java) {
