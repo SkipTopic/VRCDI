@@ -51,42 +51,52 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="设置" />
+            android:label="@string/settings_title" />
 
         <activity
             android:name=".ReportIntervalActivity"
             android:exported="false"
-            android:label="上报时间设置" />
+            android:label="@string/settings_interval" />
 
         <activity
             android:name=".WeatherCityActivity"
             android:exported="false"
-            android:label="天气城市设置" />
+            android:label="@string/settings_weather_city" />
+
+        <activity
+            android:name=".CitySearchActivity"
+            android:exported="false"
+            android:label="@string/search_title" />
+
+        <activity
+            android:name=".QWeatherSettingsActivity"
+            android:exported="false"
+            android:label="@string/qweather_title" />
 
         <activity
             android:name=".DeviceTableSettingsActivity"
             android:exported="false"
-            android:label="设备表设置" />
+            android:label="@string/settings_device_table" />
 
         <activity
             android:name=".AppTableSettingsActivity"
             android:exported="false"
-            android:label="应用表设置" />
+            android:label="@string/settings_app_table" />
 
         <activity
             android:name=".CpuMapSettingsActivity"
             android:exported="false"
-            android:label="CPU 映射表设置" />
+            android:label="@string/settings_cpu_map" />
 
         <activity
             android:name=".ThemeSettingsActivity"
             android:exported="false"
-            android:label="主题" />
+            android:label="@string/theme_title" />
 
         <activity
             android:name=".UpdateSettingsActivity"
             android:exported="false"
-            android:label="软件更新设置" />
+            android:label="@string/settings_update" />
 
         <!-- 应用内更新：把下载好的 APK 以 content:// 交给系统安装器 -->
         <provider

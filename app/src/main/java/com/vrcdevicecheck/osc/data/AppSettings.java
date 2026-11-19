@@ -3,6 +3,8 @@ package com.vrcdevicecheck.osc.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.vrcdevicecheck.osc.BuildConfig;
+
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +28,14 @@ public class AppSettings {
     private static final String KEY_SEND_ON_START = "send_on_start";
     private static final String KEY_WEATHER_PROVINCE = "weather_province";
     private static final String KEY_WEATHER_CITY = "weather_city";
+    /** 国外城市才有：国家名与国家代码，国内城市为空 */
+    private static final String KEY_WEATHER_COUNTRY = "weather_country";
+    private static final String KEY_WEATHER_COUNTRY_CODE = "weather_country_code";
+    /** 搜索选中的城市直接存经纬度，省掉一次地理编码，顺带解决同名城市 */
+    private static final String KEY_WEATHER_LAT = "weather_lat";
+    private static final String KEY_WEATHER_LON = "weather_lon";
+    private static final String KEY_QWEATHER_HOST = "qweather_host";
+    private static final String KEY_QWEATHER_KEY = "qweather_key";
     private static final String KEY_HIDE_UNAVAILABLE = "hide_unavailable";
     private static final String KEY_MODE = "privilege_mode";
     private static final String KEY_ASCII_ONLY = "ascii_only";
@@ -120,27 +130,158 @@ public class AppSettings {
         return value == null ? "" : value;
     }
 
-    /** "江西省 上饶市"；未选择时返回空串 */
+    /** 国外城市所在国家（本地化名称，例如「日本」/「Japan」）；国内城市为空 */
+    public String getWeatherCountry() {
+        String value = sp.getString(KEY_WEATHER_COUNTRY, "");
+        return value == null ? "" : value;
+    }
+
+    /** ISO 国家代码，例如 JP / US；国内城市为空 */
+    public String getWeatherCountryCode() {
+        String value = sp.getString(KEY_WEATHER_COUNTRY_CODE, "");
+        return value == null ? "" : value.trim();
+    }
+
+    /** 选城市时已经知道的经纬度；没存过返回 null，交给地理编码去解析 */
+    public Float[] getWeatherCoords() {
+        if (!sp.contains(KEY_WEATHER_LAT) || !sp.contains(KEY_WEATHER_LON)) return null;
+        return new Float[]{sp.getFloat(KEY_WEATHER_LAT, 0f), sp.getFloat(KEY_WEATHER_LON, 0f)};
+    }
+
+    /** "江西省 上饶市"；国外城市显示成「东京, 日本」；未选择时返回空串 */
     public String getWeatherCityLabel() {
         String province = getWeatherProvince();
         String city = getWeatherCity();
         if (city.isEmpty()) return "";
+        String country = getWeatherCountry();
+        if (!country.isEmpty() && !isChina(country)) {
+            // 同名城市很多（比如好几个 Springfield），带上国家才分得清
+            return city + " · " + country;
+        }
         if (province.isEmpty() || province.equals(city)) return city;
         return province + " " + city;
     }
 
+    /** 缓存键：带上国家代码，避免不同国家的同名城市共用一份缓存 */
+    public String getWeatherPlaceKey() {
+        return getCountryCodeForKey() + "/" + getWeatherProvince() + "/" + getWeatherCity();
+    }
+
+    private String getCountryCodeForKey() {
+        String code = getWeatherCountryCode();
+        if (!code.isEmpty()) return code;
+        String country = getWeatherCountry();
+        return isChina(country) ? "CN" : country;
+    }
+
+    private static boolean isChina(String country) {
+        if (country == null) return false;
+        String value = country.trim();
+        return "中国".equals(value) || "China".equalsIgnoreCase(value)
+                || "中华人民共和国".equals(value);
+    }
+
     public void setWeatherCity(String province, String city) {
-        sp.edit()
+        setWeatherPlace(province, city, "", "", null, null);
+    }
+
+    /**
+     * 记录选中的城市。国内外共用一套字段：
+     *
+     * @param province    国内是省，国外是行政区（可能为空）
+     * @param city        城市名，保留接口返回的写法
+     * @param country     国家名，国内留空
+     * @param countryCode ISO 国家代码，例如 JP
+     * @param lat         纬度，未知传 null
+     * @param lon         经度，未知传 null
+     */
+    public void setWeatherPlace(String province, String city, String country,
+                                String countryCode, Float lat, Float lon) {
+        SharedPreferences.Editor editor = sp.edit()
                 .putString(KEY_WEATHER_PROVINCE, province == null ? "" : province.trim())
                 .putString(KEY_WEATHER_CITY, city == null ? "" : city.trim())
-                .apply();
+                .putString(KEY_WEATHER_COUNTRY, country == null ? "" : country.trim())
+                .putString(KEY_WEATHER_COUNTRY_CODE, countryCode == null ? "" : countryCode.trim());
+        if (lat != null && lon != null) {
+            editor.putFloat(KEY_WEATHER_LAT, lat).putFloat(KEY_WEATHER_LON, lon);
+        } else {
+            editor.remove(KEY_WEATHER_LAT).remove(KEY_WEATHER_LON);
+        }
+        editor.apply();
     }
 
     public void clearWeatherCity() {
         sp.edit()
                 .remove(KEY_WEATHER_PROVINCE)
                 .remove(KEY_WEATHER_CITY)
+                .remove(KEY_WEATHER_COUNTRY)
+                .remove(KEY_WEATHER_COUNTRY_CODE)
+                .remove(KEY_WEATHER_LAT)
+                .remove(KEY_WEATHER_LON)
                 .apply();
+    }
+
+    // ---------------- 和风天气兜底 ----------------
+
+    /**
+     * 和风天气 2026 年起逐步停用公共地址（devapi.qweather.com 等），
+     * 改为每个账号独立的 API Host，形如 h2a9cf3mhs.xy.qweatherapi.com。
+     * 没填时退回旧公共地址，只为兼容老配置，新用户应该填自己的 Host。
+     */
+    public static final String QWEATHER_LEGACY_HOST = "devapi.qweather.com";
+
+    /** 用户可能把 https:// 和结尾的斜杠一起粘进来，这里统一清洗 */
+    public String getQWeatherHost() {
+        String stored = sp.getString(KEY_QWEATHER_HOST, "");
+        String host = stored == null ? "" : stored.trim();
+        if (host.isEmpty()) {
+            // 设置页没填，用编译进 APK 的内置值（如果有）
+            host = BuildConfig.QWEATHER_HOST == null ? "" : BuildConfig.QWEATHER_HOST.trim();
+        }
+        if (host.isEmpty()) return QWEATHER_LEGACY_HOST;
+        if (host.startsWith("https://")) {
+            host = host.substring("https://".length());
+        } else if (host.startsWith("http://")) {
+            host = host.substring("http://".length());
+        }
+        while (host.endsWith("/")) {
+            host = host.substring(0, host.length() - 1);
+        }
+        int slash = host.indexOf('/');
+        if (slash > 0) host = host.substring(0, slash);
+        return host.isEmpty() ? QWEATHER_LEGACY_HOST : host;
+    }
+
+    public void setQWeatherHost(String value) {
+        sp.edit().putString(KEY_QWEATHER_HOST, value == null ? "" : value.trim()).apply();
+    }
+
+    /** 实际生效的 Key：用户填的优先，没填就用内置的 */
+    public String getQWeatherKey() {
+        String stored = getUserQWeatherKey();
+        if (!stored.isEmpty()) return stored;
+        String builtIn = BuildConfig.QWEATHER_KEY == null ? "" : BuildConfig.QWEATHER_KEY.trim();
+        return builtIn;
+    }
+
+    /** 只返回用户在界面上填过的 Key，不含内置凭据（设置页要用它，避免把内置 Key 显示出来） */
+    public String getUserQWeatherKey() {
+        String value = sp.getString(KEY_QWEATHER_KEY, "");
+        return value == null ? "" : value.trim();
+    }
+
+    public void setQWeatherKey(String value) {
+        sp.edit().putString(KEY_QWEATHER_KEY, value == null ? "" : value.trim()).apply();
+    }
+
+    /** 这个安装包里是否编译进了兜底凭据 */
+    public static boolean hasBuiltInQWeather() {
+        return BuildConfig.QWEATHER_KEY != null && !BuildConfig.QWEATHER_KEY.trim().isEmpty();
+    }
+
+    /** 填了 Key（自己填的或内置的）才让和风天气参与兜底 */
+    public boolean isQWeatherConfigured() {
+        return !getQWeatherKey().isEmpty();
     }
 
     /** 上报时是否把读到「不可用」的字段整项删掉，节省 144 字符（默认开） */

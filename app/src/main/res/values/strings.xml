@@ -1,41 +1,504 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    中文是默认语言（values/），英文在 values-en/。
+    界面语言由「设置 → 语言」决定，与系统语言无关；默认中文。
+    注意：VRChat Chatbox 的上报文本不读这里，它只由「仅发送 ASCII」开关决定（见 ReportBuilder）。
+-->
 <resources>
     <string name="app_name">VRCDI</string>
 
+    <!-- ==================== 通用 ==================== -->
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">确定</string>
+    <string name="common_save">保存</string>
+    <string name="common_delete">删除</string>
+    <string name="common_close">关闭</string>
+    <string name="common_later">稍后</string>
+    <string name="common_exit">退出</string>
+    <string name="common_unknown">未知</string>
+    <string name="common_unknown_error">未知错误</string>
+    <string name="common_selected_file">已选择文件</string>
+    <string name="common_no_file_picker">没有找到可用的文件选择器</string>
+    <string name="not_available">不可用</string>
+    <string name="charging">充电中</string>
+
+    <!-- ==================== 通知栏 ==================== -->
     <string name="notif_channel_name">设备信息上报</string>
     <string name="notif_channel_desc">通过 OSC Chatbox 向 VRChat 上报设备信息时保持前台运行</string>
     <string name="notif_title">VRCDI 正在上报设备信息</string>
     <string name="notif_stop">停止</string>
+    <string name="notif_text">目标 %1$s:%2$d · 每 %3$ds</string>
+    <string name="notif_target_unset">未设置</string>
 
+    <!-- ==================== 主界面：卡片标题 ==================== -->
     <string name="card_connection">连接设置</string>
     <string name="card_privilege">权限通道</string>
     <string name="card_fields">上报字段</string>
     <string name="card_preview">Chatbox 预览</string>
     <string name="card_log">发送日志</string>
 
+    <!-- ==================== 主界面：连接 ==================== -->
     <string name="hint_target_ip">自定义 IP，例如 192.168.1.10</string>
     <string name="ip_mode_local">本机IP</string>
     <string name="ip_mode_custom">自定义...</string>
     <string name="hint_target_port">OSC 端口，默认 9000</string>
     <string name="label_interval">上报间隔（秒）</string>
+    <string name="ip_mode_hint_local">发送到 127.0.0.1：VRChat 与 VRCDI 在同一台设备（Quest 独立运行选这个）</string>
+    <string name="ip_mode_hint_custom">填写 VRChat 所在设备的 IP，例如 PC 的局域网地址 192.168.1.10</string>
+    <string name="action_scan_vrchat">扫描局域网中的 VRChat 电脑</string>
+    <string name="check_ascii">仅发送 ASCII（中文会变问号，但一定能显示）</string>
+    <string name="check_send_immediately">立即发送（关闭则只填进 VRChat 输入框）</string>
+    <string name="check_notification_sound">播放提示音</string>
+    <string name="local_ip_loading">本机局域网 IP：获取中…</string>
+    <string name="local_ip_none">本机局域网 IP：未获取到（请确认已连 Wi-Fi）</string>
+    <string name="local_ip_value">本机局域网 IP：%1$s</string>
+    <string name="list_separator">、</string>
+    <string name="launch_arg">VRChat 启动参数（Steam 里加）：--osc=9000:%1$s:9001\n同一局域网 + PC 防火墙放行 UDP 9000，然后在动作菜单里开启 OSC</string>
+    <string name="launch_arg_placeholder">&lt;PC的局域网IP&gt;</string>
 
+    <!-- ==================== 主界面：权限通道 ==================== -->
+    <string name="action_battery">加入电池白名单</string>
+    <string name="action_recheck">重新检测</string>
+    <string name="privilege_current">当前方式：%1$s</string>
+    <string name="privilege_not_checked">尚未检测</string>
+    <string name="privilege_shizuku">Shizuku</string>
+    <string name="privilege_root">Root</string>
+    <string name="privilege_none">无特权（仅读取系统开放的信息）</string>
+    <string name="privilege_none_dialog">免授权（仅读系统开放信息）</string>
+    <string name="privilege_shizuku_not_running">Shizuku 未运行：请打开 Shizuku 应用启动服务（Android 11+ 可用无线调试）</string>
+    <string name="privilege_shizuku_raw_not_running">Shizuku 未运行：请打开 Shizuku 应用并启动服务（Android 11+ 可用无线调试启动）</string>
+    <string name="privilege_shizuku_unauthorized">Shizuku 已运行，但尚未授权给 VRCDI</string>
+    <string name="privilege_shizuku_granted">Shizuku 已授权（shell 权限，uid=2000）</string>
+    <string name="privilege_shizuku_granted_short">Shizuku 已授权</string>
+    <string name="privilege_shizuku_denied">Shizuku 授权被拒绝</string>
+    <string name="privilege_shizuku_requesting">正在请求 Shizuku 授权…</string>
+    <string name="privilege_local_status">无特权模式：仅能读取系统开放的信息，CPU/GPU 频率与温度大概率不可用</string>
+    <string name="privilege_local_label">无特权</string>
+    <string name="privilege_root_granted_uid">Root 已授权（uid=%1$d）</string>
+    <string name="privilege_root_granted">Root 已授权</string>
+    <string name="privilege_root_denied">未检测到可用的 root 授权</string>
+    <string name="privilege_root_denied_hint">未获得 root 授权，请在 root 管理器里给 VRCDI 授权</string>
+    <string name="privilege_root_detecting">正在检测 root 环境…</string>
+    <string name="privilege_root_requesting">正在申请 root 授权，请在弹窗中点允许…</string>
+    <string name="privilege_root_timeout">root 授权被拒绝或超时</string>
+    <string name="privilege_root_detected_uid">Root 已授权（uid=0）</string>
+    <string name="privilege_switch_none">已切换为免授权：只能读取系统开放的信息</string>
+    <string name="privilege_detect_root_toast">正在检测 root 授权…</string>
+    <string name="privilege_shizuku_need_start">Shizuku 未运行：请先打开 Shizuku 应用并启动服务</string>
+    <!-- Root 管理器提示 -->
+    <string name="root_state_granted">已获得 root 授权（uid=0）</string>
+    <string name="root_state_no_env">未探测到 root 环境：/data/adb 下没有已知的面具目录（可能未 root，或路径被隐藏）</string>
+    <string name="root_state_kernel_manager">%1$s 是内核级方案，需要在它的超级用户列表里手动给 VRCDI 授权</string>
+    <string name="root_state_magisk_manager">检测到 %1$s，可以直接申请 root 授权</string>
+    <string name="root_manager_unknown">未知 root 方案</string>
+    <string name="root_hint_ksu">在 KernelSU 里进入「超级用户」，找到 VRCDI 并打开开关，然后回到本应用点「重新检测」</string>
+    <string name="root_hint_apatch">在 APatch 里进入「超级用户」，找到 VRCDI 并打开开关，然后回到本应用点「重新检测」</string>
+    <string name="root_hint_magisk">在 %1$s 里进入「超级用户」，确认 VRCDI 已授权，然后回到本应用点「重新检测」</string>
+    <string name="root_hint_generic">在你的 root 管理器里给 VRCDI 授予超级用户权限，然后回到本应用点「重新检测」</string>
+    <string name="root_manager_missing">没有检测到 %1$s 应用，请手动打开它的超级用户列表给 VRCDI 授权</string>
+    <!-- 通道执行失败（采集降级） -->
+    <string name="channel_unavailable">%1$s 通道不可用，当前仅显示免特权信息</string>
+    <string name="channel_failed">%1$s 执行失败：%2$s</string>
+    <string name="channel_empty">%1$s 无输出，当前仅显示免特权信息</string>
+    <string name="channel_degraded">%1$s（降级）</string>
+
+    <!-- ==================== 主界面：字段与预览 ==================== -->
+    <string name="action_select_all">全选</string>
+    <string name="action_select_none">全不选</string>
+    <string name="check_hide_unavailable">自动屏蔽不可用字段（节省 144 字符）</string>
+    <string name="label_model_mode">上报型号类型</string>
+    <string name="weather_hint_no_city">天气类字段需要先在「设置 → 天气城市设置」选择城市</string>
+    <string name="weather_hint_city">天气城市：%1$s（30 分钟内最多更新一次）</string>
     <string name="action_start">启动上报</string>
     <string name="action_stop">停止上报</string>
     <string name="action_send_now">立即发送一次</string>
     <string name="action_refresh">重新采集</string>
-    <string name="action_battery">加入电池白名单</string>
     <string name="action_clear_log">清空日志</string>
     <string name="action_settings">设置</string>
+    <string name="running_state">正在上报：每 %1$d 秒一次</string>
+    <string name="not_running">未在上报</string>
+    <string name="foreground_unauthed">前台应用：未授权「使用情况访问」，点这里去开启</string>
+    <string name="foreground_unknown">前台应用：未检测到（最近没有切换记录）</string>
+    <string name="foreground_value">前台应用：%1$s</string>
+    <string name="foreground_value_pkg">前台应用：%1$s（%2$s）</string>
+    <string name="foreground_previous"> · 此前：%1$s</string>
+    <string name="preview_empty">尚未采集，点「重新采集」或启动上报</string>
+    <string name="preview_count">%1$d/%2$d</string>
+    <string name="log_empty">暂无记录</string>
 
-    <string name="settings_privilege">权限申请方式</string>
-    <string name="settings_about">关于VRCDI</string>
+    <!-- 预览下方提示 -->
+    <string name="hint_dropped">超过 144 字符，已自动省略：%1$s</string>
+    <string name="hint_hard_truncated">已超过 144 字符，末尾被强制截断</string>
+    <string name="hint_hidden_count">已自动隐藏 %1$d 个不可用字段（不占 144 字符）</string>
+    <string name="hint_all_hidden">所选字段当前都不可用，已自动隐藏所有内容。</string>
+    <string name="hint_fps_need_foreground">帧率需要 VRChat 在前台时采集，并且使用 Shizuku / Root 通道；在本应用界面点「重新采集」时 VRChat 不在前台，读不到是正常的。</string>
+    <string name="hint_weather_need_city">天气类字段需要先选择城市：设置 → 天气城市设置。</string>
+    <string name="hint_weather_no_data">天气数据还没取到：启动上报后会自动获取，同一城市 30 分钟内最多获取一次。</string>
 
+    <!-- 主界面提示与弹窗 -->
+    <string name="toast_sent_now">已触发一次立即发送</string>
+    <string name="toast_collected_not_running">当前未在上报，已采集一次；填写 IP 后启动上报即会自动发送</string>
+    <string name="toast_collect_failed">采集失败：%1$s</string>
+    <string name="scanning_toast">正在扫描局域网 9000 端口，请稍候…</string>
+    <string name="scan_none">没有找到开启 OSC 的 VRChat：确认电脑和手机在同一 Wi-Fi、VRChat 已开启 OSC、PC 防火墙放行 9000；也可以手动选「自定义...」填电脑 IP</string>
+    <string name="scan_title">扫描到这些设备</string>
+    <string name="connect_title">连接 VRChat</string>
+    <string name="connect_message">在 %1$s:9000 发现可能运行 VRChat 的电脑，是否连接并开始上报？</string>
+    <string name="connect_button">连接</string>
+    <string name="toast_connected">已连接 %1$s，开始上报</string>
+    <string name="weather_prompt_title">先选择天气城市</string>
+    <string name="weather_prompt_message">天气、气温、湿度需要知道你所在的城市。\n请选择省份和城市；国外城市用「搜索城市」，中英文名字都行。</string>
+    <string name="go_choose">去选择</string>
+    <string name="battery_hint_title">建议加入电池优化白名单</string>
+    <string name="battery_hint_message">前台服务能保证大部分场景下不被杀，但国产系统的省电策略更激进。建议在接下来的系统页面里把 VRCDI 设为「不优化」，否则息屏后可能停止上报。</string>
+    <string name="go_settings">去设置</string>
+    <string name="toast_battery_already">已在电池优化白名单中</string>
+    <string name="toast_battery_failed">无法打开电池优化设置，请在系统设置里手动把 VRCDI 设为不优化</string>
+    <string name="toast_usage_granted">已获得「使用情况访问」权限</string>
+    <string name="toast_usage_failed">无法打开「使用情况访问」设置，请在系统设置里手动授予</string>
+
+    <!-- 更新提示（主界面） -->
+    <string name="update_dialog_title">发现新版本 %1$s</string>
+    <string name="update_dialog_body">有新版本可用：%1$s</string>
+    <string name="update_go">去更新</string>
+    <string name="update_later">以后再说</string>
+
+    <!-- ==================== 关于 ==================== -->
     <string name="about_title">关于VRCDI</string>
     <string name="about_version_label">软件版本</string>
     <string name="about_author_label">作者：</string>
     <string name="about_author">WanliuStudio、Qwen 3.8 Pro、DeepSeek-V4.1-Flash</string>
     <string name="about_device_label">你的设备：</string>
+    <string name="about_brand">品牌：%1$s</string>
+    <string name="about_model">型号：%1$s</string>
+    <string name="about_model_series">型号：%1$s（%2$s）</string>
+    <string name="about_cpu">CPU：%1$s</string>
+    <string name="about_gpu">GPU：%1$s</string>
+    <string name="about_api">安卓API版本：API%1$d</string>
+    <string name="about_version_value">%1$s (Build %2$d)</string>
 
-    <string name="not_available">不可用</string>
-    <string name="charging">充电中</string>
+    <!-- ==================== 设置一级菜单 ==================== -->
+    <string name="settings_title">设置</string>
+    <string name="settings_interval">上报时间设置</string>
+    <string name="settings_weather_city">天气城市设置</string>
+    <string name="settings_weather_city_with">天气城市设置（%1$s）</string>
+    <string name="settings_privilege">权限申请方式</string>
+    <string name="settings_device_table">设备表设置</string>
+    <string name="settings_app_table">应用表设置</string>
+    <string name="settings_cpu_map">CPU 映射表设置</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_language">语言 / English</string>
+    <string name="settings_update">软件更新设置</string>
+    <string name="settings_about">关于VRCDI</string>
+    <string name="settings_exit">退出</string>
+    <string name="exit_confirm_title">退出</string>
+    <string name="exit_confirm_message">确定要退出 VRCDI 吗？\n退出后上报会停止，后台服务也会一并关闭。</string>
+
+    <!-- 语言选择 -->
+    <string name="language_dialog_title">语言 / Language</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_en">English</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_restarting">已切换语言，正在重启应用…</string>
+
+    <!-- ==================== 上报时间设置 ==================== -->
+    <string name="interval_title">上报时间设置</string>
+    <string name="interval_preview_card">将要生效的设置</string>
+    <string name="interval_card">上报间隔</string>
+    <string name="interval_card_hint">两次上报之间的等待时间。间隔越短，Chatbox 刷新越快，但采集和发送更频繁，也更耗电；太快还有可能被 VRChat 限频。</string>
+    <string name="interval_preset_2">2 秒（最快）</string>
+    <string name="interval_preset_5">5 秒</string>
+    <string name="interval_preset_10">10 秒（默认）</string>
+    <string name="interval_preset_30">30 秒</string>
+    <string name="interval_preset_60">60 秒</string>
+    <string name="interval_custom">自定义</string>
+    <string name="interval_custom_hint">输入秒数（2–3600）</string>
+    <string name="interval_range_hint">可选范围 2–3600 秒。2 秒是允许的最快值；VRChat 目前限制 5 秒内最多 5 条，遇到 Chatbox 不刷新就适当调大间隔。</string>
+    <string name="interval_start_card">启动行为</string>
+    <string name="interval_send_on_start">启动上报时立即发送一次</string>
+    <string name="interval_send_on_start_hint">打开后，点「启动上报」会马上采集并发送一条，之后按上面的间隔循环；关闭则先等一个完整间隔再发第一条。</string>
+    <string name="interval_reset">恢复默认（10 秒）</string>
+    <string name="interval_invalid_preview">间隔无效：请输入 %1$d–%2$d 之间的整数秒</string>
+    <string name="interval_preview_ok">每 %1$d 秒上报一次%2$s</string>
+    <string name="interval_tail_immediate">；点「启动上报」时立即先发一条，再按间隔循环</string>
+    <string name="interval_tail_wait">；点「启动上报」后先等一个间隔，再发第一条</string>
+    <string name="interval_invalid_toast">请输入 %1$d–%2$d 之间的整数秒</string>
+    <string name="interval_saved">已保存：每 %1$d 秒上报一次%2$s</string>
+    <string name="interval_saved_immediate">，已立即生效</string>
+    <string name="interval_reset_done">已恢复默认：每 10 秒一次，启动时立即发送</string>
+
+    <!-- ==================== 天气城市 ==================== -->
+    <string name="weather_cooldown_title">请稍后再试</string>
+    <string name="weather_cooldown_message">抱歉，同一个城市 30 分钟内只能获取一次，还剩约 %1$d 分钟。</string>
+    <string name="weather_title">天气城市设置</string>
+    <string name="weather_load_failed">城市数据加载失败</string>
+    <string name="weather_load_failed_toast">城市数据加载失败，请重新安装应用</string>
+    <string name="weather_hint">先选省份，再选具体城市。\n国外城市可以「搜索城市」（中英文都行），也可以在最下面「选择国外」按国家浏览。\n数据源按顺序兜底：Open-Meteo → wttr.in → 和风天气。\n前两个都在境外，国内直连经常超时或被 DNS 污染——如果两个都失败而你没开代理，那基本就是网络环境的问题，不是应用的问题。和风天气在国内，最稳，但要自己申请 Key。\n同一城市 30 分钟内最多获取一次。</string>
+    <string name="weather_search_entry">搜索城市（支持国外）</string>
+    <string name="weather_fetch_now">立即获取</string>
+    <string name="weather_qweather">和风天气兜底</string>
+    <string name="weather_clear_city">清除已选城市</string>
+    <string name="weather_cleared">已清除天气城市</string>
+    <string name="weather_pick_city_first">先选一个城市</string>
+    <string name="weather_pick_province_title">选择城市 · %1$s</string>
+    <string name="weather_province_header">省份：%1$s\n请选择具体城市</string>
+    <string name="weather_city_selected">已选择：%1$s</string>
+    <string name="weather_log_test">测试和风天气</string>
+    <string name="weather_log_start">开始获取天气</string>
+    <string name="weather_no_city">当前未选择城市</string>
+    <string name="weather_current_city">当前城市：%1$s</string>
+    <string name="weather_current_value">当前天气：%1$s（%2$s 更新 · %3$s）</string>
+    <string name="weather_never_fetched">当前天气：还没有成功获取过</string>
+    <string name="weather_last_fail">上次失败：%1$s</string>
+    <string name="weather_last_fail_at">%1$s（%2$s）</string>
+
+    <!-- ==================== 城市搜索 ==================== -->
+    <string name="search_title">搜索城市</string>
+    <string name="search_hint">输入城市名，中英文都行，例如 东京 / Tokyo</string>
+    <string name="search_button">搜索</string>
+    <string name="search_need_keyword">先输入城市名</string>
+    <string name="search_empty">没有找到匹配的城市，换个写法再试</string>
+    <string name="search_failed">搜索失败：%1$s</string>
+    <string name="search_searching">正在搜索…</string>
+    <string name="search_result">%1$s · %2$s · %3$s</string>
+    <string name="search_result_simple">%1$s · %2$s</string>
+    <string name="search_tip">搜索结果来自 Open-Meteo 地理编码，选中后按经纬度取天气。国外城市建议用英文名搜，或回上一页用「选择国外」按国家浏览。</string>
+
+    <!-- ==================== 和风天气兜底 ==================== -->
+    <string name="qweather_title">和风天气兜底</string>
+    <string name="qweather_intro">和风天气是国内的天气服务，服务器在境内，不需要翻墙，作为最后一个兜底源。\n\n申请步骤：\n1. 打开 console.qweather.com 注册并完成实名认证\n2. 「项目管理」→ 创建项目\n3. 项目里「+ 添加凭据」→ 认证方式选 API KEY\n4. 回到「设置」页，复制你的 API Host（形如 xxxx.qweatherapi.com）\n5. 把 Host 和 Key 填到下面，点「测试连接」\n\n免费订阅每天 1000 次，本应用同一城市 30 分钟最多问一次，用不完。</string>
+    <string name="qweather_builtin_note">这个安装包已经内置了一套兜底凭据，不用填也能用；下面的输入框只用于覆盖它（留空即用内置）。</string>
+    <string name="qweather_host_label">API Host</string>
+    <string name="qweather_host_hint">xxxx.qweatherapi.com</string>
+    <string name="qweather_key_label">API KEY</string>
+    <string name="qweather_key_hint">控制台里那一串 32 位十六进制</string>
+    <string name="qweather_test">测试连接</string>
+    <string name="qweather_saved">已保存</string>
+    <string name="qweather_need_city">先回上一页选一个城市，才能测</string>
+    <string name="qweather_need_key">Key 是空的，测不了</string>
+    <string name="qweather_log_header">测试和风天气</string>
+    <string name="qweather_log_host">· API Host：%1$s</string>
+
+    <!-- ==================== 主题 ==================== -->
+    <string name="theme_title">主题</string>
+    <string name="theme_hint">内置配色点一下就能用，只换颜色。\n想要底图、按钮素材这类复杂外观，用下面的「导入主题」，主题包支持 .zip 与 .tar.gz，里面需要有 theme.json 和图片。\n切换后会自动重启应用。</string>
+    <string name="theme_import">导入主题（zip / tar.gz）</string>
+    <string name="theme_group_default">默认配色</string>
+    <string name="theme_default_item">默认（应用自带外观）</string>
+    <string name="theme_group_imported">已导入的主题</string>
+    <string name="theme_none_imported">还没有导入过主题</string>
+    <string name="theme_current">当前</string>
+    <string name="theme_builtin_undeletable">内置配色不能删除</string>
+    <string name="theme_delete_title">删除主题</string>
+    <string name="theme_delete_message">确定删除主题「%1$s」吗？</string>
+    <string name="theme_pick_file">选择主题包</string>
+    <string name="theme_import_failed">导入失败：%1$s</string>
+    <string name="theme_imported">已导入主题：%1$s</string>
+    <string name="theme_builtin_crimson">胭脂红</string>
+    <string name="theme_builtin_mist">雾蓝</string>
+    <string name="theme_builtin_sakura">樱粉</string>
+    <string name="theme_builtin_pine">松绿</string>
+    <string name="theme_builtin_amber">暖橙</string>
+    <string name="theme_builtin_violet">黛紫</string>
+
+    <!-- ==================== 设备表 ==================== -->
+    <string name="device_table_title">设备表设置</string>
+    <string name="device_table_section">品牌设备表</string>
+    <string name="device_table_empty">还没有品牌设备表，点下面的按钮创建</string>
+    <string name="device_table_create">按品牌创建设备表</string>
+    <string name="device_table_count">%1$s（%2$d 条）</string>
+    <string name="device_table_unparsable">%1$s（无法解析）</string>
+    <string name="device_table_delete_title">删除设备表</string>
+    <string name="device_table_delete_message">确定删除品牌「%1$s」的设备表吗？</string>
+    <string name="device_table_brand_hint">品牌名称，例如 ZTE / 华为</string>
+    <string name="device_table_file_none">设备表文件：未选择</string>
+    <string name="device_table_file_selected">设备表文件：%1$s</string>
+    <string name="device_table_pick">选择设备表文件（JSON）</string>
+    <string name="device_table_pick_title">选择设备表 JSON 文件</string>
+    <string name="device_table_need_brand">请先填写品牌名称</string>
+    <string name="device_table_need_file">请先选择设备表文件</string>
+    <string name="device_table_import_failed">导入失败：文件不是有效的设备表 JSON</string>
+    <string name="device_table_created">已创建「%1$s」设备表，共 %2$d 条</string>
+
+    <!-- ==================== 应用表 ==================== -->
+    <string name="app_table_title">应用表设置</string>
+    <string name="app_table_hint">应用表把包名映射成应用名，例如 com.tencent.mm = 微信。\n导入后写入应用私有目录，覆盖内置同名条目；没有收录的应用显示包名。</string>
+    <string name="app_table_import">导入应用表（JSON）</string>
+    <string name="app_table_count">当前已收录 %1$d 条应用名（内置 + 导入）</string>
+    <string name="app_table_format">格式示例：\n{\n  \"apps\": {\n    \"com.tencent.mm\": \"微信\",\n    \"com.vrchat.mobile.playstore\": \"VRChat\"\n  }\n}</string>
+    <string name="app_table_pick_title">选择应用表 JSON 文件</string>
+    <string name="app_table_import_failed">导入失败：不是有效的应用表 JSON</string>
+    <string name="app_table_imported">已导入 %1$d 条应用名</string>
+
+    <!-- ==================== CPU 映射表 ==================== -->
+    <string name="cpu_map_title">CPU 映射表设置</string>
+    <string name="cpu_map_hint">CPU 映射表把系统里的平台代号换成型号名，例如 kona = Snapdragon 865。\n高通手机通常只暴露 ro.board.platform（kona / taro / kalama），没有 ro.soc.model，有了这张表就能显示成「Qualcomm Snapdragon 865」。</string>
+    <string name="cpu_map_import">导入 CPU 映射表（JSON）</string>
+    <string name="cpu_map_count">当前已收录 %1$d 条 CPU 映射（内置 + 导入）</string>
+    <string name="cpu_map_format">格式示例：\n{\n  \"cpus\": {\n    \"kona\": \"Snapdragon 865\",\n    \"taro\": \"Snapdragon 8 Gen 1\"\n  }\n}</string>
+    <string name="cpu_map_pick_title">选择 CPU 映射表 JSON</string>
+    <string name="cpu_map_import_failed">导入失败：不是有效的 CPU 映射表 JSON</string>
+    <string name="cpu_map_imported">已导入 %1$d 条 CPU 映射</string>
+
+    <!-- ==================== 软件更新 ==================== -->
+    <string name="update_title">软件更新设置</string>
+    <string name="update_current">当前版本：%1$s（Build %2$d）</string>
+    <string name="update_auto_check">打开应用时自动检查更新（静默，默认关闭）</string>
+    <string name="update_source_label">更新源</string>
+    <string name="update_source_gitee">Gitee（国内）</string>
+    <string name="update_source_github">GitHub</string>
+    <string name="update_not_checked">还没有检查更新</string>
+    <string name="update_check_button">检查更新</string>
+    <string name="update_install_button">下载并安装</string>
+    <string name="update_note">说明：更新包会下载到应用缓存目录，下载完成后由系统安装器安装。首次更新需要允许「安装未知应用」。Gitee 偶尔会把 APK 命名成 .apk.zip，下载后会自动按 .apk 处理。</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_check_failed">检查失败：%1$s</string>
+    <string name="update_latest_release">最新发行版：%1$s</string>
+    <string name="update_latest_release_named">最新发行版：%1$s · %2$s</string>
+    <string name="update_found">发现新版本：%1$s</string>
+    <string name="update_found_no_apk">发现新版本，但发行版里没有 APK 附件</string>
+    <string name="update_is_latest">已是最新版本</string>
+    <string name="update_notes_title">更新内容 · %1$s</string>
+    <string name="update_got_it">知道了</string>
+    <string name="update_no_apk">发行版里没有可下载的 APK</string>
+    <string name="update_downloading">正在下载… %1$d%%</string>
+    <string name="update_download_failed">下载失败：%1$s</string>
+    <string name="update_downloaded">下载完成，正在打开安装器…</string>
+    <string name="update_install_failed">安装失败：%1$s</string>
+    <!-- 更新过程中的异常文案 -->
+    <string name="update_err_no_release">没有找到可用的发行版（可能被标记为草稿或预发布）：%1$s</string>
+    <string name="update_err_http">服务器返回 HTTP %1$d</string>
+    <string name="update_err_overwrite">无法覆盖旧的安装包</string>
+    <string name="update_err_download_http">下载失败：HTTP %1$d</string>
+    <string name="update_err_empty_file">下载到的文件为空</string>
+    <string name="update_err_no_apk_file">安装包不存在</string>
+    <string name="update_err_unknown_sources">请先允许「安装未知应用」，授权后再点一次更新</string>
+
+    <!-- ==================== 天气日志 / 失败原因 ==================== -->
+    <string name="wlog_no_network">✗ 设备当前没有网络连接（飞行模式 / 移动数据关闭）</string>
+    <string name="wlog_start">开始获取天气：%1$s</string>
+    <string name="wlog_pick_city_first">还没选城市，先在下面选一个</string>
+    <string name="wlog_geocoding">· 解析城市坐标（geocoding-api.open-meteo.com）…</string>
+    <string name="wlog_located">· 已定位：%1$.4f, %2$.4f</string>
+    <string name="wlog_no_coords">· 没拿到坐标，和风天气将改用城市名查询</string>
+    <string name="wlog_coords_failed">· 坐标解析失败：%1$s</string>
+    <string name="wlog_openmeteo_cooldown">① Open-Meteo：上次失败后处于 6 小时冷却，跳过</string>
+    <string name="wlog_openmeteo_connect">① 连接 Open-Meteo（api.open-meteo.com）…</string>
+    <string name="wlog_wttr">② 切换备用源 wttr.in（wttr.in）…</string>
+    <string name="wlog_qweather">③ 切换到兜底源 和风天气（%1$s）…</string>
+    <string name="wlog_qweather_no_key">· 三个数据源全部失败。去「和风天气兜底」填一套 Key 就能补上</string>
+    <string name="wlog_geoapi">· 用城市名查经纬度（GeoAPI）…</string>
+    <string name="wlog_geoapi_located">· 城市库定位：%1$.4f, %2$.4f</string>
+    <string name="wlog_all_failed">· 三个数据源全部失败，本次没有拿到天气</string>
+    <string name="wlog_success">✓ %1$s 成功：%2$s</string>
+    <string name="wlog_fail">✗ %1$s 失败：%2$s</string>
+    <string name="wlog_hint">   ↳ %1$s</string>
+    <string name="wsummary_ok">成功：%1$s · %2$s</string>
+    <string name="wsummary_fail">失败：%1$s</string>
+    <string name="wsummary_failed">失败</string>
+    <string name="wdetail_no_coords">没有坐标</string>
+    <string name="wdetail_city_parse_failed">城市名解析失败</string>
+    <string name="wdetail_no_city">未选择城市</string>
+    <string name="wdetail_network">网络</string>
+    <string name="wdetail_all_sources">全部数据源</string>
+    <string name="wprovider_qweather">和风天气</string>
+    <string name="wprovider_qweather_en">QWeather</string>
+    <!-- 城市/天气摘要 -->
+    <string name="wsummary_humidity">湿度 %1$d%%</string>
+
+    <!-- 失败原因：一句话 -->
+    <string name="werr_no_network">设备当前没有网络连接</string>
+    <string name="werr_dns">无法解析服务器域名（DNS 查询失败）</string>
+    <string name="werr_connection_refused">服务器拒绝连接或无法建立连接</string>
+    <string name="werr_connect_timeout">连接超时（对方在规定时间内没有响应）</string>
+    <string name="werr_read_timeout">读取超时（已连上，但服务器迟迟不返回数据）</string>
+    <string name="werr_ssl">TLS 握手失败</string>
+    <string name="werr_connection_reset">连接被对方重置</string>
+    <string name="werr_http">服务器返回 HTTP %1$d</string>
+    <string name="werr_empty_body">服务器返回了空内容</string>
+    <string name="werr_bad_json">返回内容不是有效 JSON（可能被登录门户或运营商劫持）</string>
+    <string name="werr_missing_field">返回内容缺少必要字段：%1$s</string>
+    <string name="werr_not_configured">未配置和风天气 API Key</string>
+    <string name="werr_server_code">和风天气错误 %1$s</string>
+    <string name="werr_unknown">未知错误</string>
+    <string name="werr_unknown_detail">未知错误（%1$s）</string>
+    <!-- 失败原因：排查建议 -->
+    <string name="werr_hint_dns">常见于运营商 DNS 污染，或加速器/代理接管了 DNS</string>
+    <string name="werr_hint_connect_timeout">该域名在国内访问本来就不稳定；开着游戏加速器时可能更慢</string>
+    <string name="werr_hint_refused">检查飞行模式、VPN、加速器是否把流量拦掉了</string>
+    <string name="werr_hint_ssl">可能被代理、抓包工具或加速器中间人接管</string>
+    <string name="werr_hint_read_timeout">服务器响应太慢，换个数据源通常就好了</string>
+    <string name="werr_hint_http_auth">Key 无效、没有权限，或 API Host 填错了</string>
+    <string name="werr_hint_http_404">接口地址或地区参数不对</string>
+    <string name="werr_hint_http_429">请求太频繁，被限流了</string>
+    <string name="werr_hint_qw_quota">额度或频率限制，等一会儿就恢复</string>
+    <string name="werr_hint_qw_auth">去控制台核对 API Host 和 Key，两者必须配对</string>
+    <string name="werr_hint_not_configured">在「和风天气兜底」里填 API Host 和 Key，它才参与兜底</string>
+    <!-- 和风天气业务码含义 -->
+    <string name="qw_code_204">该地区没有数据</string>
+    <string name="qw_code_400">请求参数有误（多半是城市或经纬度格式不对）</string>
+    <string name="qw_code_401">认证失败：API Key 无效，或 Key 与 API Host 不匹配</string>
+    <string name="qw_code_402">今日免费额度已用完（免费订阅 1000 次/天），明天 0 点恢复</string>
+    <string name="qw_code_403">这个凭据没有访问该接口的权限</string>
+    <string name="qw_code_404">查询的地区不存在</string>
+    <string name="qw_code_429">请求太频繁，被限流了（免费订阅约 10 次/分钟）</string>
+    <string name="qw_code_500">和风天气服务端出错</string>
+    <string name="qw_code_unknown">未知错误码</string>
+
+    <!-- 日志/发送结果（ReporterService、OscSender） -->
+    <string name="send_err_no_ip">尚未填写目标 IP</string>
+    <string name="send_err_bad_port">端口不合法：%1$d</string>
+    <string name="send_err_unresolved_ip">IP 地址无法解析：%1$s</string>
+    <string name="send_err_unreachable">端口 %1$d 不可达：确认 VRChat 已启动并在动作菜单里开启了 OSC</string>
+    <string name="send_err_network">网络发送失败：%1$s</string>
+    <string name="send_err_no_permission">缺少网络权限（INTERNET）</string>
+    <string name="send_err_exception">发送异常：%1$s</string>
+    <string name="log_collect_error">采集或发送异常</string>
+    <string name="log_collect_failed">采集失败</string>
+    <string name="log_no_fields">未勾选任何字段</string>
+    <string name="log_all_unavailable">所选字段当前都不可用，本次未发送</string>
+    <string name="log_no_target">未填写目标 IP，本次未发送</string>
+    <string name="log_sent">已发送 %1$d 字节到 %2$s:%3$d</string>
+    <!-- ==================== 上报字段名 ==================== -->
+    <string name="field_brand">设备品牌</string>
+    <string name="field_model">设备型号</string>
+    <string name="field_cpu_name">CPU 名称</string>
+    <string name="field_cpu_freq">CPU 频率</string>
+    <string name="field_cpu_temp">CPU 温度</string>
+    <string name="field_cpu_usage">CPU 使用率</string>
+    <string name="field_gpu_name">GPU 名称</string>
+    <string name="field_gpu_freq">GPU 频率</string>
+    <string name="field_gpu_temp">GPU 温度</string>
+    <string name="field_gpu_usage">GPU 使用率</string>
+    <string name="field_ram">RAM 占用/总量</string>
+    <string name="field_battery">电量与充电状态</string>
+    <string name="field_weather">天气</string>
+    <string name="field_temperature">气温</string>
+    <string name="field_humidity">湿度</string>
+    <string name="field_pressure">气压</string>
+    <string name="field_wind">风向风速</string>
+    <string name="field_uv">紫外线</string>
+    <string name="field_sunset">日落</string>
+    <string name="field_foreground_app">前台应用</string>
+    <string name="field_vrchat_fps">帧率</string>
+    <string name="model_mode_real">设备真实型号</string>
+    <string name="model_mode_product">设备产品名称</string>
+
+    <string name="werr_detail_suffix">（%1$s）</string>
+    <string name="priv_read_timeout">读取超时（%1$dms）</string>
+    <string name="foreground_self">VRCDI（本应用）</string>
+    <string name="foreground_vrchat_quest">VRChat（Quest）</string>
+    <string name="theme_err_mkdir_temp">无法创建临时目录</string>
+    <string name="theme_err_no_theme_json">压缩包里没有 theme.json</string>
+    <string name="theme_err_parse_theme_json">theme.json 解析失败</string>
+    <string name="theme_err_save">主题保存失败</string>
+    <string name="theme_err_mkdir">无法创建目录</string>
+    <string name="theme_err_archive_format">无法识别的压缩格式，只支持 zip / tar.gz</string>
+    <string name="world_entry">选择国外（按国家浏览）</string>
+    <string name="world_title">选择国家</string>
+    <string name="world_hint">先选国家，再选城市。这里只收各国人口较多的城市；找不到就回上一页用「搜索城市」。</string>
+    <string name="world_city_title">选择城市 · %1$s</string>
+    <string name="world_city_count">该国家收录了 %1$d 个城市</string>
+    <string name="world_empty">城市数据加载失败，请重新安装应用</string>
 </resources>

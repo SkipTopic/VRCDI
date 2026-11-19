@@ -1,5 +1,10 @@
 package com.vrcdevicecheck.osc.priv;
 
+import android.content.Context;
+
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,7 +16,7 @@ final class ProcessRunner {
     private ProcessRunner() {
     }
 
-    static ShellResult read(Process process, long timeoutMs) {
+    static ShellResult read(Context context, Process process, long timeoutMs) {
         final StringBuilder stdout = new StringBuilder();
         final StringBuilder stderr = new StringBuilder();
 
@@ -25,7 +30,8 @@ final class ProcessRunner {
             } catch (Throwable ignored) {
                 // 销毁失败无需处理
             }
-            return new ShellResult(-1, stdout.toString(), "读取超时（" + timeoutMs + "ms）");
+            return new ShellResult(-1, stdout.toString(),
+                    LocaleHelper.str(context, R.string.priv_read_timeout, timeoutMs));
         }
 
         join(outReader);

@@ -24,6 +24,7 @@ import com.vrcdevicecheck.osc.osc.OscSender;
 import com.vrcdevicecheck.osc.osc.ReportBuilder;
 import com.vrcdevicecheck.osc.priv.PrivilegeController;
 import com.vrcdevicecheck.osc.priv.PrivilegedShell;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
 import com.vrcdevicecheck.osc.weather.WeatherRepository;
 
@@ -160,6 +161,12 @@ public class ReporterService extends Service {
     private boolean forceSend;
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        // 通知栏和日志里的文案要跟界面语言一致，不能只看系统语言
+        super.attachBaseContext(LocaleHelper.wrap(newBase));
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
@@ -274,7 +281,7 @@ public class ReporterService extends Service {
                 try {
                     sampleAndSend();
                 } catch (Throwable t) {
-                    addLog(false, "采集或发送异常", t.getClass().getSimpleName());
+                    addLog(false, text(R.string.log_collect_error), t.getClass().getSimpleName());
                 }
                 lastSendAt = System.currentTimeMillis();
                 synchronized (lock) {
@@ -304,7 +311,8 @@ public class ReporterService extends Service {
         try {
             result = repository.collect(shell);
         } catch (Throwable t) {
-            addLog(false, "采集失败", t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage());
+            addLog(false, text(R.string.log_collect_failed),
+                    t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage());
             return;
         }
         latestSnapshot = result.snapshot;
@@ -321,29 +329,31 @@ public class ReporterService extends Service {
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
                 weather,
-                settings.isHideUnavailable());
+                settings.isHideUnavailable(),
+                LocaleHelper.getLanguage(this));
         latestReport = report;
 
         if (report.text.trim().isEmpty()) {
             addLog(false, enabledFields.isEmpty()
-                    ? "未勾选任何字段"
-                    : "所选字段当前都不可用，本次未发送", null);
+                    ? text(R.string.log_no_fields)
+                    : text(R.string.log_all_unavailable), null);
             notifyListeners();
             return;
         }
         if (settings.getTargetIp().trim().isEmpty()) {
-            addLog(false, report.text, "未填写目标 IP，本次未发送");
+            addLog(false, report.text, text(R.string.log_no_target));
             notifyListeners();
             return;
         }
 
         byte[] packet = OscEncoder.chatboxInput(
                 report.text, settings.isSendImmediately(), settings.isNotificationSound());
-        OscSender.Result sendResult = sender.send(settings.getTargetIp(), settings.getTargetPort(), packet);
+        OscSender.Result sendResult = sender.send(this,
+                settings.getTargetIp(), settings.getTargetPort(), packet);
         if (sendResult.ok) {
             addLog(true, report.text,
-                    "已发送 " + sendResult.bytes + " 字节到 "
-                            + settings.getTargetIp() + ":" + settings.getTargetPort());
+                    text(R.string.log_sent, sendResult.bytes,
+                            settings.getTargetIp(), settings.getTargetPort()));
         } else {
             addLog(false, report.text, sendResult.message);
         }
@@ -360,14 +370,18 @@ public class ReporterService extends Service {
     private void createChannel() {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
-        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    getString(R.string.notif_channel_name),
-                    NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription(getString(R.string.notif_channel_desc));
-            manager.createNotificationChannel(channel);
-        }
+        // 已存在时也重建一次：语言换了以后通知渠道名字要跟着更新
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                text(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription(text(R.string.notif_channel_desc));
+        manager.createNotificationChannel(channel);
+    }
+
+    /** 取一条本地化文案：不依赖 attachBaseContext 是否生效 */
+    private String text(int resId, Object... args) {
+        return LocaleHelper.str(this, resId, args);
     }
 
     private void startAsForeground() {
@@ -394,18 +408,19 @@ public class ReporterService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         String ip = settings.getTargetIp();
-        String target = (ip == null || ip.trim().isEmpty()) ? "未设置" : ip.trim();
+        String target = (ip == null || ip.trim().isEmpty())
+                ? text(R.string.notif_target_unset) : ip.trim();
 
         return new Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(getString(R.string.notif_title))
-                .setContentText("目标 " + target + ":" + settings.getTargetPort()
-                        + " · 每 " + settings.getIntervalSec() + "s")
+                .setContentTitle(text(R.string.notif_title))
+                .setContentText(text(R.string.notif_text, target,
+                        settings.getTargetPort(), settings.getIntervalSec()))
                 .setContentIntent(content)
                 .setOngoing(true)
                 .addAction(new Notification.Action.Builder(
                         android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_notification),
-                        getString(R.string.notif_stop),
+                        text(R.string.notif_stop),
                         stop).build())
                 .build();
     }

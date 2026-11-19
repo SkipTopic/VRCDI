@@ -6,6 +6,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -38,7 +41,7 @@ public final class UpdateManager {
         File dir = ApkProvider.updateDir(context);
         File target = new File(dir, APK_NAME);
         if (target.exists() && !target.delete()) {
-            throw new Exception("无法覆盖旧的安装包");
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_overwrite));
         }
 
         HttpURLConnection conn = null;
@@ -51,7 +54,9 @@ public final class UpdateManager {
             conn.setInstanceFollowRedirects(true);
             conn.setRequestProperty("User-Agent", UpdateChecker.USER_AGENT);
             int code = conn.getResponseCode();
-            if (code != 200) throw new Exception("下载失败：HTTP " + code);
+            if (code != 200) {
+                throw new Exception(LocaleHelper.str(context, R.string.update_err_download_http, code));
+            }
 
             long total = conn.getContentLength();
             in = conn.getInputStream();
@@ -85,7 +90,9 @@ public final class UpdateManager {
             if (conn != null) conn.disconnect();
         }
 
-        if (!target.isFile() || target.length() <= 0) throw new Exception("下载到的文件为空");
+        if (!target.isFile() || target.length() <= 0) {
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_empty_file));
+        }
         // 附件名可能是 xxx.apk.zip，内容仍是 APK；保存名固定为 .apk，这里只做个兜底改名
         if (asset.name != null && asset.name.toLowerCase(Locale.US).endsWith(".zip")) {
             File renamed = new File(dir, APK_NAME);
@@ -97,7 +104,9 @@ public final class UpdateManager {
     }
 
     public static void install(Context context, File apk) throws Exception {
-        if (apk == null || !apk.isFile()) throw new Exception("安装包不存在");
+        if (apk == null || !apk.isFile()) {
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_no_apk_file));
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 && !context.getPackageManager().canRequestPackageInstalls()) {
@@ -106,7 +115,7 @@ public final class UpdateManager {
                     Uri.parse("package:" + context.getPackageName()));
             settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(settings);
-            throw new Exception("请先允许「安装未知应用」，授权后再点一次更新");
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_unknown_sources));
         }
 
         Uri uri = ApkProvider.uriFor(context, apk);

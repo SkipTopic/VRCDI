@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    日本語リソース。キーは values/strings.xml と完全に一致させてください。
+    VRChat の Chatbox に送るテキストはここを読みません（「ASCII のみ」スイッチで決まります）。
+-->
+<resources>
+    <string name="app_name">VRCDI</string>
+
+    <!-- 共通 -->
+    <string name="common_cancel">キャンセル</string>
+    <string name="common_confirm">OK</string>
+    <string name="common_save">保存</string>
+    <string name="common_delete">削除</string>
+    <string name="common_close">閉じる</string>
+    <string name="common_later">あとで</string>
+    <string name="common_exit">終了</string>
+    <string name="common_unknown">不明</string>
+    <string name="common_unknown_error">不明なエラー</string>
+    <string name="common_selected_file">ファイルを選択済み</string>
+    <string name="common_no_file_picker">ファイル選択アプリが見つかりません</string>
+    <string name="not_available">利用不可</string>
+    <string name="charging">充電中</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel_name">デバイス情報の送信</string>
+    <string name="notif_channel_desc">OSC Chatbox で VRChat にデバイス情報を送っている間、前面で動作し続けます</string>
+    <string name="notif_title">VRCDI がデバイス情報を送信中</string>
+    <string name="notif_stop">停止</string>
+    <string name="notif_text">送信先 %1$s:%2$d · %3$d 秒ごと</string>
+    <string name="notif_target_unset">未設定</string>
+
+    <!-- メイン画面：カード -->
+    <string name="card_connection">接続設定</string>
+    <string name="card_privilege">権限チャネル</string>
+    <string name="card_fields">送信する項目</string>
+    <string name="card_preview">Chatbox プレビュー</string>
+    <string name="card_log">送信ログ</string>
+
+    <!-- メイン画面：接続 -->
+    <string name="hint_target_ip">カスタム IP（例 192.168.1.10）</string>
+    <string name="ip_mode_local">この端末</string>
+    <string name="ip_mode_custom">カスタム...</string>
+    <string name="hint_target_port">OSC ポート（既定 9000）</string>
+    <string name="label_interval">送信間隔（秒）</string>
+    <string name="ip_mode_hint_local">127.0.0.1 に送信：VRChat と VRCDI が同じ端末（Quest 単体ならこれを選択）</string>
+    <string name="ip_mode_hint_custom">VRChat を動かしている端末の IP（例 PC の 192.168.1.10）</string>
+    <string name="action_scan_vrchat">LAN 内の VRChat PC を探す</string>
+    <string name="check_ascii">ASCII のみ送信（中国語は「?」になるが必ず表示される）</string>
+    <string name="check_send_immediately">すぐ送信（オフなら VRChat の入力欄に入れるだけ）</string>
+    <string name="check_notification_sound">通知音を鳴らす</string>
+    <string name="local_ip_loading">この端末の LAN IP：取得中…</string>
+    <string name="local_ip_none">この端末の LAN IP：取得できません（Wi-Fi 接続を確認）</string>
+    <string name="local_ip_value">この端末の LAN IP：%1$s</string>
+    <string name="list_separator">、</string>
+    <string name="launch_arg">VRChat の起動オプション（Steam で追加）：--osc=9000:%1$s:9001\n同じ LAN に接続し、PC のファイアウォールで UDP 9000 を許可してから、Action Menu で OSC を有効にします</string>
+    <string name="launch_arg_placeholder">&lt;PC の LAN IP&gt;</string>
+
+    <!-- メイン画面：権限 -->
+    <string name="action_battery">電池最適化の除外に追加</string>
+    <string name="action_recheck">再検出</string>
+    <string name="privilege_current">現在の方式：%1$s</string>
+    <string name="privilege_not_checked">未検出</string>
+    <string name="privilege_shizuku">Shizuku</string>
+    <string name="privilege_root">Root</string>
+    <string name="privilege_none">権限なし（公開情報のみ読み取り）</string>
+    <string name="privilege_none_dialog">認可なし（公開情報のみ）</string>
+    <string name="privilege_shizuku_not_running">Shizuku が動作していません：Shizuku アプリでサービスを開始してください（Android 11+ はワイヤレスデバッグ可）</string>
+    <string name="privilege_shizuku_raw_not_running">Shizuku が動作していません：Shizuku アプリでサービスを開始してください（Android 11+ はワイヤレスデバッグで開始可）</string>
+    <string name="privilege_shizuku_unauthorized">Shizuku は動作中ですが、VRCDI に許可されていません</string>
+    <string name="privilege_shizuku_granted">Shizuku 許可済み（shell 権限、uid=2000）</string>
+    <string name="privilege_shizuku_granted_short">Shizuku 許可済み</string>
+    <string name="privilege_shizuku_denied">Shizuku の許可が拒否されました</string>
+    <string name="privilege_shizuku_requesting">Shizuku の許可を要求中…</string>
+    <string name="privilege_local_status">権限なしモード：公開情報のみ。CPU/GPU の周波数と温度はほぼ利用できません</string>
+    <string name="privilege_local_label">権限なし</string>
+    <string name="privilege_root_granted_uid">Root 許可済み（uid=%1$d）</string>
+    <string name="privilege_root_granted">Root 許可済み</string>
+    <string name="privilege_root_denied">有効な root 許可が見つかりません</string>
+    <string name="privilege_root_denied_hint">root が許可されていません。root マネージャーで VRCDI を許可してください</string>
+    <string name="privilege_root_detecting">root 環境を検出中…</string>
+    <string name="privilege_root_requesting">root 許可を要求中。ダイアログで「許可」を押してください…</string>
+    <string name="privilege_root_timeout">root 許可が拒否されたかタイムアウトしました</string>
+    <string name="privilege_root_detected_uid">Root 許可済み（uid=0）</string>
+    <string name="privilege_switch_none">権限なしに切り替えました：公開情報のみ読み取れます</string>
+    <string name="privilege_detect_root_toast">root 許可を確認中…</string>
+    <string name="privilege_shizuku_need_start">Shizuku が動作していません：Shizuku アプリでサービスを開始してください</string>
+    <string name="root_state_granted">root 許可を取得しました（uid=0）</string>
+    <string name="root_state_no_env">root 環境が見つかりません：/data/adb に既知のマスク用ディレクトリがありません（未 root、またはパスが隠蔽）</string>
+    <string name="root_state_kernel_manager">%1$s はカーネルレベルの方式です。そのスーパーユーザー一覧で VRCDI を手動許可してください</string>
+    <string name="root_state_magisk_manager">%1$s を検出しました。root 許可を直接要求できます</string>
+    <string name="root_manager_unknown">不明な root 方式</string>
+    <string name="root_hint_ksu">KernelSU の「スーパーユーザー」で VRCDI を有効にし、戻って「再検出」を押してください</string>
+    <string name="root_hint_apatch">APatch の「スーパーユーザー」で VRCDI を有効にし、戻って「再検出」を押してください</string>
+    <string name="root_hint_magisk">%1$s の「スーパーユーザー」で VRCDI が許可されているか確認し、戻って「再検出」を押してください</string>
+    <string name="root_hint_generic">root マネージャーで VRCDI にスーパーユーザー権限を与え、戻って「再検出」を押してください</string>
+    <string name="root_manager_missing">%1$s アプリが見つかりません。手動でスーパーユーザー一覧を開いて VRCDI を許可してください</string>
+    <string name="channel_unavailable">%1$s チャネルが利用できません。権限なしの情報のみ表示しています</string>
+    <string name="channel_failed">%1$s の実行に失敗：%2$s</string>
+    <string name="channel_empty">%1$s の出力がありません。権限なしの情報のみ表示しています</string>
+    <string name="channel_degraded">%1$s（縮退）</string>
+
+    <!-- メイン画面：項目とプレビュー -->
+    <string name="action_select_all">すべて選択</string>
+    <string name="action_select_none">すべて解除</string>
+    <string name="check_hide_unavailable">利用不可の項目を自動で隠す（144 文字を節約）</string>
+    <string name="label_model_mode">送信する型番の種類</string>
+    <string name="weather_hint_no_city">天気系の項目は「設定 → 天気の都市」で都市を選ぶ必要があります</string>
+    <string name="weather_hint_city">天気の都市：%1$s（30 分に 1 回まで更新）</string>
+    <string name="action_start">送信を開始</string>
+    <string name="action_stop">送信を停止</string>
+    <string name="action_send_now">今すぐ 1 回送信</string>
+    <string name="action_refresh">再取得</string>
+    <string name="action_clear_log">ログを消去</string>
+    <string name="action_settings">設定</string>
+    <string name="running_state">送信中：%1$d 秒ごと</string>
+    <string name="not_running">送信していません</string>
+    <string name="foreground_unauthed">前面のアプリ：使用状況へのアクセスが未許可。タップして有効化</string>
+    <string name="foreground_unknown">前面のアプリ：検出できません（最近の切り替えなし）</string>
+    <string name="foreground_value">前面のアプリ：%1$s</string>
+    <string name="foreground_value_pkg">前面のアプリ：%1$s（%2$s）</string>
+    <string name="foreground_previous"> · 以前：%1$s</string>
+    <string name="preview_empty">まだ取得していません。「再取得」か送信開始を押してください</string>
+    <string name="preview_count">%1$d/%2$d</string>
+    <string name="log_empty">記録なし</string>
+
+    <string name="hint_dropped">144 文字を超えたため省略：%1$s</string>
+    <string name="hint_hard_truncated">144 文字を超えたため末尾を切り捨てました</string>
+    <string name="hint_hidden_count">利用不可の項目を %1$d 件自動で隠しました（144 文字を消費しません）</string>
+    <string name="hint_all_hidden">選択した項目は現在すべて利用不可のため、すべて隠しました。</string>
+    <string name="hint_fps_need_foreground">FPS は VRChat が前面にあり、Shizuku / Root チャネルのときだけ取得できます。この画面で「再取得」を押すと VRChat は前面にないため、利用不可でも正常です。</string>
+    <string name="hint_weather_need_city">天気系の項目は先に都市を選んでください：設定 → 天気の都市。</string>
+    <string name="hint_weather_no_data">天気データがまだありません。送信を開始すると自動取得します（同じ都市は 30 分に 1 回まで）。</string>
+
+    <string name="toast_sent_now">1 回の即時送信を実行しました</string>
+    <string name="toast_collected_not_running">送信していないため 1 回だけ取得しました。IP を入れて送信を開始すると自動で送られます</string>
+    <string name="toast_collect_failed">取得に失敗：%1$s</string>
+    <string name="scanning_toast">LAN の 9000 番ポートをスキャン中です…</string>
+    <string name="scan_none">OSC が有効な VRChat が見つかりません：PC とスマホが同じ Wi-Fi、VRChat で OSC が有効、PC のファイアウォールで 9000 を許可しているか確認してください。「カスタム...」で PC の IP を直接入れても構いません</string>
+    <string name="scan_title">見つかった端末</string>
+    <string name="connect_title">VRChat に接続</string>
+    <string name="connect_message">%1$s:9000 に VRChat と思われる PC があります。接続して送信を開始しますか？</string>
+    <string name="connect_button">接続</string>
+    <string name="toast_connected">%1$s に接続し、送信を開始しました</string>
+    <string name="weather_prompt_title">先に天気の都市を選んでください</string>
+    <string name="weather_prompt_message">天気・気温・湿度には現在地の都市が必要です。\n省と都市を選んでください。海外の都市は「都市を検索」で中国語・英語どちらでも探せます。</string>
+    <string name="go_choose">選ぶ</string>
+    <string name="battery_hint_title">電池最適化の除外をおすすめします</string>
+    <string name="battery_hint_message">フォアグラウンドサービスは多くの場合で停止されませんが、メーカー独自の省電力はより積極的です。次の画面で VRCDI を「最適化しない」に設定してください。画面オフ後に送信が止まることがあります。</string>
+    <string name="go_settings">設定を開く</string>
+    <string name="toast_battery_already">すでに電池最適化の除外にあります</string>
+    <string name="toast_battery_failed">電池設定を開けません。システム設定で VRCDI を「最適化しない」にしてください</string>
+    <string name="toast_usage_granted">「使用状況へのアクセス」を許可しました</string>
+    <string name="toast_usage_failed">「使用状況へのアクセス」設定を開けません。システム設定で手動許可してください</string>
+
+    <string name="update_dialog_title">新しいバージョン %1$s</string>
+    <string name="update_dialog_body">新しいバージョンがあります：%1$s</string>
+    <string name="update_go">更新する</string>
+    <string name="update_later">あとで</string>
+
+    <!-- このアプリについて -->
+    <string name="about_title">VRCDI について</string>
+    <string name="about_version_label">バージョン</string>
+    <string name="about_author_label">作者：</string>
+    <string name="about_author">WanliuStudio、Qwen 3.8 Pro、DeepSeek-V4.1-Flash</string>
+    <string name="about_device_label">この端末：</string>
+    <string name="about_brand">ブランド：%1$s</string>
+    <string name="about_model">型番：%1$s</string>
+    <string name="about_model_series">型番：%1$s（%2$s）</string>
+    <string name="about_cpu">CPU：%1$s</string>
+    <string name="about_gpu">GPU：%1$s</string>
+    <string name="about_api">Android API レベル：API%1$d</string>
+    <string name="about_version_value">%1$s (Build %2$d)</string>
+
+    <!-- 設定メニュー -->
+    <string name="settings_title">設定</string>
+    <string name="settings_interval">送信間隔</string>
+    <string name="settings_weather_city">天気の都市</string>
+    <string name="settings_weather_city_with">天気の都市（%1$s）</string>
+    <string name="settings_privilege">権限の取得方法</string>
+    <string name="settings_device_table">端末テーブル</string>
+    <string name="settings_app_table">アプリテーブル</string>
+    <string name="settings_cpu_map">CPU マップテーブル</string>
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_language">言語 / English</string>
+    <string name="settings_update">ソフトウェア更新</string>
+    <string name="settings_about">VRCDI について</string>
+    <string name="settings_exit">終了</string>
+    <string name="exit_confirm_title">終了</string>
+    <string name="exit_confirm_message">VRCDI を終了しますか？\n終了すると送信が停止し、バックグラウンドサービスも終了します。</string>
+
+    <string name="language_dialog_title">言語 / Language</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_en">English</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_restarting">言語を切り替えました。アプリを再起動します…</string>
+
+    <!-- 送信間隔 -->
+    <string name="interval_title">送信間隔</string>
+    <string name="interval_preview_card">適用される設定</string>
+    <string name="interval_card">送信間隔</string>
+    <string name="interval_card_hint">2 回の送信の間隔です。短いほど Chatbox の更新は速くなりますが、取得と送信が増えて電池を消費します。短すぎると VRChat 側のレート制限にかかる場合があります。</string>
+    <string name="interval_preset_2">2 秒（最速）</string>
+    <string name="interval_preset_5">5 秒</string>
+    <string name="interval_preset_10">10 秒（既定）</string>
+    <string name="interval_preset_30">30 秒</string>
+    <string name="interval_preset_60">60 秒</string>
+    <string name="interval_custom">カスタム</string>
+    <string name="interval_custom_hint">秒数を入力（2–3600）</string>
+    <string name="interval_range_hint">指定できる範囲は 2–3600 秒です。2 秒が最短です。VRChat は 5 秒間に 5 通までなので、Chatbox が更新されないときは間隔を広げてください。</string>
+    <string name="interval_start_card">開始時の動作</string>
+    <string name="interval_send_on_start">送信開始時にすぐ 1 回送る</string>
+    <string name="interval_send_on_start_hint">オンにすると「送信を開始」で即座に 1 回送信し、その後は上の間隔で繰り返します。オフなら最初の 1 回は間隔を待ちます。</string>
+    <string name="interval_reset">既定に戻す（10 秒）</string>
+    <string name="interval_invalid_preview">間隔が不正です：%1$d〜%2$d の整数秒を入力してください</string>
+    <string name="interval_preview_ok">%1$d 秒ごとに送信%2$s</string>
+    <string name="interval_tail_immediate">。「送信を開始」で即座に 1 回送り、その後は間隔で繰り返します</string>
+    <string name="interval_tail_wait">。「送信を開始」後、最初の 1 回は間隔を待ちます</string>
+    <string name="interval_invalid_toast">%1$d〜%2$d の整数秒を入力してください</string>
+    <string name="interval_saved">保存しました：%1$d 秒ごとに送信%2$s</string>
+    <string name="interval_saved_immediate">（すぐ反映）</string>
+    <string name="interval_reset_done">既定に戻しました：10 秒ごと、開始時にすぐ送信</string>
+
+    <!-- 天気の都市 -->
+    <string name="weather_cooldown_title">しばらくお待ちください</string>
+    <string name="weather_cooldown_message">申し訳ありません。同じ都市は 30 分に 1 回だけ取得できます。残り約 %1$d 分。</string>
+    <string name="weather_title">天気の都市</string>
+    <string name="weather_load_failed">都市データの読み込みに失敗</string>
+    <string name="weather_load_failed_toast">都市データの読み込みに失敗しました。再インストールしてください</string>
+    <string name="weather_hint">まず省、次に都市を選びます。\n海外の都市は「都市を検索」（中国語・英語可）か、一番下の「海外から選ぶ」で国から選べます。\nデータ源は順に試します：Open-Meteo → wttr.in → QWeather。\n前の 2 つは海外にあり、中国本土からはタイムアウトや DNS 汚染がよく起きます。両方失敗してプロキシも使っていないなら、原因は回線であってアプリではありません。QWeather は中国国内にあり最も安定しますが、自分の Key が必要です。\n同じ都市は 30 分に 1 回まで。</string>
+    <string name="weather_search_entry">都市を検索（海外も可）</string>
+    <string name="weather_fetch_now">今すぐ取得</string>
+    <string name="weather_qweather">QWeather フォールバック</string>
+    <string name="weather_clear_city">選択した都市を解除</string>
+    <string name="weather_cleared">天気の都市を解除しました</string>
+    <string name="weather_pick_city_first">先に都市を選んでください</string>
+    <string name="weather_pick_province_title">都市を選択 · %1$s</string>
+    <string name="weather_province_header">省：%1$s\n都市を選んでください</string>
+    <string name="weather_city_selected">選択しました：%1$s</string>
+    <string name="weather_log_test">QWeather をテスト</string>
+    <string name="weather_log_start">天気の取得を開始</string>
+    <string name="weather_no_city">都市が未選択です</string>
+    <string name="weather_current_city">現在の都市：%1$s</string>
+    <string name="weather_current_value">現在の天気：%1$s（%2$s 更新 · %3$s）</string>
+    <string name="weather_never_fetched">現在の天気：まだ取得できていません</string>
+    <string name="weather_last_fail">前回の失敗：%1$s</string>
+    <string name="weather_last_fail_at">%1$s（%2$s）</string>
+
+    <!-- 都市検索 -->
+    <string name="search_title">都市を検索</string>
+    <string name="search_hint">都市名を入力（中国語・英語可）。例：東京 / Tokyo</string>
+    <string name="search_button">検索</string>
+    <string name="search_need_keyword">先に都市名を入力してください</string>
+    <string name="search_empty">一致する都市がありません。別の表記で試してください</string>
+    <string name="search_failed">検索に失敗：%1$s</string>
+    <string name="search_searching">検索中…</string>
+    <string name="search_result">%1$s · %2$s · %3$s</string>
+    <string name="search_result_simple">%1$s · %2$s</string>
+    <string name="search_tip">検索結果は Open-Meteo のジオコーディングによるものです。選択後は緯度経度で天気を取得します。海外の都市は英語名で検索するか、戻って「海外から選ぶ」で国から選んでください。</string>
+
+    <!-- QWeather -->
+    <string name="qweather_title">QWeather フォールバック</string>
+    <string name="qweather_intro">QWeather（和風天気）は中国国内の天気サービスで、VPN 不要の最後のフォールバックです。\n\n取得手順：\n1. console.qweather.com で登録し、本人確認を完了\n2. 「プロジェクト管理」→ プロジェクト作成\n3. プロジェクトで「+ 認証情報を追加」→ 認証方式は API KEY\n4. 「設定」ページで API Host（xxxx.qweatherapi.com の形式）をコピー\n5. 下の Host と Key を入力し、「接続テスト」を押す\n\n無料枠は 1 日 1000 回。本アプリは同じ都市で 30 分に 1 回までなので使い切れません。</string>
+    <string name="qweather_builtin_note">この APK にはフォールバック用の認証情報が組み込まれています。入力しなくても使えます。下の欄は上書き用です（空欄なら組み込み値）。</string>
+    <string name="qweather_host_label">API Host</string>
+    <string name="qweather_host_hint">xxxx.qweatherapi.com</string>
+    <string name="qweather_key_label">API KEY</string>
+    <string name="qweather_key_hint">コンソールの 32 桁の 16 進数</string>
+    <string name="qweather_test">接続テスト</string>
+    <string name="qweather_saved">保存しました</string>
+    <string name="qweather_need_city">前の画面で都市を選んでからテストしてください</string>
+    <string name="qweather_need_key">Key が空のためテストできません</string>
+    <string name="qweather_log_header">QWeather をテスト</string>
+    <string name="qweather_log_host">・API Host：%1$s</string>
+
+    <!-- テーマ -->
+    <string name="theme_title">テーマ</string>
+    <string name="theme_hint">内蔵の配色はタップするだけで適用され、色だけが変わります。\n背景画像やボタン画像を使う場合は下の「テーマをインポート」を使います。テーマパッケージは .zip / .tar.gz で、theme.json と画像が必要です。\n切り替えるとアプリが再起動します。</string>
+    <string name="theme_import">テーマをインポート（zip / tar.gz）</string>
+    <string name="theme_group_default">既定の配色</string>
+    <string name="theme_default_item">既定（アプリ標準の見た目）</string>
+    <string name="theme_group_imported">インポートしたテーマ</string>
+    <string name="theme_none_imported">まだテーマをインポートしていません</string>
+    <string name="theme_current">使用中</string>
+    <string name="theme_builtin_undeletable">内蔵の配色は削除できません</string>
+    <string name="theme_delete_title">テーマを削除</string>
+    <string name="theme_delete_message">テーマ「%1$s」を削除しますか？</string>
+    <string name="theme_pick_file">テーマパッケージを選択</string>
+    <string name="theme_import_failed">インポートに失敗：%1$s</string>
+    <string name="theme_imported">テーマをインポートしました：%1$s</string>
+    <string name="theme_builtin_crimson">カーマイン</string>
+    <string name="theme_builtin_mist">ミストブルー</string>
+    <string name="theme_builtin_sakura">桜</string>
+    <string name="theme_builtin_pine">パイン</string>
+    <string name="theme_builtin_amber">アンバー</string>
+    <string name="theme_builtin_violet">バイオレット</string>
+
+    <!-- 端末テーブル -->
+    <string name="device_table_title">端末テーブル</string>
+    <string name="device_table_section">ブランド別テーブル</string>
+    <string name="device_table_empty">ブランド別テーブルはまだありません。下のボタンで作成してください</string>
+    <string name="device_table_create">ブランド別テーブルを作成</string>
+    <string name="device_table_count">%1$s（%2$d 件）</string>
+    <string name="device_table_unparsable">%1$s（解析できません）</string>
+    <string name="device_table_delete_title">端末テーブルを削除</string>
+    <string name="device_table_delete_message">ブランド「%1$s」の端末テーブルを削除しますか？</string>
+    <string name="device_table_brand_hint">ブランド名（例 ZTE / HUAWEI）</string>
+    <string name="device_table_file_none">テーブルファイル：未選択</string>
+    <string name="device_table_file_selected">テーブルファイル：%1$s</string>
+    <string name="device_table_pick">テーブルファイルを選択（JSON）</string>
+    <string name="device_table_pick_title">端末テーブルの JSON を選択</string>
+    <string name="device_table_need_brand">先にブランド名を入力してください</string>
+    <string name="device_table_need_file">先にテーブルファイルを選んでください</string>
+    <string name="device_table_import_failed">インポートに失敗：有効な端末テーブル JSON ではありません</string>
+    <string name="device_table_created">「%1$s」の端末テーブルを作成しました（%2$d 件）</string>
+
+    <!-- アプリテーブル -->
+    <string name="app_table_title">アプリテーブル</string>
+    <string name="app_table_hint">アプリテーブルはパッケージ名をアプリ名に対応させます（例 com.tencent.mm = WeChat）。\nインポートするとアプリ専用領域に保存され、内蔵の同名項目を上書きします。未収録のアプリはパッケージ名を表示します。</string>
+    <string name="app_table_import">アプリテーブルをインポート（JSON）</string>
+    <string name="app_table_count">現在 %1$d 件のアプリ名を収録（内蔵 + インポート）</string>
+    <string name="app_table_format">形式の例：\n{\n  \"apps\": {\n    \"com.tencent.mm\": \"WeChat\",\n    \"com.vrchat.mobile.playstore\": \"VRChat\"\n  }\n}</string>
+    <string name="app_table_pick_title">アプリテーブルの JSON を選択</string>
+    <string name="app_table_import_failed">インポートに失敗：有効なアプリテーブル JSON ではありません</string>
+    <string name="app_table_imported">%1$d 件のアプリ名をインポートしました</string>
+
+    <!-- CPU マップ -->
+    <string name="cpu_map_title">CPU マップテーブル</string>
+    <string name="cpu_map_hint">CPU マップはプラットフォームのコード名を型番に変換します（例 kona = Snapdragon 865）。\nSnapdragon 搭載端末は ro.board.platform（kona / taro / kalama）しか公開せず ro.soc.model がないことが多く、この表があれば「Qualcomm Snapdragon 865」と表示できます。</string>
+    <string name="cpu_map_import">CPU マップをインポート（JSON）</string>
+    <string name="cpu_map_count">現在 %1$d 件の CPU マップを収録（内蔵 + インポート）</string>
+    <string name="cpu_map_format">形式の例：\n{\n  \"cpus\": {\n    \"kona\": \"Snapdragon 865\",\n    \"taro\": \"Snapdragon 8 Gen 1\"\n  }\n}</string>
+    <string name="cpu_map_pick_title">CPU マップの JSON を選択</string>
+    <string name="cpu_map_import_failed">インポートに失敗：有効な CPU マップ JSON ではありません</string>
+    <string name="cpu_map_imported">%1$d 件の CPU マップをインポートしました</string>
+
+    <!-- ソフトウェア更新 -->
+    <string name="update_title">ソフトウェア更新</string>
+    <string name="update_current">現在のバージョン：%1$s（Build %2$d）</string>
+    <string name="update_auto_check">起動時に更新を確認（サイレント、既定はオフ）</string>
+    <string name="update_source_label">更新元</string>
+    <string name="update_source_gitee">Gitee（中国）</string>
+    <string name="update_source_github">GitHub</string>
+    <string name="update_not_checked">まだ確認していません</string>
+    <string name="update_check_button">更新を確認</string>
+    <string name="update_install_button">ダウンロードしてインストール</string>
+    <string name="update_note">説明：更新パッケージはアプリのキャッシュにダウンロードされ、システムのインストーラでインストールされます。初回は「提供元不明のアプリ」を許可してください。Gitee は APK を .apk.zip という名前で置くことがありますが、自動的に .apk として扱います。</string>
+    <string name="update_checking">更新を確認中…</string>
+    <string name="update_check_failed">確認に失敗：%1$s</string>
+    <string name="update_latest_release">最新リリース：%1$s</string>
+    <string name="update_latest_release_named">最新リリース：%1$s · %2$s</string>
+    <string name="update_found">新しいバージョン：%1$s</string>
+    <string name="update_found_no_apk">新しいバージョンはありますが、リリースに APK がありません</string>
+    <string name="update_is_latest">最新です</string>
+    <string name="update_notes_title">更新内容 · %1$s</string>
+    <string name="update_got_it">わかりました</string>
+    <string name="update_no_apk">リリースにダウンロードできる APK がありません</string>
+    <string name="update_downloading">ダウンロード中… %1$d%%</string>
+    <string name="update_download_failed">ダウンロードに失敗：%1$s</string>
+    <string name="update_downloaded">ダウンロード完了。インストーラを開きます…</string>
+    <string name="update_install_failed">インストールに失敗：%1$s</string>
+    <string name="update_err_no_release">利用できるリリースが見つかりません（下書き／プレリリースの可能性）：%1$s</string>
+    <string name="update_err_http">サーバーが HTTP %1$d を返しました</string>
+    <string name="update_err_overwrite">古いパッケージを上書きできません</string>
+    <string name="update_err_download_http">ダウンロードに失敗：HTTP %1$d</string>
+    <string name="update_err_empty_file">ダウンロードしたファイルが空です</string>
+    <string name="update_err_no_apk_file">パッケージが存在しません</string>
+    <string name="update_err_unknown_sources">先に「提供元不明のアプリ」を許可し、もう一度更新を押してください</string>
+
+    <!-- 天気ログ / 失敗理由 -->
+    <string name="wlog_no_network">✗ ネットワーク接続がありません（機内モード / モバイルデータ OFF）</string>
+    <string name="wlog_start">天気の取得を開始：%1$s</string>
+    <string name="wlog_pick_city_first">都市が未選択です。下から選んでください</string>
+    <string name="wlog_geocoding">· 都市の座標を解析（geocoding-api.open-meteo.com）…</string>
+    <string name="wlog_located">· 位置を特定：%1$.4f, %2$.4f</string>
+    <string name="wlog_no_coords">· 座標が取れないため、QWeather は都市名で検索します</string>
+    <string name="wlog_coords_failed">· 座標の解析に失敗：%1$s</string>
+    <string name="wlog_openmeteo_cooldown">① Open-Meteo：前回の失敗から 6 時間のクールダウン中、スキップ</string>
+    <string name="wlog_openmeteo_connect">① Open-Meteo に接続（api.open-meteo.com）…</string>
+    <string name="wlog_wttr">② 予備の wttr.in に切り替え…</string>
+    <string name="wlog_qweather">③ フォールバックの QWeather に切り替え（%1$s）…</string>
+    <string name="wlog_qweather_no_key">· 3 つのデータ源すべて失敗。「QWeather フォールバック」に Key を入れれば補えます</string>
+    <string name="wlog_geoapi">· 都市名から緯度経度を検索（GeoAPI）…</string>
+    <string name="wlog_geoapi_located">· 都市データベースで特定：%1$.4f, %2$.4f</string>
+    <string name="wlog_all_failed">· 3 つのデータ源すべて失敗。今回は天気を取得できませんでした</string>
+    <string name="wlog_success">✓ %1$s 成功：%2$s</string>
+    <string name="wlog_fail">✗ %1$s 失敗：%2$s</string>
+    <string name="wlog_hint">   ↳ %1$s</string>
+    <string name="wsummary_ok">成功：%1$s · %2$s</string>
+    <string name="wsummary_fail">失敗：%1$s</string>
+    <string name="wsummary_failed">失敗</string>
+    <string name="wdetail_no_coords">座標なし</string>
+    <string name="wdetail_city_parse_failed">都市名を解析できません</string>
+    <string name="wdetail_no_city">都市が未選択</string>
+    <string name="wdetail_network">ネットワーク</string>
+    <string name="wdetail_all_sources">すべてのデータ源</string>
+    <string name="wprovider_qweather">QWeather</string>
+    <string name="wprovider_qweather_en">QWeather</string>
+    <string name="wsummary_humidity">湿度 %1$d%%</string>
+
+    <string name="werr_no_network">デバイスにネットワーク接続がありません</string>
+    <string name="werr_dns">サーバー名を解決できません（DNS 参照失敗）</string>
+    <string name="werr_connection_refused">サーバーが接続を拒否、または接続できません</string>
+    <string name="werr_connect_timeout">接続タイムアウト（時間内に応答なし）</string>
+    <string name="werr_read_timeout">読み取りタイムアウト（接続済みだが応答が返らない）</string>
+    <string name="werr_ssl">TLS ハンドシェイクに失敗</string>
+    <string name="werr_connection_reset">接続が相手にリセットされました</string>
+    <string name="werr_http">サーバーが HTTP %1$d を返しました</string>
+    <string name="werr_empty_body">サーバーの応答が空です</string>
+    <string name="werr_bad_json">応答が有効な JSON ではありません（公衆 Wi-Fi の認証画面や回線側の介入の可能性）</string>
+    <string name="werr_missing_field">応答に必須項目がありません：%1$s</string>
+    <string name="werr_not_configured">QWeather の API Key が未設定です</string>
+    <string name="werr_server_code">QWeather エラー %1$s</string>
+    <string name="werr_unknown">不明なエラー</string>
+    <string name="werr_unknown_detail">不明なエラー（%1$s）</string>
+    <string name="werr_hint_dns">回線側の DNS 汚染や、ブースター／プロキシによる DNS 乗っ取りでよく起きます</string>
+    <string name="werr_hint_connect_timeout">このドメインは中国本土から不安定です。ゲームブースターを使うと遅くなることがあります</string>
+    <string name="werr_hint_refused">機内モード、VPN、ブースターが通信を遮断していないか確認してください</string>
+    <string name="werr_hint_ssl">プロキシ、パケット解析ツール、ブースターによる中間者介入の可能性</string>
+    <string name="werr_hint_read_timeout">サーバーの応答が遅いだけです。データ源を変えると大抵直ります</string>
+    <string name="werr_hint_http_auth">Key が無効、権限がない、または API Host が違います</string>
+    <string name="werr_hint_http_404">エンドポイントか地域パラメータが違います</string>
+    <string name="werr_hint_http_429">リクエストが多すぎて制限されています</string>
+    <string name="werr_hint_qw_quota">回数制限です。しばらく待つと回復します</string>
+    <string name="werr_hint_qw_auth">コンソールで API Host と Key を確認してください。両者は一致している必要があります</string>
+    <string name="werr_hint_not_configured">「QWeather フォールバック」に API Host と Key を入れるとフォールバックに参加します</string>
+    <string name="qw_code_204">この地域のデータがありません</string>
+    <string name="qw_code_400">リクエストパラメータが不正（都市や緯度経度の形式が多い）</string>
+    <string name="qw_code_401">認証失敗：API Key が無効、または Key と API Host が一致しません</string>
+    <string name="qw_code_402">本日の無料枠を使い切りました（1 日 1000 回）。翌日 0 時に回復します</string>
+    <string name="qw_code_403">この認証情報には当該 API の権限がありません</string>
+    <string name="qw_code_404">指定した地域が存在しません</string>
+    <string name="qw_code_429">リクエストが多すぎます（無料枠は約 10 回/分）</string>
+    <string name="qw_code_500">QWeather サーバー側のエラー</string>
+    <string name="qw_code_unknown">不明なエラーコード</string>
+
+    <string name="send_err_no_ip">送信先 IP が未入力です</string>
+    <string name="send_err_bad_port">ポートが不正：%1$d</string>
+    <string name="send_err_unresolved_ip">IP アドレスを解決できません：%1$s</string>
+    <string name="send_err_unreachable">ポート %1$d に到達できません：VRChat が起動し、Action Menu で OSC が有効か確認してください</string>
+    <string name="send_err_network">送信に失敗：%1$s</string>
+    <string name="send_err_no_permission">INTERNET 権限がありません</string>
+    <string name="send_err_exception">送信エラー：%1$s</string>
+    <string name="log_collect_error">取得または送信のエラー</string>
+    <string name="log_collect_failed">取得に失敗</string>
+    <string name="log_no_fields">項目が 1 つも選ばれていません</string>
+    <string name="log_all_unavailable">選択した項目は現在すべて利用不可のため送信しませんでした</string>
+    <string name="log_no_target">送信先 IP が空のため送信しませんでした</string>
+    <string name="log_sent">%1$d バイトを %2$s:%3$d に送信しました</string>
+
+    <!-- 送信項目名 -->
+    <string name="field_brand">端末ブランド</string>
+    <string name="field_model">端末の型番</string>
+    <string name="field_cpu_name">CPU 名</string>
+    <string name="field_cpu_freq">CPU 周波数</string>
+    <string name="field_cpu_temp">CPU 温度</string>
+    <string name="field_cpu_usage">CPU 使用率</string>
+    <string name="field_gpu_name">GPU 名</string>
+    <string name="field_gpu_freq">GPU 周波数</string>
+    <string name="field_gpu_temp">GPU 温度</string>
+    <string name="field_gpu_usage">GPU 使用率</string>
+    <string name="field_ram">RAM 使用量/合計</string>
+    <string name="field_battery">電池残量と充電状態</string>
+    <string name="field_weather">天気</string>
+    <string name="field_temperature">気温</string>
+    <string name="field_humidity">湿度</string>
+    <string name="field_pressure">気圧</string>
+    <string name="field_wind">風向・風速</string>
+    <string name="field_uv">紫外線</string>
+    <string name="field_sunset">日の入り</string>
+    <string name="field_foreground_app">前面のアプリ</string>
+    <string name="field_vrchat_fps">フレームレート</string>
+    <string name="model_mode_real">実際の型番</string>
+    <string name="model_mode_product">製品名</string>
+
+    <string name="werr_detail_suffix">（%1$s）</string>
+    <string name="priv_read_timeout">読み取りタイムアウト（%1$dms）</string>
+    <string name="foreground_self">VRCDI（このアプリ）</string>
+    <string name="foreground_vrchat_quest">VRChat（Quest）</string>
+    <string name="theme_err_mkdir_temp">一時ディレクトリを作成できません</string>
+    <string name="theme_err_no_theme_json">アーカイブに theme.json がありません</string>
+    <string name="theme_err_parse_theme_json">theme.json を解析できません</string>
+    <string name="theme_err_save">テーマを保存できません</string>
+    <string name="theme_err_mkdir">ディレクトリを作成できません</string>
+    <string name="theme_err_archive_format">未対応の圧縮形式です（zip / tar.gz のみ）</string>
+    <string name="world_entry">海外から選ぶ（国別）</string>
+    <string name="world_title">国を選択</string>
+    <string name="world_hint">まず国、次に都市を選びます。ここには各国の主要都市のみ収録しています。見つからない場合は戻って「都市を検索」を使ってください。</string>
+    <string name="world_city_title">都市を選択 · %1$s</string>
+    <string name="world_city_count">この国には %1$d 都市を収録</string>
+    <string name="world_empty">都市データの読み込みに失敗しました。再インストールしてください</string>
+</resources>

@@ -1,6 +1,5 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,33 +21,35 @@ import com.vrcdevicecheck.osc.priv.RootShell;
 import com.vrcdevicecheck.osc.priv.ShizukuShell;
 import com.vrcdevicecheck.osc.service.ReporterService;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import rikka.shizuku.Shizuku;
 
 /**
  * 设置一级菜单。
  *
- * 会弹窗的条目（权限申请方式、关于VRCDI）直接在设置页里弹，
+ * 会弹窗的条目（权限申请方式、语言、关于VRCDI）直接在设置页里弹，
  * 不返回首页，弹完仍然停在设置页。
  */
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends BaseActivity {
 
     private String[] buildItems() {
         String weatherLabel = settings.getWeatherCityLabel();
         String weatherItem = weatherLabel.isEmpty()
-                ? "天气城市设置"
-                : "天气城市设置（" + weatherLabel + "）";
+                ? getString(R.string.settings_weather_city)
+                : getString(R.string.settings_weather_city_with, weatherLabel);
         return new String[]{
-                "上报时间设置",
+                getString(R.string.settings_interval),
                 weatherItem,
-                "权限申请方式",
-                "设备表设置",
-                "应用表设置",
-                "CPU 映射表设置",
-                "主题",
-                "软件更新设置",
-                "关于VRCDI",
-                "退出"
+                getString(R.string.settings_privilege),
+                getString(R.string.settings_device_table),
+                getString(R.string.settings_app_table),
+                getString(R.string.settings_cpu_map),
+                getString(R.string.settings_theme),
+                getString(R.string.settings_language),
+                getString(R.string.settings_update),
+                getString(R.string.settings_about),
+                getString(R.string.settings_exit)
         };
     }
 
@@ -61,15 +62,15 @@ public class SettingsActivity extends Activity {
                 public void onRequestPermissionResult(int requestCode, int grantResult) {
                     if (requestCode != ShizukuShell.REQUEST_CODE_PERMISSION) return;
                     toast(grantResult == PackageManager.PERMISSION_GRANTED
-                            ? "Shizuku 已授权"
-                            : "Shizuku 授权被拒绝");
+                            ? getString(R.string.privilege_shizuku_granted_short)
+                            : getString(R.string.privilege_shizuku_denied));
                 }
             };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("设置");
+        setTitle(R.string.settings_title);
         settings = new AppSettings(this);
 
         ListView list = new ListView(this);
@@ -100,9 +101,12 @@ public class SettingsActivity extends Activity {
                         startActivity(new Intent(SettingsActivity.this, ThemeSettingsActivity.class));
                         break;
                     case 7:
-                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        showLanguageDialog();
                         break;
                     case 8:
+                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        break;
+                    case 9:
                         showAboutDialog();
                         break;
                     default:
@@ -128,12 +132,46 @@ public class SettingsActivity extends Activity {
         super.onStop();
     }
 
+    /** 语言：中文 / English / 日本語 / Русский。默认中文，切换后立刻重启让所有界面重建 */
+    private void showLanguageDialog() {
+        final String[] values = {
+                LocaleHelper.LANG_ZH, LocaleHelper.LANG_EN,
+                LocaleHelper.LANG_JA, LocaleHelper.LANG_RU};
+        final String[] labels = {
+                getString(R.string.language_zh),
+                getString(R.string.language_en),
+                getString(R.string.language_ja),
+                getString(R.string.language_ru)};
+        String current = LocaleHelper.getLanguage(this);
+        int checked = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(current)) checked = i;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.language_dialog_title)
+                .setSingleChoiceItems(labels, checked, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        String current = LocaleHelper.getLanguage(SettingsActivity.this);
+                        if (current.equals(values[which])) return;
+                        LocaleHelper.setLanguage(SettingsActivity.this, values[which]);
+                        toast(getString(R.string.language_restarting));
+                        LocaleHelper.applyAndRestart(SettingsActivity.this);
+                    }
+                })
+                .setNegativeButton(R.string.common_cancel, null)
+                .show();
+    }
+
     /** 权限申请方式：Shizuku / Root / 免授权 */
     private void showPrivilegeDialog() {
         final PrivilegeMode[] modes = new PrivilegeMode[]{
                 PrivilegeMode.SHIZUKU, PrivilegeMode.ROOT, PrivilegeMode.NONE};
         String[] labels = new String[]{
-                modes[0].label, modes[1].label, "免授权（仅读系统开放信息）"};
+                modes[0].label(this), modes[1].label(this),
+                getString(R.string.privilege_none_dialog)};
 
         int checked = 0;
         PrivilegeMode current = settings.getPrivilegeMode();
@@ -150,7 +188,7 @@ public class SettingsActivity extends Activity {
                         applyPrivilegeMode(modes[which]);
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -162,22 +200,22 @@ public class SettingsActivity extends Activity {
         settings.setPrivilegeMode(mode);
 
         if (mode == PrivilegeMode.NONE) {
-            toast("已切换为免授权：只能读取系统开放的信息");
+            toast(getString(R.string.privilege_switch_none));
             return;
         }
 
         if (mode == PrivilegeMode.ROOT) {
-            toast("正在检测 root 授权…");
+            toast(getString(R.string.privilege_detect_root_toast));
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final boolean granted = RootShell.probe() != null;
+                    final boolean granted = RootShell.probe(SettingsActivity.this) != null;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             toast(granted
-                                    ? "Root 已授权"
-                                    : "未获得 root 授权，请在 root 管理器里给 VRCDI 授权");
+                                    ? getString(R.string.privilege_root_granted)
+                                    : getString(R.string.privilege_root_denied_hint));
                         }
                     });
                 }
@@ -186,29 +224,29 @@ public class SettingsActivity extends Activity {
         }
 
         if (!ShizukuShell.ping()) {
-            toast("Shizuku 未运行：请先打开 Shizuku 应用并启动服务");
+            toast(getString(R.string.privilege_shizuku_need_start));
             return;
         }
         if (ShizukuShell.granted()) {
-            toast("Shizuku 已授权");
+            toast(getString(R.string.privilege_shizuku_granted_short));
             return;
         }
-        toast("正在请求 Shizuku 授权…");
+        toast(getString(R.string.privilege_shizuku_requesting));
         ShizukuShell.requestPermission();
     }
 
     /** 退出：确认后停止上报服务并结束进程 */
     private void confirmExit() {
         new AlertDialog.Builder(this)
-                .setTitle("退出")
-                .setMessage("确定要退出 VRCDI 吗？\n退出后上报会停止，后台服务也会一并关闭。")
-                .setPositiveButton("退出", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.exit_confirm_title)
+                .setMessage(R.string.exit_confirm_message)
+                .setPositiveButton(R.string.common_exit, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         exitApp();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.common_cancel, null)
                 .show();
     }
 
@@ -240,14 +278,23 @@ public class SettingsActivity extends Activity {
         String cpu = snapshot == null ? null : snapshot.cpuName;
         String gpu = snapshot == null ? null : snapshot.gpuName;
 
+        String unknown = getString(R.string.common_unknown);
+        String na = getString(R.string.not_available);
+
         StringBuilder sb = new StringBuilder();
-        sb.append("品牌：").append(brand == null ? "未知" : brand).append('\n');
-        sb.append("型号：").append(model == null ? "未知" : model);
-        if (series != null && !series.trim().isEmpty()) sb.append("（").append(series).append("）");
+        sb.append(getString(R.string.about_brand, brand == null ? unknown : brand)).append('\n');
+        if (series != null && !series.trim().isEmpty()) {
+            sb.append(getString(R.string.about_model_series,
+                    model == null ? unknown : model, series));
+        } else {
+            sb.append(getString(R.string.about_model, model == null ? unknown : model));
+        }
         sb.append('\n');
-        sb.append("CPU：").append(cpu == null || cpu.trim().isEmpty() ? "不可用" : cpu).append('\n');
-        sb.append("GPU：").append(gpu == null || gpu.trim().isEmpty() ? "不可用" : gpu).append('\n');
-        sb.append("安卓API版本：API").append(Build.VERSION.SDK_INT);
+        sb.append(getString(R.string.about_cpu,
+                cpu == null || cpu.trim().isEmpty() ? na : cpu)).append('\n');
+        sb.append(getString(R.string.about_gpu,
+                gpu == null || gpu.trim().isEmpty() ? na : gpu)).append('\n');
+        sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
         String versionName = "2.3.8 Omega";
@@ -260,12 +307,12 @@ public class SettingsActivity extends Activity {
         } catch (PackageManager.NameNotFoundException ignored) {
             // 取不到就用默认值
         }
-        version.setText(versionName + " (Build " + versionCode + ")");
+        version.setText(getString(R.string.about_version_value, versionName, versionCode));
 
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.about_title))
                 .setView(view)
-                .setPositiveButton("关闭", null)
+                .setPositiveButton(R.string.common_close, null)
                 .show();
     }
 

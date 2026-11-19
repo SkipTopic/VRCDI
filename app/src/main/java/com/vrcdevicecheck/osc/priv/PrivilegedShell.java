@@ -14,14 +14,15 @@ public interface PrivilegedShell {
     /** 面向用户的一句话状态说明 */
     String statusText(Context context);
 
-    /** 通道名称，写进日志与数据来源标记 */
-    String label();
+    /** 通道名称，写进日志与数据来源标记（无特权这类名字要跟着界面语言走） */
+    String label(Context context);
 
     /**
      * 执行脚本。
      *
+     * @param context   用来取本地化文案（超时提示要跟界面语言一致）
      * @param timeoutMs 超时后强制销毁进程，避免卡死上报循环
      * @return 执行结果；通道不可用时返回 null
      */
-    ShellResult run(String script, long timeoutMs);
+    ShellResult run(Context context, String script, long timeoutMs);
 }

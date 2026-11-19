@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
+import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,13 +60,15 @@ public final class RootController {
 
         String detail;
         if (granted) {
-            detail = "已获得 root 授权（uid=0）";
+            detail = LocaleHelper.str(context, R.string.root_state_granted);
         } else if (manager == RootManager.UNKNOWN && paths.isEmpty()) {
-            detail = "未探测到 root 环境：/data/adb 下没有已知的面具目录（可能未 root，或路径被隐藏）";
+            detail = LocaleHelper.str(context, R.string.root_state_no_env);
         } else if (manager.kernelLevel) {
-            detail = manager.label + " 是内核级方案，需要在它的超级用户列表里手动给 VRCDI 授权";
+            detail = LocaleHelper.str(context, R.string.root_state_kernel_manager,
+                    label(context, manager));
         } else {
-            detail = "检测到 " + manager.label + "，可以直接申请 root 授权";
+            detail = LocaleHelper.str(context, R.string.root_state_magisk_manager,
+                    label(context, manager));
         }
         return new RootState(granted, manager, paths, detail);
     }
@@ -116,8 +121,8 @@ public final class RootController {
     }
 
     /** 直接执行 su 触发授权弹窗（适用于 Magisk 系），返回是否已授权。会阻塞数秒，必须在子线程调用。 */
-    public static boolean requestRootBlocking() {
-        return RootShell.probe() != null;
+    public static boolean requestRootBlocking(Context context) {
+        return RootShell.probe(context) != null;
     }
 
     /**
@@ -177,19 +182,29 @@ public final class RootController {
         }
     }
 
+    /** 管理器的显示名：已知品牌用原名，UNKNOWN 用本地化文案 */
+    public static String label(Context context, RootManager manager) {
+        if (manager == null || manager == RootManager.UNKNOWN) {
+            return LocaleHelper.str(context, R.string.root_manager_unknown);
+        }
+        return manager.label;
+    }
+
     /** 授权后用户该做什么，直接显示在界面上 */
-    public static String manualGrantHint(RootManager manager) {
+    public static String manualGrantHint(Context context, RootManager manager) {
+        if (manager == null) return LocaleHelper.str(context, R.string.root_hint_generic);
         switch (manager) {
             case KERNEL_SU:
-                return "在 KernelSU 里进入「超级用户」，找到 VRCDI 并打开开关，然后回到本应用点「重新检测」";
+                return LocaleHelper.str(context, R.string.root_hint_ksu);
             case APATCH:
-                return "在 APatch 里进入「超级用户」，找到 VRCDI 并打开开关，然后回到本应用点「重新检测」";
+                return LocaleHelper.str(context, R.string.root_hint_apatch);
             case MAGISK:
             case MAGISK_ALPHA:
             case KITSUNE:
-                return "在 " + manager.label + " 里进入「超级用户」，确认 VRCDI 已授权，然后回到本应用点「重新检测」";
+                return LocaleHelper.str(context, R.string.root_hint_magisk,
+                        label(context, manager));
             default:
-                return "在你的 root 管理器里给 VRCDI 授予超级用户权限，然后回到本应用点「重新检测」";
+                return LocaleHelper.str(context, R.string.root_hint_generic);
         }
     }
 }

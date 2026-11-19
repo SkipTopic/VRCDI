@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.vrcdevicecheck.osc.R;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -54,7 +56,41 @@ public final class ThemeManager {
     private static final String THEMES_DIR = "themes";
     private static final String THEME_JSON = "theme.json";
 
+    /** 内置配色的 id 前缀。sanitize 会滤掉冒号，所以不可能和导入主题的目录名撞车 */
+    public static final String BUILTIN_PREFIX = "builtin:";
+
+    private static final List<Theme> BUILT_INS = buildBuiltIns();
+
     private ThemeManager() {
+    }
+
+    /**
+     * 内置配色：只换背景/卡片/文字四色，不带图片。
+     *
+     * 这里刻意只收浅色系：Button 和 EditText 也是 TextView，上色时文字会被改成主题色，
+     * 但内置配色没有按钮/输入框素材，底色仍是系统默认的浅色。深色配色会导致
+     * 「浅色文字 + 浅色按钮」看不清。需要深色外观的，用「导入主题」并自带按钮图。
+     */
+    private static List<Theme> buildBuiltIns() {
+        List<Theme> list = new ArrayList<>();
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "crimson", R.string.theme_builtin_crimson,
+                0xFFFCEAEA, 0xFFFFFFFF, 0xFF3D0F12, 0xFF8B464C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "mist", R.string.theme_builtin_mist,
+                0xFFE8F1FA, 0xFFFFFFFF, 0xFF102B45, 0xFF4B6E8C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "sakura", R.string.theme_builtin_sakura,
+                0xFFFCEFF3, 0xFFFFFFFF, 0xFF3B1522, 0xFF82495C));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "pine", R.string.theme_builtin_pine,
+                0xFFEAF4EC, 0xFFFFFFFF, 0xFF14301D, 0xFF4A6B54));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "amber", R.string.theme_builtin_amber,
+                0xFFFDF3E6, 0xFFFFFFFF, 0xFF3D2510, 0xFF7D5633));
+        list.add(Theme.builtIn(BUILTIN_PREFIX + "violet", R.string.theme_builtin_violet,
+                0xFFF1EDFB, 0xFFFFFFFF, 0xFF241A3E, 0xFF5C4B7E));
+        return Collections.unmodifiableList(list);
+    }
+
+    /** 内置配色列表（不含「默认」，默认就是不带任何覆盖） */
+    public static List<Theme> builtIns() {
+        return BUILT_INS;
     }
 
     public static File themesDir(Context context) {
@@ -67,6 +103,13 @@ public final class ThemeManager {
     public static Theme current(Context context) {
         String id = currentId(context);
         if (id.isEmpty()) return null;
+        if (id.startsWith(BUILTIN_PREFIX)) {
+            for (Theme theme : BUILT_INS) {
+                if (theme.id.equals(id)) return theme;
+            }
+            // 记录的内置配色不存在了（比如降级安装），按默认处理
+            return null;
+        }
         return Theme.load(new File(themesDir(context), id), id);
     }
 
@@ -101,13 +144,19 @@ public final class ThemeManager {
     public static Theme install(Context context, InputStream input) throws IOException {
         File temp = new File(context.getCacheDir(), "theme_import_" + System.currentTimeMillis());
         deleteRecursive(temp);
-        if (!temp.mkdirs()) throw new IOException("无法创建临时目录");
+        if (!temp.mkdirs()) {
+            throw new IOException(LocaleHelper.str(context, R.string.theme_err_mkdir_temp));
+        }
         try {
-            ArchiveExtractor.extract(input, temp);
+            ArchiveExtractor.extract(context, input, temp);
             File root = findThemeRoot(temp);
-            if (root == null) throw new IOException("压缩包里没有 theme.json");
+            if (root == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_no_theme_json));
+            }
             Theme parsed = Theme.load(root, "temp");
-            if (parsed == null) throw new IOException("theme.json 解析失败");
+            if (parsed == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_parse_theme_json));
+            }
 
             String id = sanitize(parsed.name);
             if (id.isEmpty()) id = "theme_" + System.currentTimeMillis();
@@ -115,10 +164,12 @@ public final class ThemeManager {
             File dest = new File(themesDir(context), id);
             deleteRecursive(dest);
             if (!root.renameTo(dest)) {
-                copyRecursive(root, dest);
+                copyRecursive(context, root, dest);
             }
             Theme saved = Theme.load(dest, id);
-            if (saved == null) throw new IOException("主题保存失败");
+            if (saved == null) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_save));
+            }
             return saved;
         } finally {
             deleteRecursive(temp);
@@ -201,6 +252,7 @@ public final class ThemeManager {
         if (theme.text == 0 && theme.textSecondary == 0) return;
         int warn = activity.getColor(R.color.warn);
         int error = activity.getColor(R.color.err);
+        int secondary = activity.getColor(R.color.text_secondary);
         List<View> textViews = new ArrayList<>();
         collectViews(root, TextView.class, textViews);
         for (View view : textViews) {
@@ -208,7 +260,15 @@ public final class ThemeManager {
             int current = textView.getCurrentTextColor();
             // 状态色（警告/错误）保留，避免主题把语义色盖掉
             if (current == warn || current == error) continue;
-            if (theme.text != 0) textView.setTextColor(theme.text);
+            // 已经上过色了（列表滚动后重复 apply 时不要再叠一层，否则次要色会被拉成正文色）
+            if (theme.text != 0 && current == theme.text) continue;
+            if (theme.textSecondary != 0 && current == theme.textSecondary) continue;
+            if (current == secondary && theme.textSecondary != 0) {
+                // 原本就是次要文字，跟随主题的次要色，别被提到正文色
+                textView.setTextColor(theme.textSecondary);
+            } else if (theme.text != 0) {
+                textView.setTextColor(theme.text);
+            }
         }
     }
 
@@ -266,13 +326,15 @@ public final class ThemeManager {
         return sb.toString();
     }
 
-    private static void copyRecursive(File from, File to) throws IOException {
+    private static void copyRecursive(Context context, File from, File to) throws IOException {
         if (from.isDirectory()) {
-            if (!to.isDirectory() && !to.mkdirs()) throw new IOException("无法创建目录");
+            if (!to.isDirectory() && !to.mkdirs()) {
+                throw new IOException(LocaleHelper.str(context, R.string.theme_err_mkdir));
+            }
             File[] children = from.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    copyRecursive(child, new File(to, child.getName()));
+                    copyRecursive(context, child, new File(to, child.getName()));
                 }
             }
             return;

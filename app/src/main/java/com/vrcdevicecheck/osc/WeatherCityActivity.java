@@ -1,7 +1,8 @@
 package com.vrcdevicecheck.osc;
 
-import android.app.Activity;
-import android.app.ProgressDialog;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,12 +13,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vrcdevicecheck.osc.data.AppSettings;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
 import com.vrcdevicecheck.osc.weather.ChinaCities;
+import com.vrcdevicecheck.osc.weather.WeatherFetchListener;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
 import com.vrcdevicecheck.osc.weather.WeatherRepository;
 
@@ -25,35 +28,59 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 天气城市设置：省份 → 城市两级选择。
+ * 天气城市设置：省份 → 城市两级选择，另外提供一个全球城市搜索入口。
  *
- * 选完后立即尝试取一次天气（受 1 小时缓存限制，同城市重复选择会直接读缓存），
- * 让用户能马上看到结果；真正的定时刷新由上报服务负责。
+ * 选完城市立刻跑一次完整查询（无视缓存），过程中把每一步都打在下面的日志区：
+ * 连哪个源、失败的具体原因、切到哪个备用源。取到后写进缓存，供上报服务复用。
+ *
+ * 国内外走同一套流程：都是先拿到经纬度，之后按坐标向三个源要天气。
  */
-public class WeatherCityActivity extends Activity {
+public class WeatherCityActivity extends BaseActivity {
+
+    private static final int REQUEST_CODE_SEARCH = 71;
+    private static final int REQUEST_CODE_WORLD = 72;
 
     private AppSettings settings;
     private List<ChinaCities.Province> provinces;
     private ListView list;
     private TextView header;
     private TextView hint;
+    private TextView logView;
+    private ScrollView logScroll;
     private Button clearButton;
+    private Button fetchButton;
+    private Button qweatherButton;
     private int provinceIndex = -1;
+    private boolean fetching;
 
     private final Handler main = new Handler(Looper.getMainLooper());
+
+    /** 查询过程在后台线程，回调切回主线程再动界面 */
+    private final WeatherFetchListener listener = new WeatherFetchListener() {
+        @Override
+        public void onStep(final String line) {
+            main.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (isFinishing() || isDestroyed()) return;
+                    appendLog(line);
+                }
+            });
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("天气城市设置");
+        setTitle(R.string.weather_title);
         settings = new AppSettings(this);
         provinces = ChinaCities.load(this);
         buildUi();
         showProvinces();
         ThemeManager.apply(this);
         if (provinces.isEmpty()) {
-            header.setText("城市数据加载失败");
-            toast("城市数据加载失败，请重新安装应用");
+            header.setText(R.string.weather_load_failed);
+            toast(getString(R.string.weather_load_failed_toast));
         }
     }
 
@@ -68,13 +95,27 @@ public class WeatherCityActivity extends Activity {
         header.setLineSpacing(dp(2), 1f);
         root.addView(header);
 
+        logView = new TextView(this);
+        logView.setTextSize(11f);
+        logView.setTextColor(getColor(R.color.text_secondary));
+        logView.setLineSpacing(dp(2), 1f);
+        logView.setPadding(dp(8), dp(6), dp(8), dp(6));
+        logView.setTypeface(android.graphics.Typeface.MONOSPACE);
+
+        logScroll = new ScrollView(this);
+        logScroll.addView(logView);
+        logScroll.setBackgroundColor(getColor(R.color.card_bg));
+        logScroll.setVisibility(View.GONE);
+        LinearLayout.LayoutParams logParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(150));
+        logParams.topMargin = dp(6);
+        root.addView(logScroll, logParams);
+
         hint = new TextView(this);
         hint.setTextSize(12f);
         hint.setTextColor(getColor(R.color.text_secondary));
         hint.setLineSpacing(dp(2), 1f);
-        hint.setText("先选省份，再选具体城市。\n"
-                + "天气数据来自 Open-Meteo，网络不通时自动切换 wttr.in；"
-                + "同一城市每小时最多请求一次。");
+        hint.setText(R.string.weather_hint);
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         hintParams.topMargin = dp(6);
@@ -86,13 +127,47 @@ public class WeatherCityActivity extends Activity {
         root.addView(list, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+
+        fetchButton = new Button(this);
+        fetchButton.setText(R.string.weather_fetch_now);
+        fetchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (settings.getWeatherCity().isEmpty()) {
+                    toast(getString(R.string.weather_pick_city_first));
+                    return;
+                }
+                runFetch(false);
+            }
+        });
+        row.addView(fetchButton, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        qweatherButton = new Button(this);
+        qweatherButton.setText(R.string.weather_qweather);
+        qweatherButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(WeatherCityActivity.this,
+                        QWeatherSettingsActivity.class));
+            }
+        });
+        row.addView(qweatherButton, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        root.addView(row);
+
         clearButton = new Button(this);
-        clearButton.setText("清除已选城市");
+        clearButton.setText(R.string.weather_clear_city);
         clearButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 WeatherRepository.clearCity(WeatherCityActivity.this);
-                toast("已清除天气城市");
+                logView.setText("");
+                logScroll.setVisibility(View.GONE);
+                toast(getString(R.string.weather_cleared));
                 showProvinces();
             }
         });
@@ -104,25 +179,39 @@ public class WeatherCityActivity extends Activity {
 
     private void showProvinces() {
         provinceIndex = -1;
-        setTitle("天气城市设置");
+        setTitle(R.string.weather_title);
         updateHeader();
-        if (provinces.isEmpty()) {
-            list.setAdapter(null);
-            clearButton.setVisibility(View.GONE);
-            return;
-        }
 
-        List<String> names = new ArrayList<>();
+        // 结构：第 0 项「搜索城市」+ 国内省市 + 最后一项「选择国外」。
+        // 省市数据读取失败时也保留首尾两项，至少还能靠搜索或按国家选城市。
+        final List<String> names = new ArrayList<>();
+        names.add(getString(R.string.weather_search_entry));
         for (ChinaCities.Province province : provinces) names.add(province.name);
+        names.add(getString(R.string.world_entry));
+
         list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names));
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ChinaCities.Province province = provinces.get(position);
+                if (position == 0) {
+                    startActivityForResult(
+                            new Intent(WeatherCityActivity.this, CitySearchActivity.class),
+                            REQUEST_CODE_SEARCH);
+                    return;
+                }
+                if (position == names.size() - 1) {
+                    startActivityForResult(
+                            new Intent(WeatherCityActivity.this, WorldCityActivity.class),
+                            REQUEST_CODE_WORLD);
+                    return;
+                }
+                int index = position - 1;
+                if (index < 0 || index >= provinces.size()) return;
+                ChinaCities.Province province = provinces.get(index);
                 if (province.cities.size() == 1) {
                     selectCity(province, province.cities.get(0));
                 } else {
-                    showCities(position);
+                    showCities(index);
                 }
             }
         });
@@ -131,66 +220,120 @@ public class WeatherCityActivity extends Activity {
     private void showCities(int index) {
         provinceIndex = index;
         ChinaCities.Province province = provinces.get(index);
-        setTitle("选择城市 · " + province.name);
-        header.setText("省份：" + province.name + "\n请选择具体城市");
+        setTitle(getString(R.string.weather_pick_province_title, province.name));
+        header.setText(getString(R.string.weather_province_header, province.name));
 
         list.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
                 province.cities));
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectCity(province, province.cities.get(position));
+                ChinaCities.Province selected = provinces.get(provinceIndex);
+                selectCity(selected, selected.cities.get(position));
             }
         });
     }
 
     private void selectCity(ChinaCities.Province province, String city) {
         WeatherRepository.setCity(this, province.name, city);
-        toast("已选择：" + province.name + " " + city);
-        refreshWeather();
+        toast(getString(R.string.weather_city_selected, settings.getWeatherCityLabel()));
+        showProvinces();
+        runFetch(false);
     }
 
-    /** 选完城市立刻取一次，让用户看到结果；服务后续会按 1 小时缓存复用 */
-    private void refreshWeather() {
-        final ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setMessage("正在获取天气…");
-        dialog.setCancelable(true);
-        dialog.show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_CODE_SEARCH && requestCode != REQUEST_CODE_WORLD) return;
+        if (resultCode != RESULT_OK) return;
+        // 搜索页已经把城市和坐标写进设置，这里只负责回到列表并立刻取一次天气
+        showProvinces();
+        runFetch(false);
+    }
+
+    /**
+     * 跑一次完整查询。qweatherOnly=true 时只测和风天气这一条。
+     */
+    private void runFetch(final boolean qweatherOnly) {
+        if (fetching) return;
+
+        // 同一城市 30 分钟内只允许手动获取一次；换城市会清缓存，冷却自然消失
+        long cooldown = WeatherRepository.getManualFetchCooldownMs(this);
+        if (cooldown > 0) {
+            int minutes = (int) Math.ceil(cooldown / 60000.0);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.weather_cooldown_title)
+                    .setMessage(getString(R.string.weather_cooldown_message, minutes))
+                    .setPositiveButton(R.string.common_confirm,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                    .show();
+            return;
+        }
+        fetching = true;
+        fetchButton.setEnabled(false);
+        qweatherButton.setEnabled(false);
+
+        logView.setText("");
+        logScroll.setVisibility(View.VISIBLE);
+        appendLog("——— " + getString(qweatherOnly
+                ? R.string.weather_log_test : R.string.weather_log_start) + " ———");
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final WeatherInfo info = WeatherRepository.getForReport(getApplicationContext());
+                final WeatherRepository.Result result = qweatherOnly
+                        ? WeatherRepository.testQWeather(getApplicationContext(), listener)
+                        : WeatherRepository.refresh(getApplicationContext(), listener);
                 main.post(new Runnable() {
                     @Override
                     public void run() {
                         if (isFinishing() || isDestroyed()) return;
-                        if (dialog.isShowing()) dialog.dismiss();
-                        if (info != null) {
-                            toast("当前天气：" + info.summary());
-                        } else {
-                            toast("城市已保存；天气获取失败，下次上报会自动重试");
-                        }
-                        showProvinces();
+                        fetching = false;
+                        fetchButton.setEnabled(true);
+                        qweatherButton.setEnabled(true);
+                        appendLog("——— " + result.summaryLine(WeatherCityActivity.this) + " ———");
+                        updateHeader();
                     }
                 });
             }
         }, "vrcdi-weather-select").start();
     }
 
+    private void appendLog(String line) {
+        logScroll.setVisibility(View.VISIBLE);
+        logView.append(line + "\n");
+        logScroll.post(new Runnable() {
+            @Override
+            public void run() {
+                logScroll.fullScroll(View.FOCUS_DOWN);
+            }
+        });
+    }
+
     private void updateHeader() {
         String label = settings.getWeatherCityLabel();
         if (label.isEmpty()) {
-            header.setText("当前未选择城市");
+            header.setText(R.string.weather_no_city);
             clearButton.setVisibility(View.GONE);
             return;
         }
 
-        StringBuilder sb = new StringBuilder("当前城市：").append(label);
+        StringBuilder sb = new StringBuilder(getString(R.string.weather_current_city, label));
         WeatherInfo cached = WeatherRepository.getCached(this);
         if (cached != null) {
-            sb.append("\n当前天气：").append(cached.summary())
-                    .append("（").append(cached.timeText()).append(" 更新）");
+            sb.append('\n').append(getString(R.string.weather_current_value,
+                    cached.summary(this), cached.timeText(), cached.providerLabel(this)));
+        } else {
+            sb.append('\n').append(getString(R.string.weather_never_fetched));
+        }
+        String lastFail = WeatherRepository.getLastFailText(this);
+        if (!lastFail.isEmpty()) {
+            sb.append('\n').append(getString(R.string.weather_last_fail, lastFail));
         }
         header.setText(sb);
         clearButton.setVisibility(View.VISIBLE);

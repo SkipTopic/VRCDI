@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Русские строки. Набор ключей должен полностью совпадать с values/strings.xml.
+    Текст для чатбокса VRChat здесь не читается (им управляет переключатель «Только ASCII»).
+-->
+<resources>
+    <string name="app_name">VRCDI</string>
+
+    <!-- Общее -->
+    <string name="common_cancel">Отмена</string>
+    <string name="common_confirm">ОК</string>
+    <string name="common_save">Сохранить</string>
+    <string name="common_delete">Удалить</string>
+    <string name="common_close">Закрыть</string>
+    <string name="common_later">Позже</string>
+    <string name="common_exit">Выход</string>
+    <string name="common_unknown">Неизвестно</string>
+    <string name="common_unknown_error">Неизвестная ошибка</string>
+    <string name="common_selected_file">файл выбран</string>
+    <string name="common_no_file_picker">Не найдено приложение для выбора файлов</string>
+    <string name="not_available">Недоступно</string>
+    <string name="charging">Заряжается</string>
+
+    <!-- Уведомление -->
+    <string name="notif_channel_name">Отправка данных устройства</string>
+    <string name="notif_channel_desc">Работа в фоне, пока данные устройства отправляются в VRChat через OSC Chatbox</string>
+    <string name="notif_title">VRCDI отправляет данные устройства</string>
+    <string name="notif_stop">Остановить</string>
+    <string name="notif_text">Цель %1$s:%2$d · каждые %3$d с</string>
+    <string name="notif_target_unset">не задана</string>
+
+    <!-- Главный экран: карточки -->
+    <string name="card_connection">Подключение</string>
+    <string name="card_privilege">Канал прав</string>
+    <string name="card_fields">Поля отчёта</string>
+    <string name="card_preview">Предпросмотр Chatbox</string>
+    <string name="card_log">Журнал отправки</string>
+
+    <!-- Главный экран: подключение -->
+    <string name="hint_target_ip">Свой IP, например 192.168.1.10</string>
+    <string name="ip_mode_local">Это устройство</string>
+    <string name="ip_mode_custom">Другой...</string>
+    <string name="hint_target_port">Порт OSC, по умолчанию 9000</string>
+    <string name="label_interval">Интервал (с)</string>
+    <string name="ip_mode_hint_local">Отправка на 127.0.0.1: VRChat и VRCDI на одном устройстве (выберите это на автономном Quest)</string>
+    <string name="ip_mode_hint_custom">Введите IP устройства с VRChat, например адрес ПК 192.168.1.10</string>
+    <string name="action_scan_vrchat">Найти ПК с VRChat в локальной сети</string>
+    <string name="check_ascii">Только ASCII (китайский станет «?», но точно отобразится)</string>
+    <string name="check_send_immediately">Отправлять сразу (выкл. — только вставить в поле ввода VRChat)</string>
+    <string name="check_notification_sound">Звук уведомления</string>
+    <string name="local_ip_loading">IP в локальной сети: получение…</string>
+    <string name="local_ip_none">IP в локальной сети: не удалось получить (проверьте Wi-Fi)</string>
+    <string name="local_ip_value">IP в локальной сети: %1$s</string>
+    <string name="list_separator">, </string>
+    <string name="launch_arg">Параметр запуска VRChat (добавьте в Steam): --osc=9000:%1$s:9001\nОдна локальная сеть + разрешить UDP 9000 в брандмауэре ПК, затем включить OSC в Action Menu</string>
+    <string name="launch_arg_placeholder">&lt;IP ПК в локальной сети&gt;</string>
+
+    <!-- Главный экран: права -->
+    <string name="action_battery">В исключения батареи</string>
+    <string name="action_recheck">Проверить снова</string>
+    <string name="privilege_current">Текущий способ: %1$s</string>
+    <string name="privilege_not_checked">Не проверено</string>
+    <string name="privilege_shizuku">Shizuku</string>
+    <string name="privilege_root">Root</string>
+    <string name="privilege_none">Без прав (только открытые данные системы)</string>
+    <string name="privilege_none_dialog">Без авторизации (только открытые данные)</string>
+    <string name="privilege_shizuku_not_running">Shizuku не запущен: откройте приложение Shizuku и запустите службу (Android 11+ — отладка по Wi-Fi)</string>
+    <string name="privilege_shizuku_raw_not_running">Shizuku не запущен: откройте приложение Shizuku и запустите службу (Android 11+ — через отладку по Wi-Fi)</string>
+    <string name="privilege_shizuku_unauthorized">Shizuku работает, но VRCDI не авторизован</string>
+    <string name="privilege_shizuku_granted">Shizuku авторизован (права shell, uid=2000)</string>
+    <string name="privilege_shizuku_granted_short">Shizuku авторизован</string>
+    <string name="privilege_shizuku_denied">В авторизации Shizuku отказано</string>
+    <string name="privilege_shizuku_requesting">Запрос авторизации Shizuku…</string>
+    <string name="privilege_local_status">Режим без прав: доступны только открытые данные, частота и температура CPU/GPU скорее всего будут недоступны</string>
+    <string name="privilege_local_label">Без прав</string>
+    <string name="privilege_root_granted_uid">Root авторизован (uid=%1$d)</string>
+    <string name="privilege_root_granted">Root авторизован</string>
+    <string name="privilege_root_denied">Действующая авторизация root не найдена</string>
+    <string name="privilege_root_denied_hint">Root не выдан. Разрешите VRCDI в менеджере root</string>
+    <string name="privilege_root_detecting">Проверка окружения root…</string>
+    <string name="privilege_root_requesting">Запрос прав root, нажмите «Разрешить» в диалоге…</string>
+    <string name="privilege_root_timeout">В правах root отказано или истекло время</string>
+    <string name="privilege_root_detected_uid">Root авторизован (uid=0)</string>
+    <string name="privilege_switch_none">Переключено на режим без прав: доступны только открытые данные</string>
+    <string name="privilege_detect_root_toast">Проверка прав root…</string>
+    <string name="privilege_shizuku_need_start">Shizuku не запущен: сначала откройте приложение Shizuku и запустите службу</string>
+    <string name="root_state_granted">Права root получены (uid=0)</string>
+    <string name="root_state_no_env">Окружение root не найдено: в /data/adb нет известных каталогов маскировки (нет root или пути скрыты)</string>
+    <string name="root_state_kernel_manager">%1$s — решение уровня ядра, разрешите VRCDI вручную в его списке суперпользователя</string>
+    <string name="root_state_magisk_manager">Обнаружен %1$s, права root можно запросить напрямую</string>
+    <string name="root_manager_unknown">Неизвестное решение root</string>
+    <string name="root_hint_ksu">В KernelSU откройте «Суперпользователь», включите VRCDI и вернитесь нажать «Проверить снова»</string>
+    <string name="root_hint_apatch">В APatch откройте «Суперпользователь», включите VRCDI и вернитесь нажать «Проверить снова»</string>
+    <string name="root_hint_magisk">В %1$s откройте «Суперпользователь», убедитесь, что VRCDI разрешён, и вернитесь нажать «Проверить снова»</string>
+    <string name="root_hint_generic">Разрешите VRCDI в менеджере root и вернитесь нажать «Проверить снова»</string>
+    <string name="root_manager_missing">Приложение %1$s не найдено. Откройте его список суперпользователя вручную и разрешите VRCDI</string>
+    <string name="channel_unavailable">Канал %1$s недоступен, показаны только данные без прав</string>
+    <string name="channel_failed">Ошибка %1$s: %2$s</string>
+    <string name="channel_empty">%1$s не вернул данных, показаны только данные без прав</string>
+    <string name="channel_degraded">%1$s (упрощённый режим)</string>
+
+    <!-- Главный экран: поля и предпросмотр -->
+    <string name="action_select_all">Выбрать все</string>
+    <string name="action_select_none">Снять выбор</string>
+    <string name="check_hide_unavailable">Скрывать недоступные поля (экономит 144 символа)</string>
+    <string name="label_model_mode">Тип названия модели</string>
+    <string name="weather_hint_no_city">Для полей погоды нужно выбрать город: Настройки → Город погоды</string>
+    <string name="weather_hint_city">Город погоды: %1$s (обновление не чаще раза в 30 минут)</string>
+    <string name="action_start">Начать отправку</string>
+    <string name="action_stop">Остановить отправку</string>
+    <string name="action_send_now">Отправить один раз</string>
+    <string name="action_refresh">Обновить</string>
+    <string name="action_clear_log">Очистить журнал</string>
+    <string name="action_settings">Настройки</string>
+    <string name="running_state">Отправка: каждые %1$d с</string>
+    <string name="not_running">Отправка не идёт</string>
+    <string name="foreground_unauthed">Приложение на экране: нет доступа к использованию. Нажмите, чтобы включить</string>
+    <string name="foreground_unknown">Приложение на экране: не определено (недавних переключений нет)</string>
+    <string name="foreground_value">Приложение на экране: %1$s</string>
+    <string name="foreground_value_pkg">Приложение на экране: %1$s (%2$s)</string>
+    <string name="foreground_previous"> · ранее: %1$s</string>
+    <string name="preview_empty">Данных ещё нет. Нажмите «Обновить» или начните отправку</string>
+    <string name="preview_count">%1$d/%2$d</string>
+    <string name="log_empty">Записей нет</string>
+
+    <string name="hint_dropped">Больше 144 символов, пропущено: %1$s</string>
+    <string name="hint_hard_truncated">Больше 144 символов, конец обрезан</string>
+    <string name="hint_hidden_count">Автоматически скрыто недоступных полей: %1$d (символы не расходуются)</string>
+    <string name="hint_all_hidden">Все выбранные поля сейчас недоступны, поэтому всё скрыто.</string>
+    <string name="hint_fps_need_foreground">FPS считывается только когда VRChat на экране и используется канал Shizuku / Root. При нажатии «Обновить» здесь VRChat не на экране, поэтому «Недоступно» — это нормально.</string>
+    <string name="hint_weather_need_city">Для полей погоды сначала выберите город: Настройки → Город погоды.</string>
+    <string name="hint_weather_no_data">Данных погоды ещё нет: они загрузятся при начале отправки, не чаще раза в 30 минут для одного города.</string>
+
+    <string name="toast_sent_now">Запрошена одна немедленная отправка</string>
+    <string name="toast_collected_not_running">Отправка не идёт, данные собраны один раз. Укажите IP и начните отправку</string>
+    <string name="toast_collect_failed">Ошибка сбора: %1$s</string>
+    <string name="scanning_toast">Сканирование порта 9000 в локальной сети…</string>
+    <string name="scan_none">VRChat с включённым OSC не найден: проверьте, что ПК и телефон в одной Wi-Fi, OSC включён в VRChat, порт 9000 разрешён в брандмауэре ПК. Можно выбрать «Другой...» и ввести IP ПК</string>
+    <string name="scan_title">Найденные устройства</string>
+    <string name="connect_title">Подключение к VRChat</string>
+    <string name="connect_message">На %1$s:9000 найден ПК, возможно с VRChat. Подключиться и начать отправку?</string>
+    <string name="connect_button">Подключиться</string>
+    <string name="toast_connected">Подключено к %1$s, отправка начата</string>
+    <string name="weather_prompt_title">Сначала выберите город погоды</string>
+    <string name="weather_prompt_message">Для погоды, температуры и влажности нужен ваш город.\nВыберите регион и город; для зарубежных городов используйте «Поиск города» (можно по-китайски или по-английски).</string>
+    <string name="go_choose">Выбрать</string>
+    <string name="battery_hint_title">Добавьте в исключения оптимизации батареи</string>
+    <string name="battery_hint_message">Служба переднего плана обычно не завершается, но агрессивная экономия производителей может её убить. На следующем экране выберите для VRCDI «Не оптимизировать», иначе отправка может остановиться при выключенном экране.</string>
+    <string name="go_settings">Открыть настройки</string>
+    <string name="toast_battery_already">Уже в исключениях оптимизации батареи</string>
+    <string name="toast_battery_failed">Не удалось открыть настройки батареи. Выберите для VRCDI «Не оптимизировать» вручную</string>
+    <string name="toast_usage_granted">Доступ к использованию получен</string>
+    <string name="toast_usage_failed">Не удалось открыть настройки доступа к использованию. Выдайте его вручную</string>
+
+    <string name="update_dialog_title">Новая версия %1$s</string>
+    <string name="update_dialog_body">Доступна новая версия: %1$s</string>
+    <string name="update_go">Обновить</string>
+    <string name="update_later">Позже</string>
+
+    <!-- О приложении -->
+    <string name="about_title">О VRCDI</string>
+    <string name="about_version_label">Версия</string>
+    <string name="about_author_label">Авторы: </string>
+    <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_device_label">Ваше устройство:</string>
+    <string name="about_brand">Бренд: %1$s</string>
+    <string name="about_model">Модель: %1$s</string>
+    <string name="about_model_series">Модель: %1$s (%2$s)</string>
+    <string name="about_cpu">CPU: %1$s</string>
+    <string name="about_gpu">GPU: %1$s</string>
+    <string name="about_api">Уровень Android API: API%1$d</string>
+    <string name="about_version_value">%1$s (Build %2$d)</string>
+
+    <!-- Меню настроек -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_interval">Интервал отправки</string>
+    <string name="settings_weather_city">Город погоды</string>
+    <string name="settings_weather_city_with">Город погоды (%1$s)</string>
+    <string name="settings_privilege">Способ получения прав</string>
+    <string name="settings_device_table">Таблицы устройств</string>
+    <string name="settings_app_table">Таблицы приложений</string>
+    <string name="settings_cpu_map">Таблицы CPU</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_language">Язык / English</string>
+    <string name="settings_update">Обновление</string>
+    <string name="settings_about">О VRCDI</string>
+    <string name="settings_exit">Выход</string>
+    <string name="exit_confirm_title">Выход</string>
+    <string name="exit_confirm_message">Выйти из VRCDI?\nОтправка остановится, фоновая служба тоже закроется.</string>
+
+    <string name="language_dialog_title">Язык / Language</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_en">English</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_restarting">Язык изменён, приложение перезапускается…</string>
+
+    <!-- Интервал отправки -->
+    <string name="interval_title">Интервал отправки</string>
+    <string name="interval_preview_card">Будущие настройки</string>
+    <string name="interval_card">Интервал</string>
+    <string name="interval_card_hint">Время между отправками. Чем короче, тем быстрее обновляется Chatbox, но сбор и отправка идут чаще и тратят батарею; слишком короткий интервал может упереться в ограничение VRChat.</string>
+    <string name="interval_preset_2">2 с (быстрее всего)</string>
+    <string name="interval_preset_5">5 с</string>
+    <string name="interval_preset_10">10 с (по умолчанию)</string>
+    <string name="interval_preset_30">30 с</string>
+    <string name="interval_preset_60">60 с</string>
+    <string name="interval_custom">Другой</string>
+    <string name="interval_custom_hint">Секунды (2–3600)</string>
+    <string name="interval_range_hint">Допустимый диапазон 2–3600 с. 2 с — минимум. VRChat принимает не более 5 сообщений за 5 с, поэтому при зависшем Chatbox увеличьте интервал.</string>
+    <string name="interval_start_card">Поведение при запуске</string>
+    <string name="interval_send_on_start">Отправить один раз сразу при запуске</string>
+    <string name="interval_send_on_start_hint">Если включено, «Начать отправку» сразу собирает и отправляет отчёт, затем цикл по интервалу. Если выключено, первый отчёт ждёт полный интервал.</string>
+    <string name="interval_reset">Вернуть по умолчанию (10 с)</string>
+    <string name="interval_invalid_preview">Неверный интервал: введите целое число секунд от %1$d до %2$d</string>
+    <string name="interval_preview_ok">Отправка каждые %1$d с%2$s</string>
+    <string name="interval_tail_immediate">; сразу уйдёт один отчёт, затем цикл по интервалу</string>
+    <string name="interval_tail_wait">; первый отчёт ждёт интервал после запуска</string>
+    <string name="interval_invalid_toast">Введите целое число секунд от %1$d до %2$d</string>
+    <string name="interval_saved">Сохранено: каждые %1$d с%2$s</string>
+    <string name="interval_saved_immediate">, применено сразу</string>
+    <string name="interval_reset_done">По умолчанию: каждые 10 с, отправка сразу при запуске</string>
+
+    <!-- Город погоды -->
+    <string name="weather_cooldown_title">Подождите</string>
+    <string name="weather_cooldown_message">Извините, для одного города можно обновлять данные раз в 30 минут. Осталось около %1$d мин.</string>
+    <string name="weather_title">Город погоды</string>
+    <string name="weather_load_failed">Не удалось загрузить данные городов</string>
+    <string name="weather_load_failed_toast">Не удалось загрузить данные городов, переустановите приложение</string>
+    <string name="weather_hint">Сначала регион, затем город.\nЗарубежные города: «Поиск города» (по-китайски или по-английски) или «Выбрать зарубежный город» внизу списка.\nИсточники по порядку: Open-Meteo → wttr.in → QWeather.\nПервые два за рубежом, из материкового Китая часто таймаут или подмена DNS. Если оба не работают, а прокси нет — дело в сети, не в приложении. QWeather работает в Китае и самый стабильный, но нужен свой ключ.\nОдин город — не чаще раза в 30 минут.</string>
+    <string name="weather_search_entry">Поиск города (весь мир)</string>
+    <string name="weather_fetch_now">Получить сейчас</string>
+    <string name="weather_qweather">Резерв QWeather</string>
+    <string name="weather_clear_city">Сбросить город</string>
+    <string name="weather_cleared">Город погоды сброшен</string>
+    <string name="weather_pick_city_first">Сначала выберите город</string>
+    <string name="weather_pick_province_title">Выбор города · %1$s</string>
+    <string name="weather_province_header">Регион: %1$s\nВыберите город</string>
+    <string name="weather_city_selected">Выбрано: %1$s</string>
+    <string name="weather_log_test">Проверка QWeather</string>
+    <string name="weather_log_start">Начало загрузки погоды</string>
+    <string name="weather_no_city">Город не выбран</string>
+    <string name="weather_current_city">Текущий город: %1$s</string>
+    <string name="weather_current_value">Текущая погода: %1$s (обновлено %2$s · %3$s)</string>
+    <string name="weather_never_fetched">Текущая погода: ещё не загружалась</string>
+    <string name="weather_last_fail">Прошлая ошибка: %1$s</string>
+    <string name="weather_last_fail_at">%1$s (%2$s)</string>
+
+    <!-- Поиск города -->
+    <string name="search_title">Поиск города</string>
+    <string name="search_hint">Название города по-китайски или по-английски, например Токио / Tokyo</string>
+    <string name="search_button">Найти</string>
+    <string name="search_need_keyword">Сначала введите название города</string>
+    <string name="search_empty">Город не найден. Попробуйте другое написание</string>
+    <string name="search_failed">Ошибка поиска: %1$s</string>
+    <string name="search_searching">Поиск…</string>
+    <string name="search_result">%1$s · %2$s · %3$s</string>
+    <string name="search_result_simple">%1$s · %2$s</string>
+    <string name="search_tip">Результаты из геокодинга Open-Meteo; после выбора погода берётся по координатам. Для зарубежных городов лучше искать по-английски или вернуться и выбрать «Выбрать зарубежный город».</string>
+
+    <!-- QWeather -->
+    <string name="qweather_title">Резерв QWeather</string>
+    <string name="qweather_intro">QWeather (和风天气) — китайский погодный сервис, серверы в Китае, VPN не нужен. Используется как последний резерв.\n\nКак получить доступ:\n1. Откройте console.qweather.com, зарегистрируйтесь и пройдите проверку\n2. «Управление проектами» → создать проект\n3. В проекте «+ Добавить учётные данные» → способ API KEY\n4. В «Настройках» скопируйте API Host (вида xxxx.qweatherapi.com)\n5. Введите Host и Key ниже и нажмите «Проверить подключение»\n\nБесплатно 1000 запросов в день; приложение спрашивает не чаще раза в 30 минут на город.</string>
+    <string name="qweather_builtin_note">В этой сборке уже встроены резервные учётные данные, заполнять ничего не нужно. Поля ниже только перекрывают их (пусто — используется встроенное).</string>
+    <string name="qweather_host_label">API Host</string>
+    <string name="qweather_host_hint">xxxx.qweatherapi.com</string>
+    <string name="qweather_key_label">API KEY</string>
+    <string name="qweather_key_hint">32-значный hex из консоли</string>
+    <string name="qweather_test">Проверить подключение</string>
+    <string name="qweather_saved">Сохранено</string>
+    <string name="qweather_need_city">Сначала вернитесь и выберите город</string>
+    <string name="qweather_need_key">Key пустой, проверить нельзя</string>
+    <string name="qweather_log_header">Проверка QWeather</string>
+    <string name="qweather_log_host">· API Host: %1$s</string>
+
+    <!-- Тема -->
+    <string name="theme_title">Тема</string>
+    <string name="theme_hint">Встроенные палитры применяются одним нажатием и меняют только цвета.\nДля фона и кнопок используйте «Импорт темы»: пакет .zip или .tar.gz с theme.json и картинками.\nПосле смены приложение перезапустится.</string>
+    <string name="theme_import">Импорт темы (zip / tar.gz)</string>
+    <string name="theme_group_default">Палитра по умолчанию</string>
+    <string name="theme_default_item">По умолчанию (вид приложения)</string>
+    <string name="theme_group_imported">Импортированные темы</string>
+    <string name="theme_none_imported">Темы ещё не импортированы</string>
+    <string name="theme_current">текущая</string>
+    <string name="theme_builtin_undeletable">Встроенные палитры нельзя удалить</string>
+    <string name="theme_delete_title">Удалить тему</string>
+    <string name="theme_delete_message">Удалить тему «%1$s»?</string>
+    <string name="theme_pick_file">Выбрать пакет темы</string>
+    <string name="theme_import_failed">Ошибка импорта: %1$s</string>
+    <string name="theme_imported">Тема импортирована: %1$s</string>
+    <string name="theme_builtin_crimson">Кармин</string>
+    <string name="theme_builtin_mist">Туманно-синяя</string>
+    <string name="theme_builtin_sakura">Сакура</string>
+    <string name="theme_builtin_pine">Хвоя</string>
+    <string name="theme_builtin_amber">Янтарь</string>
+    <string name="theme_builtin_violet">Фиолет</string>
+
+    <!-- Таблицы устройств -->
+    <string name="device_table_title">Таблицы устройств</string>
+    <string name="device_table_section">Таблицы по брендам</string>
+    <string name="device_table_empty">Таблиц по брендам нет, создайте кнопкой ниже</string>
+    <string name="device_table_create">Создать таблицу по бренду</string>
+    <string name="device_table_count">%1$s (%2$d записей)</string>
+    <string name="device_table_unparsable">%1$s (не читается)</string>
+    <string name="device_table_delete_title">Удалить таблицу</string>
+    <string name="device_table_delete_message">Удалить таблицу устройств бренда «%1$s»?</string>
+    <string name="device_table_brand_hint">Название бренда, например ZTE / HUAWEI</string>
+    <string name="device_table_file_none">Файл таблицы: не выбран</string>
+    <string name="device_table_file_selected">Файл таблицы: %1$s</string>
+    <string name="device_table_pick">Выбрать файл таблицы (JSON)</string>
+    <string name="device_table_pick_title">Выберите JSON таблицы устройств</string>
+    <string name="device_table_need_brand">Сначала введите название бренда</string>
+    <string name="device_table_need_file">Сначала выберите файл таблицы</string>
+    <string name="device_table_import_failed">Ошибка импорта: это не корректный JSON таблицы устройств</string>
+    <string name="device_table_created">Таблица «%1$s» создана, записей: %2$d</string>
+
+    <!-- Таблицы приложений -->
+    <string name="app_table_title">Таблицы приложений</string>
+    <string name="app_table_hint">Таблица приложений сопоставляет имя пакета и название, например com.tencent.mm = WeChat.\nИмпорт сохраняется в приватном каталоге и перекрывает встроенные записи; неизвестные приложения показывают имя пакета.</string>
+    <string name="app_table_import">Импорт таблицы приложений (JSON)</string>
+    <string name="app_table_count">Доступно названий приложений: %1$d (встроенные + импорт)</string>
+    <string name="app_table_format">Пример формата:\n{\n  \"apps\": {\n    \"com.tencent.mm\": \"WeChat\",\n    \"com.vrchat.mobile.playstore\": \"VRChat\"\n  }\n}</string>
+    <string name="app_table_pick_title">Выберите JSON таблицы приложений</string>
+    <string name="app_table_import_failed">Ошибка импорта: это не корректный JSON таблицы приложений</string>
+    <string name="app_table_imported">Импортировано названий: %1$d</string>
+
+    <!-- Таблицы CPU -->
+    <string name="cpu_map_title">Таблицы CPU</string>
+    <string name="cpu_map_hint">Таблица CPU превращает кодовое имя платформы в модель, например kona = Snapdragon 865.\nТелефоны Qualcomm часто отдают только ro.board.platform (kona / taro / kalama) без ro.soc.model; с этой таблицей будет «Qualcomm Snapdragon 865».</string>
+    <string name="cpu_map_import">Импорт таблицы CPU (JSON)</string>
+    <string name="cpu_map_count">Доступно сопоставлений CPU: %1$d (встроенные + импорт)</string>
+    <string name="cpu_map_format">Пример формата:\n{\n  \"cpus\": {\n    \"kona\": \"Snapdragon 865\",\n    \"taro\": \"Snapdragon 8 Gen 1\"\n  }\n}</string>
+    <string name="cpu_map_pick_title">Выберите JSON таблицы CPU</string>
+    <string name="cpu_map_import_failed">Ошибка импорта: это не корректный JSON таблицы CPU</string>
+    <string name="cpu_map_imported">Импортировано сопоставлений CPU: %1$d</string>
+
+    <!-- Обновление -->
+    <string name="update_title">Обновление</string>
+    <string name="update_current">Текущая версия: %1$s (Build %2$d)</string>
+    <string name="update_auto_check">Проверять обновления при запуске (тихо, по умолчанию выкл.)</string>
+    <string name="update_source_label">Источник обновлений</string>
+    <string name="update_source_gitee">Gitee (Китай)</string>
+    <string name="update_source_github">GitHub</string>
+    <string name="update_not_checked">Ещё не проверялось</string>
+    <string name="update_check_button">Проверить обновления</string>
+    <string name="update_install_button">Скачать и установить</string>
+    <string name="update_note">Пакет скачивается в кэш приложения и передаётся системному установщику. В первый раз нужно разрешить установку из неизвестных источников. Gitee иногда называет APK как .apk.zip — это обрабатывается автоматически.</string>
+    <string name="update_checking">Проверка обновлений…</string>
+    <string name="update_check_failed">Ошибка проверки: %1$s</string>
+    <string name="update_latest_release">Последний релиз: %1$s</string>
+    <string name="update_latest_release_named">Последний релиз: %1$s · %2$s</string>
+    <string name="update_found">Новая версия: %1$s</string>
+    <string name="update_found_no_apk">Новая версия есть, но в релизе нет APK</string>
+    <string name="update_is_latest">Установлена последняя версия</string>
+    <string name="update_notes_title">Что нового · %1$s</string>
+    <string name="update_got_it">Понятно</string>
+    <string name="update_no_apk">В релизе нет APK для скачивания</string>
+    <string name="update_downloading">Скачивание… %1$d%%</string>
+    <string name="update_download_failed">Ошибка скачивания: %1$s</string>
+    <string name="update_downloaded">Скачано, открываю установщик…</string>
+    <string name="update_install_failed">Ошибка установки: %1$s</string>
+    <string name="update_err_no_release">Подходящий релиз не найден (возможно, черновик или пререлиз): %1$s</string>
+    <string name="update_err_http">Сервер вернул HTTP %1$d</string>
+    <string name="update_err_overwrite">Не удалось перезаписать старый пакет</string>
+    <string name="update_err_download_http">Ошибка скачивания: HTTP %1$d</string>
+    <string name="update_err_empty_file">Скачанный файл пуст</string>
+    <string name="update_err_no_apk_file">Файл пакета не найден</string>
+    <string name="update_err_unknown_sources">Сначала разрешите установку из неизвестных источников и нажмите обновление снова</string>
+
+    <!-- Погода: журнал и ошибки -->
+    <string name="wlog_no_network">✗ Нет подключения к сети (авиарежим / мобильные данные выкл.)</string>
+    <string name="wlog_start">Загрузка погоды: %1$s</string>
+    <string name="wlog_pick_city_first">Город не выбран, выберите ниже</string>
+    <string name="wlog_geocoding">· Определение координат города (geocoding-api.open-meteo.com)…</string>
+    <string name="wlog_located">· Найдено: %1$.4f, %2$.4f</string>
+    <string name="wlog_no_coords">· Координат нет, QWeather будет искать по названию города</string>
+    <string name="wlog_coords_failed">· Не удалось определить координаты: %1$s</string>
+    <string name="wlog_openmeteo_cooldown">① Open-Meteo: пропуск, 6-часовой откат после ошибки</string>
+    <string name="wlog_openmeteo_connect">① Подключение к Open-Meteo (api.open-meteo.com)…</string>
+    <string name="wlog_wttr">② Переключение на резерв wttr.in…</string>
+    <string name="wlog_qweather">③ Переключение на резерв QWeather (%1$s)…</string>
+    <string name="wlog_qweather_no_key">· Все три источника не сработали. Впишите Key в «Резерв QWeather»</string>
+    <string name="wlog_geoapi">· Поиск координат по названию города (GeoAPI)…</string>
+    <string name="wlog_geoapi_located">· Найдено по базе городов: %1$.4f, %2$.4f</string>
+    <string name="wlog_all_failed">· Все три источника не сработали, погода не получена</string>
+    <string name="wlog_success">✓ %1$s успешно: %2$s</string>
+    <string name="wlog_fail">✗ %1$s ошибка: %2$s</string>
+    <string name="wlog_hint">   ↳ %1$s</string>
+    <string name="wsummary_ok">Успешно: %1$s · %2$s</string>
+    <string name="wsummary_fail">Ошибка: %1$s</string>
+    <string name="wsummary_failed">Ошибка</string>
+    <string name="wdetail_no_coords">нет координат</string>
+    <string name="wdetail_city_parse_failed">не удалось разобрать название города</string>
+    <string name="wdetail_no_city">город не выбран</string>
+    <string name="wdetail_network">сеть</string>
+    <string name="wdetail_all_sources">все источники</string>
+    <string name="wprovider_qweather">QWeather</string>
+    <string name="wprovider_qweather_en">QWeather</string>
+    <string name="wsummary_humidity">Влажность %1$d%%</string>
+
+    <string name="werr_no_network">На устройстве нет подключения к сети</string>
+    <string name="werr_dns">Не удаётся разрешить имя сервера (сбой DNS)</string>
+    <string name="werr_connection_refused">Сервер отклонил подключение или недоступен</string>
+    <string name="werr_connect_timeout">Таймаут подключения (нет ответа вовремя)</string>
+    <string name="werr_read_timeout">Таймаут чтения (соединение есть, ответа нет)</string>
+    <string name="werr_ssl">Сбой TLS-рукопожатия</string>
+    <string name="werr_connection_reset">Соединение сброшено удалённой стороной</string>
+    <string name="werr_http">Сервер вернул HTTP %1$d</string>
+    <string name="werr_empty_body">Сервер вернул пустой ответ</string>
+    <string name="werr_bad_json">Ответ не является корректным JSON (возможно, страница авторизации Wi-Fi или вмешательство оператора)</string>
+    <string name="werr_missing_field">В ответе нет обязательного поля: %1$s</string>
+    <string name="werr_not_configured">API Key QWeather не настроен</string>
+    <string name="werr_server_code">Ошибка QWeather %1$s</string>
+    <string name="werr_unknown">Неизвестная ошибка</string>
+    <string name="werr_unknown_detail">Неизвестная ошибка (%1$s)</string>
+    <string name="werr_hint_dns">Обычно это подмена DNS оператором или перехват DNS ускорителем/прокси</string>
+    <string name="werr_hint_connect_timeout">Этот домен и так нестабилен из материкового Китая; игровой ускоритель может замедлить</string>
+    <string name="werr_hint_refused">Проверьте, не блокируют ли трафик авиарежим, VPN или ускоритель</string>
+    <string name="werr_hint_ssl">Возможно вмешательство прокси, сниффера или ускорителя</string>
+    <string name="werr_hint_read_timeout">Сервер слишком медленный; обычно помогает смена источника</string>
+    <string name="werr_hint_http_auth">Неверный Key, нет прав или неверный API Host</string>
+    <string name="werr_hint_http_404">Неверный адрес или параметр региона</string>
+    <string name="werr_hint_http_429">Слишком много запросов, сработал лимит</string>
+    <string name="werr_hint_qw_quota">Лимит квоты или частоты, скоро восстановится</string>
+    <string name="werr_hint_qw_auth">Сверьте API Host и Key в консоли, они должны совпадать</string>
+    <string name="werr_hint_not_configured">Укажите API Host и Key в «Резерв QWeather», тогда он участвует</string>
+    <string name="qw_code_204">Для этого региона нет данных</string>
+    <string name="qw_code_400">Неверные параметры (обычно формат города или координат)</string>
+    <string name="qw_code_401">Ошибка авторизации: неверный API Key или Key не совпадает с API Host</string>
+    <string name="qw_code_402">Дневная бесплатная квота исчерпана (1000/день), сброс в 0:00</string>
+    <string name="qw_code_403">У этих учётных данных нет доступа к API</string>
+    <string name="qw_code_404">Запрошенный регион не существует</string>
+    <string name="qw_code_429">Слишком много запросов (бесплатно около 10/мин)</string>
+    <string name="qw_code_500">Ошибка на стороне QWeather</string>
+    <string name="qw_code_unknown">Неизвестный код ошибки</string>
+
+    <string name="send_err_no_ip">IP назначения не указан</string>
+    <string name="send_err_bad_port">Неверный порт: %1$d</string>
+    <string name="send_err_unresolved_ip">Не удаётся разрешить IP-адрес: %1$s</string>
+    <string name="send_err_unreachable">Порт %1$d недоступен: проверьте, что VRChat запущен и OSC включён в Action Menu</string>
+    <string name="send_err_network">Ошибка отправки: %1$s</string>
+    <string name="send_err_no_permission">Нет разрешения INTERNET</string>
+    <string name="send_err_exception">Ошибка отправки: %1$s</string>
+    <string name="log_collect_error">Ошибка сбора или отправки</string>
+    <string name="log_collect_failed">Ошибка сбора</string>
+    <string name="log_no_fields">Ни одно поле не выбрано</string>
+    <string name="log_all_unavailable">Все выбранные поля сейчас недоступны, отправка не выполнена</string>
+    <string name="log_no_target">IP назначения пуст, отправка не выполнена</string>
+    <string name="log_sent">Отправлено %1$d байт на %2$s:%3$d</string>
+
+    <!-- Названия полей -->
+    <string name="field_brand">Бренд устройства</string>
+    <string name="field_model">Модель устройства</string>
+    <string name="field_cpu_name">Название CPU</string>
+    <string name="field_cpu_freq">Частота CPU</string>
+    <string name="field_cpu_temp">Температура CPU</string>
+    <string name="field_cpu_usage">Загрузка CPU</string>
+    <string name="field_gpu_name">Название GPU</string>
+    <string name="field_gpu_freq">Частота GPU</string>
+    <string name="field_gpu_temp">Температура GPU</string>
+    <string name="field_gpu_usage">Загрузка GPU</string>
+    <string name="field_ram">RAM занято/всего</string>
+    <string name="field_battery">Батарея и зарядка</string>
+    <string name="field_weather">Погода</string>
+    <string name="field_temperature">Температура</string>
+    <string name="field_humidity">Влажность</string>
+    <string name="field_pressure">Давление</string>
+    <string name="field_wind">Ветер</string>
+    <string name="field_uv">УФ-индекс</string>
+    <string name="field_sunset">Закат</string>
+    <string name="field_foreground_app">Приложение на экране</string>
+    <string name="field_vrchat_fps">FPS</string>
+    <string name="model_mode_real">Реальная модель</string>
+    <string name="model_mode_product">Маркетинговое название</string>
+
+    <string name="werr_detail_suffix"> (%1$s)</string>
+    <string name="priv_read_timeout">Таймаут чтения (%1$d мс)</string>
+    <string name="foreground_self">VRCDI (это приложение)</string>
+    <string name="foreground_vrchat_quest">VRChat (Quest)</string>
+    <string name="theme_err_mkdir_temp">Не удалось создать временный каталог</string>
+    <string name="theme_err_no_theme_json">В архиве нет theme.json</string>
+    <string name="theme_err_parse_theme_json">Не удалось разобрать theme.json</string>
+    <string name="theme_err_save">Не удалось сохранить тему</string>
+    <string name="theme_err_mkdir">Не удалось создать каталог</string>
+    <string name="theme_err_archive_format">Неподдерживаемый формат архива, только zip / tar.gz</string>
+    <string name="world_entry">Выбрать зарубежный город</string>
+    <string name="world_title">Выбор страны</string>
+    <string name="world_hint">Сначала страна, затем город. Здесь только крупные города стран; если нужного нет, вернитесь и используйте «Поиск города».</string>
+    <string name="world_city_title">Выбор города · %1$s</string>
+    <string name="world_city_count">В этой стране городов: %1$d</string>
+    <string name="world_empty">Не удалось загрузить данные городов, переустановите приложение</string>
+</resources>
