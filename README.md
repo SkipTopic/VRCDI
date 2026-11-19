@@ -2,13 +2,20 @@
 
 > 把安卓设备的实时状态送进 VRChat 的 Chatbox。
 
-VRCDI 是一个纯 Java 的 Android 小工具：通过 **Shizuku**（或 Root，或完全无特权）读取设备的 CPU / GPU / 内存 / 电量等信息，按你勾选的字段拼成一行文本，用 **UDP OSC** 的 `/chatbox/input` 发送给 VRChat，显示在聊天框（Chatbox）里。
+VRCDI 是一个纯 Java 的 Android 小工具：通过 **Shizuku**（或 Root，或完全无特权）读取设备的 CPU / GPU / 内存 / 电量等信息，按你勾选的字段拼成多行文本，用 **UDP OSC** 的 `/chatbox/input` 发送给 VRChat，显示在聊天框（Chatbox）里。
 
 - 包名：`com.vrcdevicecheck.osc`
-- 当前版本：`2.3.8 Omega (Build 138)`
+- 当前版本：`2.5.0 Omega (Build 150)`
 - 最低系统：Android 10（API 29）
 - 语言：Java 8；唯一的第三方依赖是 Shizuku
 - 构建：Android Studio 4.2 / AGP 4.2.2 / Gradle 6.7.1 / compileSdk 30
+
+> **唯一官网：https://wanliustudio.github.io/VRCDI/**
+>
+> 请只从以下官方渠道下载：本官网、[GitHub Releases](https://github.com/WanliuStudio/VRCDI/releases)、
+> [Gitee 发行版](https://gitee.com/WanliuStudio/VRCDI/releases)。
+> 第三方下载站（如各类“软件下载站”“应用大全”收录页）提供的安装包可能被修改、版本落后，
+> 其页面介绍也常与软件实际功能不符（例如把它描述成 VR 头显/手柄检测工具），请勿从来源不明的下载站安装。
 
 ---
 
@@ -258,6 +265,7 @@ VRCDI/
 ## 作者
 
 - WanliuStudio
+- 海盗船长暗金（SkipTopic）
 - Qwen 3.8 Pro
 - DeepSeek-V4.1-Flash
 
