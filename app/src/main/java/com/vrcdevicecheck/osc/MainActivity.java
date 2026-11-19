@@ -47,6 +47,7 @@ import com.vrcdevicecheck.osc.priv.ShellResult;
 import com.vrcdevicecheck.osc.priv.ShizukuShell;
 import com.vrcdevicecheck.osc.service.ReporterService;
 import com.vrcdevicecheck.osc.theme.ThemeManager;
+import com.vrcdevicecheck.osc.util.LocaleHelper;
 import com.vrcdevicecheck.osc.update.UpdateChecker;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
 import com.vrcdevicecheck.osc.weather.WeatherRepository;
@@ -939,7 +940,8 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
                 cachedWeather,
-                settings.isHideUnavailable());
+                settings.isHideUnavailable(),
+                LocaleHelper.getLanguage(this));
         textPreview.setText(report.text);
         textPreviewCount.setText(getString(R.string.preview_count,
                 report.charCount(), ReportBuilder.CHATBOX_LIMIT));

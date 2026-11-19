@@ -329,7 +329,8 @@ public class ReporterService extends Service {
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
                 weather,
-                settings.isHideUnavailable());
+                settings.isHideUnavailable(),
+                LocaleHelper.getLanguage(this));
         latestReport = report;
 
         if (report.text.trim().isEmpty()) {

@@ -66,8 +66,8 @@ public final class WeatherRepository {
 
     private static final String PREFS = "vrcdi_weather";
 
-    /** 缓存结构版本：升级后旧缓存没有气压/风/紫外线/日落，直接丢弃重取 */
-    private static final int SCHEMA_VERSION = 2;
+    /** 缓存结构版本：v3 起多了日文/俄文天气描述，旧缓存直接丢弃重取 */
+    private static final int SCHEMA_VERSION = 3;
     private static final String KEY_SCHEMA = "schema";
 
     private static final String KEY_LAST_SUCCESS = "last_success";
@@ -77,6 +77,8 @@ public final class WeatherRepository {
     private static final String KEY_HUMIDITY = "humidity";
     private static final String KEY_COND_ZH = "cond_zh";
     private static final String KEY_COND_EN = "cond_en";
+    private static final String KEY_COND_JA = "cond_ja";
+    private static final String KEY_COND_RU = "cond_ru";
     private static final String KEY_PROVIDER = "provider";
     private static final String KEY_PRESSURE = "pressure_hpa";
     private static final String KEY_WIND_DIR = "wind_dir_deg";
@@ -93,8 +95,8 @@ public final class WeatherRepository {
     /** 和风天气在缓存里的固定写法；界面上按语言显示成「和风天气」/「QWeather」 */
     public static final String PROVIDER_QWEATHER = "和风天气";
 
-    /** 成功缓存 1 小时 */
-    private static final long CACHE_TTL_MS = 60L * 60L * 1000L;
+    /** 成功缓存 30 分钟（同一城市 30 分钟内不重复请求，手动「立即获取」也受此限制） */
+    private static final long CACHE_TTL_MS = 30L * 60L * 1000L;
     /** 失败后至少隔 10 分钟再试 */
     private static final long FAIL_BACKOFF_MS = 10L * 60L * 1000L;
     /** api.open-meteo.com 失败后 6 小时内直接走备用源，避免每次都白等一次超时 */
@@ -341,7 +343,22 @@ public final class WeatherRepository {
         return new SearchResult(places, "");
     }
 
-    /** 「上次失败：Open-Meteo 连接超时（10:32）」；没有失败记录时返回空串 */
+    /**
+     * 同一城市距离上次成功获取还剩多少毫秒。
+     * 0 表示可以立即获取：没选城市、城市变了（缓存已清）、或者已经过了 30 分钟。
+     */
+    public static long getManualFetchCooldownMs(Context context) {
+        AppSettings settings = new AppSettings(context);
+        if (settings.getWeatherCity().isEmpty()) return 0;
+        SharedPreferences sp = prefs(context);
+        if (!settings.getWeatherPlaceKey().equals(sp.getString(KEY_CITY_KEY, ""))) return 0;
+        long last = sp.getLong(KEY_LAST_SUCCESS, 0L);
+        if (last <= 0) return 0;
+        long remain = CACHE_TTL_MS - (System.currentTimeMillis() - last);
+        return Math.max(0L, remain);
+    }
+
+    /** 「上次失败：Open-Meteo 连接超时（10:32）」；没有失败记录时返回空字符串 */
     public static String getLastFailText(Context context) {
         SharedPreferences sp = prefs(context);
         String text = sp.getString(KEY_LAST_FAIL, "");
@@ -384,6 +401,8 @@ public final class WeatherRepository {
                 .remove(KEY_HUMIDITY)
                 .remove(KEY_COND_ZH)
                 .remove(KEY_COND_EN)
+                .remove(KEY_COND_JA)
+                .remove(KEY_COND_RU)
                 .remove(KEY_PROVIDER)
                 .remove(KEY_PRESSURE)
                 .remove(KEY_WIND_DIR)
@@ -661,7 +680,8 @@ public final class WeatherRepository {
             }
 
             return new WeatherInfo(label, temp, humidity,
-                    WeatherCodes.zhForWmo(code), WeatherCodes.enForWmo(code),
+                    WeatherCodes.forWmo(code, "zh"), WeatherCodes.forWmo(code, "en"),
+                    WeatherCodes.forWmo(code, "ja"), WeatherCodes.forWmo(code, "ru"),
                     System.currentTimeMillis(), "Open-Meteo",
                     pressure, windDir, windSpeed, uv, sunset);
         } catch (Exception e) {
@@ -715,7 +735,8 @@ public final class WeatherRepository {
             }
 
             return new WeatherInfo(label, temp, humidity,
-                    WeatherCodes.zhForWwo(code), WeatherCodes.enForWwo(code, desc),
+                    WeatherCodes.forWwo(code, "zh", desc), WeatherCodes.forWwo(code, "en", desc),
+                    WeatherCodes.forWwo(code, "ja", desc), WeatherCodes.forWwo(code, "ru", desc),
                     System.currentTimeMillis(), "wttr.in",
                     pressure == null ? null : pressure.floatValue(),
                     windDir, windSpeed, uv, sunset);
@@ -805,8 +826,10 @@ public final class WeatherRepository {
             if (uvRaw instanceof Number) uv = ((Number) uvRaw).intValue();
 
             return new WeatherInfo(label, temp, humidity,
-                    text.isEmpty() ? "未知" : text,
-                    WeatherCodes.enForQWeather(icon),
+                    text.isEmpty() ? WeatherCodes.unknown("zh") : text,
+                    WeatherCodes.forQWeather(icon, "en"),
+                    WeatherCodes.forQWeather(icon, "ja"),
+                    WeatherCodes.forQWeather(icon, "ru"),
                     System.currentTimeMillis(), PROVIDER_QWEATHER,
                     pressure, windDir, windMs, uv, null);
         } catch (Exception e) {
@@ -938,6 +961,8 @@ public final class WeatherRepository {
                 .putString(KEY_CITY_KEY, cityKey)
                 .putString(KEY_COND_ZH, info.conditionZh)
                 .putString(KEY_COND_EN, info.conditionEn)
+                .putString(KEY_COND_JA, info.conditionJa)
+                .putString(KEY_COND_RU, info.conditionRu)
                 .putString(KEY_PROVIDER, info.provider);
         if (info.temperatureC != null) editor.putFloat(KEY_TEMP, info.temperatureC);
         else editor.remove(KEY_TEMP);
@@ -969,6 +994,8 @@ public final class WeatherRepository {
         return new WeatherInfo(label, temp, humidity,
                 sp.getString(KEY_COND_ZH, "未知"),
                 sp.getString(KEY_COND_EN, "Unknown"),
+                sp.getString(KEY_COND_JA, ""),
+                sp.getString(KEY_COND_RU, ""),
                 time, sp.getString(KEY_PROVIDER, ""),
                 pressure, windDir, windSpeed, uv, sp.getString(KEY_SUNSET, null));
     }

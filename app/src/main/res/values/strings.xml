@@ -108,7 +108,7 @@
     <string name="check_hide_unavailable">自动屏蔽不可用字段（节省 144 字符）</string>
     <string name="label_model_mode">上报型号类型</string>
     <string name="weather_hint_no_city">天气类字段需要先在「设置 → 天气城市设置」选择城市</string>
-    <string name="weather_hint_city">天气城市：%1$s（每小时最多更新一次）</string>
+    <string name="weather_hint_city">天气城市：%1$s（30 分钟内最多更新一次）</string>
     <string name="action_start">启动上报</string>
     <string name="action_stop">停止上报</string>
     <string name="action_send_now">立即发送一次</string>
@@ -133,7 +133,7 @@
     <string name="hint_all_hidden">所选字段当前都不可用，已自动隐藏所有内容。</string>
     <string name="hint_fps_need_foreground">帧率需要 VRChat 在前台时采集，并且使用 Shizuku / Root 通道；在本应用界面点「重新采集」时 VRChat 不在前台，读不到是正常的。</string>
     <string name="hint_weather_need_city">天气类字段需要先选择城市：设置 → 天气城市设置。</string>
-    <string name="hint_weather_no_data">天气数据还没取到：启动上报后会自动获取，同一城市每小时最多请求一次。</string>
+    <string name="hint_weather_no_data">天气数据还没取到：启动上报后会自动获取，同一城市 30 分钟内最多获取一次。</string>
 
     <!-- 主界面提示与弹窗 -->
     <string name="toast_sent_now">已触发一次立即发送</string>
@@ -229,10 +229,12 @@
     <string name="interval_reset_done">已恢复默认：每 10 秒一次，启动时立即发送</string>
 
     <!-- ==================== 天气城市 ==================== -->
+    <string name="weather_cooldown_title">请稍后再试</string>
+    <string name="weather_cooldown_message">抱歉，同一个城市 30 分钟内只能获取一次，还剩约 %1$d 分钟。</string>
     <string name="weather_title">天气城市设置</string>
     <string name="weather_load_failed">城市数据加载失败</string>
     <string name="weather_load_failed_toast">城市数据加载失败，请重新安装应用</string>
-    <string name="weather_hint">先选省份，再选具体城市。\n国外城市可以「搜索城市」（中英文都行），也可以在最下面「选择国外」按国家浏览。\n数据源按顺序兜底：Open-Meteo → wttr.in → 和风天气。\n前两个都在境外，国内直连经常超时或被 DNS 污染——如果两个都失败而你没开代理，那基本就是网络环境的问题，不是应用的问题。和风天气在国内，最稳，但要自己申请 Key。\n同一城市每小时最多请求一次。</string>
+    <string name="weather_hint">先选省份，再选具体城市。\n国外城市可以「搜索城市」（中英文都行），也可以在最下面「选择国外」按国家浏览。\n数据源按顺序兜底：Open-Meteo → wttr.in → 和风天气。\n前两个都在境外，国内直连经常超时或被 DNS 污染——如果两个都失败而你没开代理，那基本就是网络环境的问题，不是应用的问题。和风天气在国内，最稳，但要自己申请 Key。\n同一城市 30 分钟内最多获取一次。</string>
     <string name="weather_search_entry">搜索城市（支持国外）</string>
     <string name="weather_fetch_now">立即获取</string>
     <string name="weather_qweather">和风天气兜底</string>
@@ -265,7 +267,7 @@
 
     <!-- ==================== 和风天气兜底 ==================== -->
     <string name="qweather_title">和风天气兜底</string>
-    <string name="qweather_intro">和风天气是国内的天气服务，服务器在境内，不需要翻墙，作为最后一个兜底源。\n\n申请步骤：\n1. 打开 console.qweather.com 注册并完成实名认证\n2. 「项目管理」→ 创建项目\n3. 项目里「+ 添加凭据」→ 认证方式选 API KEY\n4. 回到「设置」页，复制你的 API Host（形如 xxxx.qweatherapi.com）\n5. 把 Host 和 Key 填到下面，点「测试连接」\n\n免费订阅每天 1000 次，本应用同一城市每小时最多问一次，用不完。</string>
+    <string name="qweather_intro">和风天气是国内的天气服务，服务器在境内，不需要翻墙，作为最后一个兜底源。\n\n申请步骤：\n1. 打开 console.qweather.com 注册并完成实名认证\n2. 「项目管理」→ 创建项目\n3. 项目里「+ 添加凭据」→ 认证方式选 API KEY\n4. 回到「设置」页，复制你的 API Host（形如 xxxx.qweatherapi.com）\n5. 把 Host 和 Key 填到下面，点「测试连接」\n\n免费订阅每天 1000 次，本应用同一城市 30 分钟最多问一次，用不完。</string>
     <string name="qweather_builtin_note">这个安装包已经内置了一套兜底凭据，不用填也能用；下面的输入框只用于覆盖它（留空即用内置）。</string>
     <string name="qweather_host_label">API Host</string>
     <string name="qweather_host_hint">xxxx.qweatherapi.com</string>

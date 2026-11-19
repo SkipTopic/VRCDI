@@ -105,7 +105,7 @@
     <string name="check_hide_unavailable">Скрывать недоступные поля (экономит 144 символа)</string>
     <string name="label_model_mode">Тип названия модели</string>
     <string name="weather_hint_no_city">Для полей погоды нужно выбрать город: Настройки → Город погоды</string>
-    <string name="weather_hint_city">Город погоды: %1$s (обновление не чаще раза в час)</string>
+    <string name="weather_hint_city">Город погоды: %1$s (обновление не чаще раза в 30 минут)</string>
     <string name="action_start">Начать отправку</string>
     <string name="action_stop">Остановить отправку</string>
     <string name="action_send_now">Отправить один раз</string>
@@ -129,7 +129,7 @@
     <string name="hint_all_hidden">Все выбранные поля сейчас недоступны, поэтому всё скрыто.</string>
     <string name="hint_fps_need_foreground">FPS считывается только когда VRChat на экране и используется канал Shizuku / Root. При нажатии «Обновить» здесь VRChat не на экране, поэтому «Недоступно» — это нормально.</string>
     <string name="hint_weather_need_city">Для полей погоды сначала выберите город: Настройки → Город погоды.</string>
-    <string name="hint_weather_no_data">Данных погоды ещё нет: они загрузятся при начале отправки, не чаще раза в час для одного города.</string>
+    <string name="hint_weather_no_data">Данных погоды ещё нет: они загрузятся при начале отправки, не чаще раза в 30 минут для одного города.</string>
 
     <string name="toast_sent_now">Запрошена одна немедленная отправка</string>
     <string name="toast_collected_not_running">Отправка не идёт, данные собраны один раз. Укажите IP и начните отправку</string>
@@ -222,10 +222,12 @@
     <string name="interval_reset_done">По умолчанию: каждые 10 с, отправка сразу при запуске</string>
 
     <!-- Город погоды -->
+    <string name="weather_cooldown_title">Подождите</string>
+    <string name="weather_cooldown_message">Извините, для одного города можно обновлять данные раз в 30 минут. Осталось около %1$d мин.</string>
     <string name="weather_title">Город погоды</string>
     <string name="weather_load_failed">Не удалось загрузить данные городов</string>
     <string name="weather_load_failed_toast">Не удалось загрузить данные городов, переустановите приложение</string>
-    <string name="weather_hint">Сначала регион, затем город.\nЗарубежные города: «Поиск города» (по-китайски или по-английски) или «Выбрать зарубежный город» внизу списка.\nИсточники по порядку: Open-Meteo → wttr.in → QWeather.\nПервые два за рубежом, из материкового Китая часто таймаут или подмена DNS. Если оба не работают, а прокси нет — дело в сети, не в приложении. QWeather работает в Китае и самый стабильный, но нужен свой ключ.\nОдин город — не чаще раза в час.</string>
+    <string name="weather_hint">Сначала регион, затем город.\nЗарубежные города: «Поиск города» (по-китайски или по-английски) или «Выбрать зарубежный город» внизу списка.\nИсточники по порядку: Open-Meteo → wttr.in → QWeather.\nПервые два за рубежом, из материкового Китая часто таймаут или подмена DNS. Если оба не работают, а прокси нет — дело в сети, не в приложении. QWeather работает в Китае и самый стабильный, но нужен свой ключ.\nОдин город — не чаще раза в 30 минут.</string>
     <string name="weather_search_entry">Поиск города (весь мир)</string>
     <string name="weather_fetch_now">Получить сейчас</string>
     <string name="weather_qweather">Резерв QWeather</string>
@@ -258,7 +260,7 @@
 
     <!-- QWeather -->
     <string name="qweather_title">Резерв QWeather</string>
-    <string name="qweather_intro">QWeather (和风天气) — китайский погодный сервис, серверы в Китае, VPN не нужен. Используется как последний резерв.\n\nКак получить доступ:\n1. Откройте console.qweather.com, зарегистрируйтесь и пройдите проверку\n2. «Управление проектами» → создать проект\n3. В проекте «+ Добавить учётные данные» → способ API KEY\n4. В «Настройках» скопируйте API Host (вида xxxx.qweatherapi.com)\n5. Введите Host и Key ниже и нажмите «Проверить подключение»\n\nБесплатно 1000 запросов в день; приложение спрашивает не чаще раза в час на город.</string>
+    <string name="qweather_intro">QWeather (和风天气) — китайский погодный сервис, серверы в Китае, VPN не нужен. Используется как последний резерв.\n\nКак получить доступ:\n1. Откройте console.qweather.com, зарегистрируйтесь и пройдите проверку\n2. «Управление проектами» → создать проект\n3. В проекте «+ Добавить учётные данные» → способ API KEY\n4. В «Настройках» скопируйте API Host (вида xxxx.qweatherapi.com)\n5. Введите Host и Key ниже и нажмите «Проверить подключение»\n\nБесплатно 1000 запросов в день; приложение спрашивает не чаще раза в 30 минут на город.</string>
     <string name="qweather_builtin_note">В этой сборке уже встроены резервные учётные данные, заполнять ничего не нужно. Поля ниже только перекрывают их (пусто — используется встроенное).</string>
     <string name="qweather_host_label">API Host</string>
     <string name="qweather_host_hint">xxxx.qweatherapi.com</string>

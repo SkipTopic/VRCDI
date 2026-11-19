@@ -105,7 +105,7 @@
     <string name="check_hide_unavailable">利用不可の項目を自動で隠す（144 文字を節約）</string>
     <string name="label_model_mode">送信する型番の種類</string>
     <string name="weather_hint_no_city">天気系の項目は「設定 → 天気の都市」で都市を選ぶ必要があります</string>
-    <string name="weather_hint_city">天気の都市：%1$s（1 時間に 1 回まで更新）</string>
+    <string name="weather_hint_city">天気の都市：%1$s（30 分に 1 回まで更新）</string>
     <string name="action_start">送信を開始</string>
     <string name="action_stop">送信を停止</string>
     <string name="action_send_now">今すぐ 1 回送信</string>
@@ -129,7 +129,7 @@
     <string name="hint_all_hidden">選択した項目は現在すべて利用不可のため、すべて隠しました。</string>
     <string name="hint_fps_need_foreground">FPS は VRChat が前面にあり、Shizuku / Root チャネルのときだけ取得できます。この画面で「再取得」を押すと VRChat は前面にないため、利用不可でも正常です。</string>
     <string name="hint_weather_need_city">天気系の項目は先に都市を選んでください：設定 → 天気の都市。</string>
-    <string name="hint_weather_no_data">天気データがまだありません。送信を開始すると自動取得します（同じ都市は 1 時間に 1 回まで）。</string>
+    <string name="hint_weather_no_data">天気データがまだありません。送信を開始すると自動取得します（同じ都市は 30 分に 1 回まで）。</string>
 
     <string name="toast_sent_now">1 回の即時送信を実行しました</string>
     <string name="toast_collected_not_running">送信していないため 1 回だけ取得しました。IP を入れて送信を開始すると自動で送られます</string>
@@ -222,10 +222,12 @@
     <string name="interval_reset_done">既定に戻しました：10 秒ごと、開始時にすぐ送信</string>
 
     <!-- 天気の都市 -->
+    <string name="weather_cooldown_title">しばらくお待ちください</string>
+    <string name="weather_cooldown_message">申し訳ありません。同じ都市は 30 分に 1 回だけ取得できます。残り約 %1$d 分。</string>
     <string name="weather_title">天気の都市</string>
     <string name="weather_load_failed">都市データの読み込みに失敗</string>
     <string name="weather_load_failed_toast">都市データの読み込みに失敗しました。再インストールしてください</string>
-    <string name="weather_hint">まず省、次に都市を選びます。\n海外の都市は「都市を検索」（中国語・英語可）か、一番下の「海外から選ぶ」で国から選べます。\nデータ源は順に試します：Open-Meteo → wttr.in → QWeather。\n前の 2 つは海外にあり、中国本土からはタイムアウトや DNS 汚染がよく起きます。両方失敗してプロキシも使っていないなら、原因は回線であってアプリではありません。QWeather は中国国内にあり最も安定しますが、自分の Key が必要です。\n同じ都市は 1 時間に 1 回まで。</string>
+    <string name="weather_hint">まず省、次に都市を選びます。\n海外の都市は「都市を検索」（中国語・英語可）か、一番下の「海外から選ぶ」で国から選べます。\nデータ源は順に試します：Open-Meteo → wttr.in → QWeather。\n前の 2 つは海外にあり、中国本土からはタイムアウトや DNS 汚染がよく起きます。両方失敗してプロキシも使っていないなら、原因は回線であってアプリではありません。QWeather は中国国内にあり最も安定しますが、自分の Key が必要です。\n同じ都市は 30 分に 1 回まで。</string>
     <string name="weather_search_entry">都市を検索（海外も可）</string>
     <string name="weather_fetch_now">今すぐ取得</string>
     <string name="weather_qweather">QWeather フォールバック</string>
@@ -258,7 +260,7 @@
 
     <!-- QWeather -->
     <string name="qweather_title">QWeather フォールバック</string>
-    <string name="qweather_intro">QWeather（和風天気）は中国国内の天気サービスで、VPN 不要の最後のフォールバックです。\n\n取得手順：\n1. console.qweather.com で登録し、本人確認を完了\n2. 「プロジェクト管理」→ プロジェクト作成\n3. プロジェクトで「+ 認証情報を追加」→ 認証方式は API KEY\n4. 「設定」ページで API Host（xxxx.qweatherapi.com の形式）をコピー\n5. 下の Host と Key を入力し、「接続テスト」を押す\n\n無料枠は 1 日 1000 回。本アプリは同じ都市で 1 時間に 1 回までなので使い切れません。</string>
+    <string name="qweather_intro">QWeather（和風天気）は中国国内の天気サービスで、VPN 不要の最後のフォールバックです。\n\n取得手順：\n1. console.qweather.com で登録し、本人確認を完了\n2. 「プロジェクト管理」→ プロジェクト作成\n3. プロジェクトで「+ 認証情報を追加」→ 認証方式は API KEY\n4. 「設定」ページで API Host（xxxx.qweatherapi.com の形式）をコピー\n5. 下の Host と Key を入力し、「接続テスト」を押す\n\n無料枠は 1 日 1000 回。本アプリは同じ都市で 30 分に 1 回までなので使い切れません。</string>
     <string name="qweather_builtin_note">この APK にはフォールバック用の認証情報が組み込まれています。入力しなくても使えます。下の欄は上書き用です（空欄なら組み込み値）。</string>
     <string name="qweather_host_label">API Host</string>
     <string name="qweather_host_hint">xxxx.qweatherapi.com</string>

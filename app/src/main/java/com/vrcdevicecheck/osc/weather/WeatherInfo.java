@@ -12,8 +12,8 @@ import java.util.Locale;
 /**
  * 一次天气查询的结果。字段可为 null，表示该 provider 没返回这项数据。
  *
- * conditionZh / conditionEn 两套文案都留着：发往 Chatbox 的文本用哪一套
- * 只由「仅发送 ASCII」决定，跟界面语言无关（见 ReportBuilder）。
+ * 天气描述存了四种语言：发往 Chatbox 的文本按界面语言取一条（见 ReportBuilder），
+ * 中文和英文是原有文案，日文、俄文是后加的。
  */
 public final class WeatherInfo {
 
@@ -22,6 +22,8 @@ public final class WeatherInfo {
     public final Integer humidityPct;
     public final String conditionZh;
     public final String conditionEn;
+    public final String conditionJa;
+    public final String conditionRu;
     public final long fetchedAtMs;
     /** 数据来源：Open-Meteo / wttr.in / 和风天气 */
     public final String provider;
@@ -35,13 +37,8 @@ public final class WeatherInfo {
     public final String sunset;
 
     public WeatherInfo(String cityLabel, Float temperatureC, Integer humidityPct,
-                       String conditionZh, String conditionEn, long fetchedAtMs, String provider) {
-        this(cityLabel, temperatureC, humidityPct, conditionZh, conditionEn, fetchedAtMs, provider,
-                null, null, null, null, null);
-    }
-
-    public WeatherInfo(String cityLabel, Float temperatureC, Integer humidityPct,
-                       String conditionZh, String conditionEn, long fetchedAtMs, String provider,
+                       String conditionZh, String conditionEn, String conditionJa, String conditionRu,
+                       long fetchedAtMs, String provider,
                        Float pressureHpa, Integer windDirectionDeg, Float windSpeedMs,
                        Integer uvIndex, String sunset) {
         this.cityLabel = cityLabel;
@@ -49,6 +46,8 @@ public final class WeatherInfo {
         this.humidityPct = humidityPct;
         this.conditionZh = conditionZh == null ? "未知" : conditionZh;
         this.conditionEn = conditionEn == null ? "Unknown" : conditionEn;
+        this.conditionJa = conditionJa == null ? "" : conditionJa;
+        this.conditionRu = conditionRu == null ? "" : conditionRu;
         this.fetchedAtMs = fetchedAtMs;
         this.provider = provider == null ? "" : provider;
         this.pressureHpa = pressureHpa;
@@ -58,19 +57,31 @@ public final class WeatherInfo {
         this.sunset = sunset;
     }
 
+    /** 按语言取天气描述：zh / en / ja / ru，缺日俄时退回英文 */
+    public String condition(String lang) {
+        if ("en".equals(lang)) return conditionEn;
+        if ("ja".equals(lang)) return conditionJa.isEmpty() ? conditionEn : conditionJa;
+        if ("ru".equals(lang)) return conditionRu.isEmpty() ? conditionEn : conditionRu;
+        return conditionZh;
+    }
+
     public String timeText() {
         return new SimpleDateFormat("HH:mm", Locale.US).format(new Date(fetchedAtMs));
     }
 
     /** 设置页/Toast 用的一行摘要，天气文案跟着界面语言走 */
     public String summary(Context context) {
-        boolean english = !LocaleHelper.isChinese(context);
-        String condition = english ? conditionEn : conditionZh;
+        String lang = LocaleHelper.getLanguage(context);
+        String condition = condition(lang);
         StringBuilder sb = new StringBuilder();
         if (condition != null && !condition.isEmpty()) sb.append(condition);
         if (temperatureC != null) {
             if (sb.length() > 0) sb.append(' ');
-            sb.append(String.format(Locale.US, english ? "%.1f C" : "%.1f℃", temperatureC));
+            if ("ja".equals(lang) || "zh".equals(lang)) {
+                sb.append(String.format(Locale.US, "%.1f℃", temperatureC));
+            } else {
+                sb.append(String.format(Locale.US, "%.1f°C", temperatureC));
+            }
         }
         if (humidityPct != null) {
             if (sb.length() > 0) sb.append(' ');
@@ -82,7 +93,7 @@ public final class WeatherInfo {
         return sb.toString();
     }
 
-    /** 数据源名字。和风天气在英文界面显示 QWeather，其余用服务自己的品牌名 */
+    /** 数据源名字。和风天气在非中文界面显示 QWeather，其余用服务自己的品牌名 */
     public String providerLabel(Context context) {
         if (!LocaleHelper.isChinese(context) && "和风天气".equals(provider)) {
             return LocaleHelper.str(context, R.string.wprovider_qweather_en);

@@ -108,7 +108,7 @@
     <string name="check_hide_unavailable">Hide unavailable fields automatically (saves the 144 chars)</string>
     <string name="label_model_mode">Model name type</string>
     <string name="weather_hint_no_city">Weather fields need a city first: Settings → Weather city</string>
-    <string name="weather_hint_city">Weather city: %1$s (updated at most once an hour)</string>
+    <string name="weather_hint_city">Weather city: %1$s (updated at most once every 30 minutes)</string>
     <string name="action_start">Start reporting</string>
     <string name="action_stop">Stop reporting</string>
     <string name="action_send_now">Send once now</string>
@@ -133,7 +133,7 @@
     <string name="hint_all_hidden">None of the selected fields is available right now, so everything was hidden.</string>
     <string name="hint_fps_need_foreground">FPS can only be read while VRChat is in the foreground and with the Shizuku / Root channel. VRChat is not in the foreground when you tap Refresh here, so N/A is expected.</string>
     <string name="hint_weather_need_city">Weather fields need a city: Settings → Weather city.</string>
-    <string name="hint_weather_no_data">No weather data yet: it is fetched automatically once reporting starts, at most once an hour per city.</string>
+    <string name="hint_weather_no_data">No weather data yet: it is fetched automatically once reporting starts, at most once every 30 minutes per city.</string>
 
     <!-- Main screen toasts & dialogs -->
     <string name="toast_sent_now">Triggered one immediate send</string>
@@ -229,10 +229,12 @@
     <string name="interval_reset_done">Defaults restored: every 10 s, send immediately on start</string>
 
     <!-- ==================== Weather city ==================== -->
+    <string name="weather_cooldown_title">Please wait</string>
+    <string name="weather_cooldown_message">Sorry, the same city can only be fetched once every 30 minutes. About %1$d min left.</string>
     <string name="weather_title">Weather city</string>
     <string name="weather_load_failed">Failed to load city data</string>
     <string name="weather_load_failed_toast">Failed to load city data, please reinstall the app</string>
-    <string name="weather_hint">Pick a province, then a city.\nFor cities outside China use Search city (Chinese or English), or Browse by country at the bottom.\nSources are tried in order: Open-Meteo → wttr.in → QWeather.\nThe first two are overseas services and often time out or get DNS-polluted from mainland China — if both fail and you are not on a proxy, it is the network, not the app. QWeather is hosted in China and is the most reliable, but needs your own key.\nOne request per city per hour.</string>
+    <string name="weather_hint">Pick a province, then a city.\nFor cities outside China use Search city (Chinese or English), or Browse by country at the bottom.\nSources are tried in order: Open-Meteo → wttr.in → QWeather.\nThe first two are overseas services and often time out or get DNS-polluted from mainland China — if both fail and you are not on a proxy, it is the network, not the app. QWeather is hosted in China and is the most reliable, but needs your own key.\nOne request per city every 30 minutes.</string>
     <string name="weather_search_entry">Search city (worldwide)</string>
     <string name="weather_fetch_now">Fetch now</string>
     <string name="weather_qweather">QWeather fallback</string>
@@ -265,7 +267,7 @@
 
     <!-- ==================== QWeather ==================== -->
     <string name="qweather_title">QWeather fallback</string>
-    <string name="qweather_intro">QWeather (和风天气) is a Chinese weather service hosted in mainland China, no VPN needed, used as the last fallback.\n\nHow to get credentials:\n1. Open console.qweather.com, register and complete verification\n2. Project Management → create a project\n3. In the project: + Add credential → choose API KEY\n4. Go to Settings and copy your API Host (looks like xxxx.qweatherapi.com)\n5. Fill Host and Key below, then tap Test connection\n\nThe free plan allows 1000 calls a day; this app asks at most once an hour per city.</string>
+    <string name="qweather_intro">QWeather (和风天气) is a Chinese weather service hosted in mainland China, no VPN needed, used as the last fallback.\n\nHow to get credentials:\n1. Open console.qweather.com, register and complete verification\n2. Project Management → create a project\n3. In the project: + Add credential → choose API KEY\n4. Go to Settings and copy your API Host (looks like xxxx.qweatherapi.com)\n5. Fill Host and Key below, then tap Test connection\n\nThe free plan allows 1000 calls a day; this app asks at most once every 30 minutes per city.</string>
     <string name="qweather_builtin_note">This build already has fallback credentials baked in, so you can leave these empty. The fields below only override them (empty = use the built-in).</string>
     <string name="qweather_host_label">API Host</string>
     <string name="qweather_host_hint">xxxx.qweatherapi.com</string>

@@ -1,5 +1,7 @@
 package com.vrcdevicecheck.osc;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -135,6 +137,22 @@ public class WeatherCityActivity extends BaseActivity {
             public void onClick(View v) {
                 if (settings.getWeatherCity().isEmpty()) {
                     toast(getString(R.string.weather_pick_city_first));
+                    return;
+                }
+                long cooldown = WeatherRepository.getManualFetchCooldownMs(WeatherCityActivity.this);
+                if (cooldown > 0) {
+                    int minutes = (int) Math.ceil(cooldown / 60000.0);
+                    new AlertDialog.Builder(WeatherCityActivity.this)
+                            .setTitle(R.string.weather_cooldown_title)
+                            .setMessage(getString(R.string.weather_cooldown_message, minutes))
+                            .setPositiveButton(R.string.common_confirm,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    })
+                            .show();
                     return;
                 }
                 runFetch(false);
