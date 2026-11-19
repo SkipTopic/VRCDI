@@ -139,22 +139,6 @@ public class WeatherCityActivity extends BaseActivity {
                     toast(getString(R.string.weather_pick_city_first));
                     return;
                 }
-                long cooldown = WeatherRepository.getManualFetchCooldownMs(WeatherCityActivity.this);
-                if (cooldown > 0) {
-                    int minutes = (int) Math.ceil(cooldown / 60000.0);
-                    new AlertDialog.Builder(WeatherCityActivity.this)
-                            .setTitle(R.string.weather_cooldown_title)
-                            .setMessage(getString(R.string.weather_cooldown_message, minutes))
-                            .setPositiveButton(R.string.common_confirm,
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.dismiss();
-                                        }
-                                    })
-                            .show();
-                    return;
-                }
                 runFetch(false);
             }
         });
@@ -272,6 +256,24 @@ public class WeatherCityActivity extends BaseActivity {
      */
     private void runFetch(final boolean qweatherOnly) {
         if (fetching) return;
+
+        // 同一城市 30 分钟内只允许手动获取一次；换城市会清缓存，冷却自然消失
+        long cooldown = WeatherRepository.getManualFetchCooldownMs(this);
+        if (cooldown > 0) {
+            int minutes = (int) Math.ceil(cooldown / 60000.0);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.weather_cooldown_title)
+                    .setMessage(getString(R.string.weather_cooldown_message, minutes))
+                    .setPositiveButton(R.string.common_confirm,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                    .show();
+            return;
+        }
         fetching = true;
         fetchButton.setEnabled(false);
         qweatherButton.setEnabled(false);
