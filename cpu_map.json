@@ -1,0 +1,7 @@
+{
+    "cpus": {
+    "SXR2230P": "Snapdragon XR2"
+    "sdm710": "Snapdragon 710",
+    "ums9620_2h10": "Unisoc T770"
+  }
+}
