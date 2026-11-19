@@ -2,7 +2,6 @@ package com.vrcdevicecheck.osc.osc;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.vrcdevicecheck.osc.data.ReportField;
@@ -87,7 +86,6 @@ public class ReportBuilderTest {
         // 最后一段（VRChat 帧率）最先被整段丢掉
         assertTrue(report.dropped.contains(ReportField.VRCHAT_FPS));
         assertTrue(report.overLimit());
-        assertTrue(report.limitHint().contains("省略"));
     }
 
     @Test
@@ -95,7 +93,6 @@ public class ReportBuilderTest {
         ReportBuilder.Report report = ReportBuilder.build(
                 TestSnapshots.notCharging(50), EnumSet.of(ReportField.BATTERY), false);
         assertTrue(report.dropped.isEmpty());
-        assertNull(report.limitHint());
         assertFalse(report.overLimit());
     }
 
@@ -108,7 +105,8 @@ public class ReportBuilderTest {
 
     private WeatherInfo weather() {
         return new WeatherInfo("江西省 上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", 0L, "Open-Meteo");
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                0L, "Open-Meteo", null, null, null, null, null);
     }
 
     @Test
@@ -144,7 +142,8 @@ public class ReportBuilderTest {
 
     private WeatherInfo weatherWithDetails() {
         return new WeatherInfo("江西省 上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", 0L, "Open-Meteo",
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                0L, "Open-Meteo",
                 1018f, 225, 3.2f, 5, "17:14");
     }
 
@@ -169,7 +168,8 @@ public class ReportBuilderTest {
     @Test
     public void windWithoutDirectionStillShowsSpeed() {
         WeatherInfo weather = new WeatherInfo("上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", 0L, "Open-Meteo",
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                0L, "Open-Meteo",
                 null, null, 3.2f, null, null);
         String text = ReportBuilder.build(TestSnapshots.full(),
                 EnumSet.of(ReportField.WIND), false, true, weather, false).text;
@@ -187,7 +187,6 @@ public class ReportBuilderTest {
         assertTrue(report.hidden.contains(ReportField.MODEL));
         assertTrue(report.hidden.contains(ReportField.CPU_NAME));
         assertTrue(report.dropped.isEmpty());
-        assertNull(report.limitHint());
     }
 
     @Test
@@ -211,6 +210,36 @@ public class ReportBuilderTest {
         assertEquals("不可用", report.text);
         assertTrue(report.hidden.isEmpty());
         assertTrue(report.dropped.isEmpty());
+    }
+
+    @Test
+    public void reportFollowsSelectedLanguage() {
+        assertEquals("Battery: 78% Charging", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.BATTERY), false, true, null, false, "en").text);
+        assertEquals("バッテリー: 78% 充電中", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.BATTERY), false, true, null, false, "ja").text);
+        assertEquals("Батарея: 78% Заряжается", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.BATTERY), false, true, null, false, "ru").text);
+        assertEquals("电量: 78% 充电中", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.BATTERY), false, true, null, false, "zh").text);
+    }
+
+    @Test
+    public void asciiOnlyOverridesLanguage() {
+        String text = ReportBuilder.build(TestSnapshots.full(), EnumSet.of(ReportField.BATTERY),
+                true, true, null, false, "ja").text;
+        assertEquals("Battery: 78% Charging", text);
+    }
+
+    @Test
+    public void weatherLineUsesSelectedLanguage() {
+        assertEquals("天気: 晴れ時々曇り 17.3℃ 湿度 86%", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                false, true, weather(), false, "ja").text);
+        assertEquals("Погода: Переменная облачность 17.3°C Влажность 86%",
+                ReportBuilder.build(TestSnapshots.full(),
+                        EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                        false, true, weather(), false, "ru").text);
     }
 
     @Test

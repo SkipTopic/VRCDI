@@ -102,13 +102,14 @@ public final class ReportBuilder {
         final String wind;
         final String uv;
         final String sunset;
+        final String speedOnly;
         final String charging;
         final String humidityFormat;
         final String tempFormat;
         final String[] directions;
 
         Words(String na, String battery, String weather, String pressure, String wind,
-              String uv, String sunset, String charging, String humidityFormat,
+              String uv, String sunset, String speedOnly, String charging, String humidityFormat,
               String tempFormat, String[] directions) {
             this.na = na;
             this.battery = battery;
@@ -117,6 +118,7 @@ public final class ReportBuilder {
             this.wind = wind;
             this.uv = uv;
             this.sunset = sunset;
+            this.speedOnly = speedOnly;
             this.charging = charging;
             this.humidityFormat = humidityFormat;
             this.tempFormat = tempFormat;
@@ -125,25 +127,27 @@ public final class ReportBuilder {
     }
 
     private static final Words WORDS_ZH = new Words(
-            "不可用", "电量: ", "天气: ", "气压 ", "风向风速 ", "紫外线 ", "日落 ", "充电中",
+            "不可用", "电量: ", "天气: ", "气压 ", "风向风速 ", "紫外线 ", "日落 ", "风速 ", "充电中",
             "湿度 %d%%", "%.1f℃",
             new String[]{"北风", "东北风", "东风", "东南风", "南风", "西南风", "西风", "西北风"});
 
     private static final Words WORDS_EN = new Words(
-            "N/A", "Battery: ", "Weather: ", "Pressure ", "Wind ", "UV ", "Sunset ", "Charging",
+            "N/A", "Battery: ", "Weather: ", "Pressure ", "Wind ", "UV ", "Sunset ",
+            "Wind ", "Charging",
             "Humidity %d%%", "%.1fC",
             new String[]{"N wind", "NE wind", "E wind", "SE wind",
                     "S wind", "SW wind", "W wind", "NW wind"});
 
     private static final Words WORDS_JA = new Words(
-            "利用不可", "バッテリー: ", "天気: ", "気圧 ", "風 ", "紫外線 ", "日の入り ", "充電中",
+            "利用不可", "バッテリー: ", "天気: ", "気圧 ", "風 ", "紫外線 ", "日の入り ",
+            "風速 ", "充電中",
             "湿度 %d%%", "%.1f℃",
             new String[]{"北の風", "北東の風", "東の風", "南東の風",
                     "南の風", "南西の風", "西の風", "北西の風"});
 
     private static final Words WORDS_RU = new Words(
             "Недоступно", "Батарея: ", "Погода: ", "Давление ", "Ветер ", "УФ ", "Закат ",
-            "Заряжается", "Влажность %d%%", "%.1f°C",
+            "Скорость ", "Заряжается", "Влажность %d%%", "%.1f°C",
             new String[]{"С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"});
 
     /** 一行文本 + 这一行包含的字段（用来算"丢了什么"） */
@@ -580,7 +584,7 @@ public final class ReportBuilder {
         }
         if (hasSpeed) {
             if (sb.length() > 0) sb.append(' ');
-            else sb.append(words.wind);
+            else sb.append(words.speedOnly);
             sb.append(String.format(Locale.US, "%.1fm/s", weather.windSpeedMs));
         }
         return sb.toString();
