@@ -7,4 +7,14 @@
         <item name="android:windowBackground">@color/bg</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
     </style>
+
+    <!-- 引导页全屏铺开，不要标题栏 -->
+    <style name="Theme.VRCDI.Onboarding" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/accent</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

@@ -48,6 +48,7 @@ public class SettingsActivity extends BaseActivity {
                 getString(R.string.settings_cpu_map),
                 getString(R.string.settings_theme),
                 getString(R.string.settings_language),
+                getString(R.string.settings_tutorial),
                 getString(R.string.settings_update),
                 getString(R.string.settings_about),
                 getString(R.string.settings_exit)
@@ -105,9 +106,13 @@ public class SettingsActivity extends BaseActivity {
                         showLanguageDialog();
                         break;
                     case 8:
-                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        // 只开教学页，不动「已引导」标记
+                        startActivity(WelcomeActivity.intentForGuide(SettingsActivity.this));
                         break;
                     case 9:
+                        startActivity(new Intent(SettingsActivity.this, UpdateSettingsActivity.class));
+                        break;
+                    case 10:
                         showAboutDialog();
                         break;
                     default:
@@ -133,16 +138,15 @@ public class SettingsActivity extends BaseActivity {
         super.onStop();
     }
 
-    /** 语言：中文 / English / 日本語 / Русский。默认中文，切换后立刻重启让所有界面重建 */
+    /** 语言：简体中文 / English / 日本語 / Русский / 한국어。默认中文，切换后立刻重启让所有界面重建 */
     private void showLanguageDialog() {
-        final String[] values = {
-                LocaleHelper.LANG_ZH, LocaleHelper.LANG_EN,
-                LocaleHelper.LANG_JA, LocaleHelper.LANG_RU};
+        final String[] values = LocaleHelper.ALL;
         final String[] labels = {
                 getString(R.string.language_zh),
                 getString(R.string.language_en),
                 getString(R.string.language_ja),
-                getString(R.string.language_ru)};
+                getString(R.string.language_ru),
+                getString(R.string.language_ko)};
         String current = LocaleHelper.getLanguage(this);
         int checked = 0;
         for (int i = 0; i < values.length; i++) {

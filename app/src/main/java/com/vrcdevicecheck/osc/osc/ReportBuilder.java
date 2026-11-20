@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * 把设备快照拼成 Chatbox 文本。纯逻辑，可单元测试。
  *
- * 文本语言跟界面语言走（zh / en / ja / ru）；
+ * 文本语言跟界面语言走（zh / en / ja / ru / ko）；
  * 打开「仅发送 ASCII」时强制用英文 ASCII 写法，避免 VRChat 显示成问号。
  *
  * 输出是分段的（每段一行），形如：
@@ -150,6 +150,12 @@ public final class ReportBuilder {
             "Скорость ", "Заряжается", "Влажность %d%%", "%.1f°C",
             new String[]{"С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"});
 
+    private static final Words WORDS_KO = new Words(
+            "사용 불가", "배터리: ", "날씨: ", "기압 ", "바람 ", "자외선 ", "일몰 ",
+            "풍속 ", "충전 중", "습도 %d%%", "%.1f℃",
+            new String[]{"북풍", "북동풍", "동풍", "남동풍",
+                    "남풍", "남서풍", "서풍", "북서풍"});
+
     /** 一行文本 + 这一行包含的字段（用来算"丢了什么"） */
     private static final class Line {
         final String text;
@@ -234,7 +240,7 @@ public final class ReportBuilder {
     /**
      * @param weather         可为 null；为 null 时天气行显示「不可用」或被隐藏
      * @param hideUnavailable true 时，任何读到「不可用」的字段都不进文本，节省 144 字符
-     * @param lang            上报文本语言：zh / en / ja / ru；asciiOnly 时强制英文
+     * @param lang            上报文本语言：zh / en / ja / ru / ko；asciiOnly 时强制英文
      */
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
                                boolean useProductName, WeatherInfo weather, boolean hideUnavailable,
@@ -281,6 +287,7 @@ public final class ReportBuilder {
         if ("en".equals(lang)) return WORDS_EN;
         if ("ja".equals(lang)) return WORDS_JA;
         if ("ru".equals(lang)) return WORDS_RU;
+        if ("ko".equals(lang)) return WORDS_KO;
         return WORDS_ZH;
     }
 

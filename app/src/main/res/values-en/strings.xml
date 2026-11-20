@@ -168,6 +168,7 @@
     <string name="about_version_label">Version</string>
     <string name="about_author_label">Authors: </string>
     <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">Project links: </string>
     <string name="about_device_label">Your device:</string>
     <string name="about_brand">Brand: %1$s</string>
     <string name="about_model">Model: %1$s</string>
@@ -200,7 +201,23 @@
     <string name="language_en">English</string>
     <string name="language_ja">日本語</string>
     <string name="language_ru">Русский</string>
+    <string name="language_ko">한국어</string>
     <string name="language_restarting">Language changed, restarting…</string>
+
+    <!-- ==================== First launch ==================== -->
+    <string name="onboarding_language_subtitle">选择语言 · Choose your language\n言語を選択 · Выберите язык · 언어를 선택하세요</string>
+    <string name="onboarding_language_hint">You can change this later in Settings → Language.</string>
+    <string name="settings_tutorial">OSC setup guide</string>
+    <string name="guide_title">First time? Turn OSC on</string>
+    <string name="guide_intro">VRCDI sends device info to the VRChat chatbox over OSC, so OSC has to be enabled in VRChat first. Do these 5 steps once and you are set.</string>
+    <string name="guide_step_label">Step %1$d / %2$d</string>
+    <string name="guide_step1">Enter any world, then tap the menu button at the bottom right of the screen to open the quick menu.</string>
+    <string name="guide_step2">In the quick menu, tap the gear at the bottom right to open Settings.</string>
+    <string name="guide_step3">Tap the open-in-window icon at the top right to expand the full settings page.</string>
+    <string name="guide_step4">Pick Avatars in the left list, then scroll down to the OSC section.</string>
+    <string name="guide_step5">Turn on both OSC and OSC Debug Panel, then come back to VRCDI.</string>
+    <string name="guide_pc_note">These screenshots are from the VRChat standalone / mobile build. On PC the switches are in the same place (Settings → Avatars → OSC), and you also need the launch option shown on the main screen.</string>
+    <string name="guide_start">Got it, let\'s start</string>
 
     <!-- ==================== Report interval ==================== -->
     <string name="interval_title">Report interval</string>
