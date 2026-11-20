@@ -168,6 +168,7 @@
     <string name="about_version_label">Version</string>
     <string name="about_author_label">Authors: </string>
     <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">Project links: </string>
     <string name="about_device_label">Your device:</string>
     <string name="about_brand">Brand: %1$s</string>
     <string name="about_model">Model: %1$s</string>

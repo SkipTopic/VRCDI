@@ -162,6 +162,7 @@
     <string name="about_version_label">バージョン</string>
     <string name="about_author_label">作者：</string>
     <string name="about_author">WanliuStudio、Qwen 3.8 Pro、DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">プロジェクト：</string>
     <string name="about_device_label">この端末：</string>
     <string name="about_brand">ブランド：%1$s</string>
     <string name="about_model">型番：%1$s</string>

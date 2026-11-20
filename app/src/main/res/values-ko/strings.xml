@@ -168,7 +168,8 @@
     <string name="about_title">VRCDI 정보</string>
     <string name="about_version_label">소프트웨어 버전</string>
     <string name="about_author_label">제작: </string>
-    <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_author">WanliuStudio, SkipTopic, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">프로젝트 링크: </string>
     <string name="about_device_label">내 기기:</string>
     <string name="about_brand">브랜드: %1$s</string>
     <string name="about_model">모델: %1$s</string>

@@ -162,6 +162,7 @@
     <string name="about_version_label">Версия</string>
     <string name="about_author_label">Авторы: </string>
     <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">Ссылки проекта: </string>
     <string name="about_device_label">Ваше устройство:</string>
     <string name="about_brand">Бренд: %1$s</string>
     <string name="about_model">Модель: %1$s</string>
