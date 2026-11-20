@@ -39,7 +39,6 @@
     <string name="group_weather">날씨</string>
     <string name="group_music">음악 재생</string>
     <string name="group_other">기타</string>
-    <string name="field_group_selected">%1$d/%2$d 선택</string>
     <string name="card_preview">채팅창 미리보기</string>
     <string name="card_log">전송 로그</string>
 
@@ -506,6 +505,7 @@
     <string name="field_music_title">곡 제목</string>
     <string name="field_music_artist">아티스트</string>
     <string name="field_music_album">앨범</string>
+    <string name="field_music_progress">재생 위치</string>
     <string name="field_music_lyric">현재 가사</string>
     <string name="music_access_hint">음악 정보에는 「알림 접근」 권한이 필요합니다: 여기를 눌러 시스템 설정을 여세요</string>
     <string name="music_access_granted_hint">알림 접근 권한이 켜져 있습니다 (미디어 정보만 읽습니다)</string>

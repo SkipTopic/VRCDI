@@ -118,6 +118,17 @@ public class ReportBuilderTest {
     }
 
     @Test
+    public void musicLineShowsPlaybackProgress() {
+        MusicInfo music = new MusicInfo("夜曲", "周杰伦", "十一月的萧邦", "一群嗜血的蚂蚁",
+                80000L, 260000L);
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.MUSIC_TITLE, ReportField.MUSIC_PROGRESS),
+                false, true, null, false, "zh", music).text;
+
+        assertEquals("♪ 夜曲 1:20 / 4:20", text);
+    }
+
+    @Test
     public void musicLineOnlyUsesSelectedParts() {
         MusicInfo music = new MusicInfo("夜曲", "周杰伦", "十一月的萧邦", "一群嗜血的蚂蚁");
         String text = ReportBuilder.build(TestSnapshots.full(),

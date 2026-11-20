@@ -13,12 +13,22 @@ public final class MusicInfo {
     public final String album;
     /** 当前播放到的那一行歌词；没有歌词、还没取到或匹配失败时为 null */
     public final String lyricLine;
+    /** 读取时的播放位置与总时长（毫秒）；拿不到时长时为 0 */
+    public final long positionMs;
+    public final long durationMs;
 
     public MusicInfo(String title, String artist, String album, String lyricLine) {
+        this(title, artist, album, lyricLine, 0L, 0L);
+    }
+
+    public MusicInfo(String title, String artist, String album, String lyricLine,
+                     long positionMs, long durationMs) {
         this.title = title;
         this.artist = artist;
         this.album = album;
         this.lyricLine = lyricLine;
+        this.positionMs = positionMs;
+        this.durationMs = durationMs;
     }
 
     public boolean hasTitle() {
@@ -39,5 +49,9 @@ public final class MusicInfo {
 
     public boolean hasLyric() {
         return lyricLine != null && !lyricLine.trim().isEmpty();
+    }
+
+    public boolean hasProgress() {
+        return durationMs > 0;
     }
 }

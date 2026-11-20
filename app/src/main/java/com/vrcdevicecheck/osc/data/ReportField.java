@@ -37,6 +37,7 @@ public enum ReportField {
     MUSIC_TITLE("music_title", R.string.field_music_title),
     MUSIC_ARTIST("music_artist", R.string.field_music_artist),
     MUSIC_ALBUM("music_album", R.string.field_music_album),
+    MUSIC_PROGRESS("music_progress", R.string.field_music_progress),
     MUSIC_LYRIC("music_lyric", R.string.field_music_lyric),
     FOREGROUND_APP("foreground_app", R.string.field_foreground_app),
     VRCHAT_FPS("vrchat_fps", R.string.field_vrchat_fps);
@@ -71,6 +72,7 @@ public enum ReportField {
     /** 音乐类字段需要「通知使用权」，且共用歌曲行 / 歌词行 */
     public boolean isMusic() {
         return this == MUSIC_TITLE || this == MUSIC_ARTIST
-                || this == MUSIC_ALBUM || this == MUSIC_LYRIC;
+                || this == MUSIC_ALBUM || this == MUSIC_PROGRESS
+                || this == MUSIC_LYRIC;
     }
 }

@@ -37,7 +37,6 @@
     <string name="group_weather">Погода</string>
     <string name="group_music">Музыка</string>
     <string name="group_other">Другое</string>
-    <string name="field_group_selected">Выбрано %1$d/%2$d</string>
     <string name="card_preview">Предпросмотр Chatbox</string>
     <string name="card_log">Журнал отправки</string>
 
@@ -493,6 +492,7 @@
     <string name="field_music_title">Название песни</string>
     <string name="field_music_artist">Исполнитель</string>
     <string name="field_music_album">Альбом</string>
+    <string name="field_music_progress">Позиция воспроизведения</string>
     <string name="field_music_lyric">Текущая строка</string>
     <string name="music_access_hint">Для данных о музыке нужен доступ к уведомлениям: нажмите, чтобы открыть настройки</string>
     <string name="music_access_granted_hint">Доступ к уведомлениям предоставлен (читается только медиаинформация)</string>

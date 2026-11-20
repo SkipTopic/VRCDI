@@ -518,15 +518,19 @@ public final class ReportBuilder {
         // 音乐行：歌名 - 歌手 (专辑)
         boolean musicTrackSelected = fields.contains(ReportField.MUSIC_TITLE)
                 || fields.contains(ReportField.MUSIC_ARTIST)
-                || fields.contains(ReportField.MUSIC_ALBUM);
+                || fields.contains(ReportField.MUSIC_ALBUM)
+                || fields.contains(ReportField.MUSIC_PROGRESS);
         if (musicTrackSelected) {
-            List<ReportField> selected = new ArrayList<>(3);
+            List<ReportField> selected = new ArrayList<>(4);
             if (fields.contains(ReportField.MUSIC_TITLE)) selected.add(ReportField.MUSIC_TITLE);
             if (fields.contains(ReportField.MUSIC_ARTIST)) selected.add(ReportField.MUSIC_ARTIST);
             if (fields.contains(ReportField.MUSIC_ALBUM)) selected.add(ReportField.MUSIC_ALBUM);
+            if (fields.contains(ReportField.MUSIC_PROGRESS)) {
+                selected.add(ReportField.MUSIC_PROGRESS);
+            }
 
             StringBuilder trackText = new StringBuilder();
-            List<ReportField> used = new ArrayList<>(3);
+            List<ReportField> used = new ArrayList<>(4);
             if (music != null) {
                 if (fields.contains(ReportField.MUSIC_TITLE) && music.hasTitle()) {
                     trackText.append(music.title.trim());
@@ -544,6 +548,13 @@ public final class ReportBuilder {
                         trackText.append(music.album.trim());
                     }
                     used.add(ReportField.MUSIC_ALBUM);
+                }
+                if (fields.contains(ReportField.MUSIC_PROGRESS) && music.hasProgress()) {
+                    if (trackText.length() > 0) trackText.append(' ');
+                    trackText.append(formatTime(music.positionMs))
+                            .append(" / ")
+                            .append(formatTime(music.durationMs));
+                    used.add(ReportField.MUSIC_PROGRESS);
                 }
             }
             if (trackText.length() > 0) {
@@ -587,6 +598,18 @@ public final class ReportBuilder {
         }
 
         return lines;
+    }
+
+    /** 播放位置 / 总时长：1:20 / 4:20；超过一小时用 1:02:03 */
+    private static String formatTime(long millis) {
+        long totalSeconds = Math.max(0L, millis) / 1000L;
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long seconds = totalSeconds % 60L;
+        if (hours > 0) {
+            return String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds);
+        }
+        return String.format(Locale.US, "%d:%02d", minutes, seconds);
     }
 
     /** 非 ASCII 模式下用音符前缀；「仅发送 ASCII」时退回纯英文标签 */

@@ -38,7 +38,6 @@
     <string name="group_weather">Weather</string>
     <string name="group_music">Music</string>
     <string name="group_other">Other</string>
-    <string name="field_group_selected">%1$d/%2$d selected</string>
     <string name="card_preview">Chatbox preview</string>
     <string name="card_log">Send log</string>
 
@@ -503,6 +502,7 @@
     <string name="field_music_title">Song title</string>
     <string name="field_music_artist">Artist</string>
     <string name="field_music_album">Album</string>
+    <string name="field_music_progress">Playback time</string>
     <string name="field_music_lyric">Current lyric</string>
     <string name="music_access_hint">Music info needs Notification access: tap here to open system settings</string>
     <string name="music_access_granted_hint">Notification access is granted (media info only)</string>

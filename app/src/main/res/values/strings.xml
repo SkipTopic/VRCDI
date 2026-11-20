@@ -38,7 +38,6 @@
     <string name="group_weather">天气</string>
     <string name="group_music">音乐播放</string>
     <string name="group_other">其它</string>
-    <string name="field_group_selected">已选 %1$d/%2$d</string>
     <string name="card_preview">Chatbox 预览</string>
     <string name="card_log">发送日志</string>
 
@@ -505,6 +504,7 @@
     <string name="field_music_title">歌曲名</string>
     <string name="field_music_artist">歌手</string>
     <string name="field_music_album">专辑名</string>
+    <string name="field_music_progress">播放进度</string>
     <string name="field_music_lyric">当前歌词</string>
     <string name="music_access_hint">音乐信息需要「通知使用权」：点按这里前往系统设置开启</string>
     <string name="music_access_granted_hint">通知使用权已开启（只读取媒体播放信息）</string>

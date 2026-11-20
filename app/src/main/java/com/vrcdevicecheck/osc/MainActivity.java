@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -61,11 +62,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -111,6 +110,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     };
 
     private Spinner spinnerIpMode;
+    private Spinner spinnerModelMode;
     private EditText inputIp;
     private EditText inputPort;
     private EditText inputInterval;
@@ -137,7 +137,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     private TextView textMusicHint;
 
     private DeviceSnapshot localSnapshot;
-    private final Map<FieldGroup, TextView> groupSummaries = new EnumMap<>(FieldGroup.class);
+    private final List<CheckBox> fieldBoxes = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -341,49 +341,76 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 : getString(R.string.ip_mode_hint_custom));
     }
 
-    /** 主页只放分组入口，细项在 FieldGroupActivity 里选 */
+    /**
+     * 按分组平铺：组标题紧靠左边，子选项整体缩进，组与组之间留空隙。
+     * 结构像 Word 大纲（标题 + Tab 缩进的子段落），所有选项都直接可见。
+     */
     private void buildFieldGroups() {
         containerFields.removeAllViews();
-        groupSummaries.clear();
+        fieldBoxes.clear();
         float density = getResources().getDisplayMetrics().density;
-        for (final FieldGroup group : FieldGroup.values()) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.VERTICAL);
-            int horizontal = Math.round(density * 4);
-            int vertical = Math.round(density * 10);
-            row.setPadding(horizontal, vertical, horizontal, vertical);
-            // VR 一体机用手柄射线点按，行高太小容易点空
-            if (VrSupport.isVrDevice()) {
-                row.setMinimumHeight(Math.round(density * 56));
-            }
-            row.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(MainActivity.this, FieldGroupActivity.class);
-                    intent.putExtra(FieldGroupActivity.EXTRA_GROUP, group.key);
-                    startActivity(intent);
+        int indent = Math.round(density * 20);
+        boolean firstGroup = true;
+
+        for (FieldGroup group : FieldGroup.values()) {
+            TextView heading = new TextView(this);
+            heading.setText(group.label(this));
+            heading.setTextSize(15f);
+            heading.setTypeface(Typeface.DEFAULT_BOLD);
+            heading.setTextColor(getColor(R.color.text_primary));
+            int top = firstGroup ? Math.round(density * 2) : Math.round(density * 18);
+            heading.setPadding(0, top, 0, Math.round(density * 4));
+            containerFields.addView(heading);
+            firstGroup = false;
+
+            for (final ReportField field : group.fields()) {
+                CheckBox box = new CheckBox(this);
+                box.setText(field.label(this));
+                box.setTag(field);
+                box.setTextColor(getColor(R.color.text_primary));
+                box.setTextSize(14f);
+                int vertical = Math.round(density * 2);
+                box.setPadding(indent, vertical, 0, vertical);
+                // VR 一体机用手柄射线点按，行高太小容易点空
+                if (VrSupport.isVrDevice()) {
+                    box.setMinHeight(Math.round(density * 48));
+                    int vrVertical = Math.round(density * 6);
+                    box.setPadding(indent, vrVertical, 0, vrVertical);
                 }
-            });
-
-            TextView title = new TextView(this);
-            title.setText(group.label(this) + "  ›");
-            title.setTextSize(15f);
-            title.setTextColor(getColor(R.color.text_primary));
-            row.addView(title);
-
-            TextView summary = new TextView(this);
-            summary.setTextSize(12f);
-            summary.setTextColor(getColor(R.color.text_secondary));
-            row.addView(summary);
-            groupSummaries.put(group, summary);
-
-            containerFields.addView(row);
+                box.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        // 代码回填（applySettingsToViews）时不写回配置，只响应真实点击
+                        if (!buttonView.isPressed()) return;
+                        Set<ReportField> current = EnumSet.noneOf(ReportField.class);
+                        current.addAll(settings.getEnabledFields());
+                        if (isChecked) current.add(field);
+                        else current.remove(field);
+                        settings.setEnabledFields(current);
+                        refreshPreview();
+                        refreshMusicHint();
+                        ReporterService.wake();
+                        if (isChecked && field.isWeather() && settings.getWeatherCity().isEmpty()) {
+                            promptWeatherCity();
+                        }
+                        if (isChecked && field.isMusic()
+                                && !NowPlayingRepository.hasAccess(MainActivity.this)) {
+                            promptMusicAccess();
+                        }
+                    }
+                });
+                fieldBoxes.add(box);
+                containerFields.addView(box);
+                if (field == ReportField.MODEL) {
+                    addModelModeRow(density);
+                }
+            }
         }
 
         textWeatherHint = new TextView(this);
         textWeatherHint.setTextSize(12f);
         textWeatherHint.setTextColor(getColor(R.color.text_secondary));
-        int pad = Math.round(getResources().getDisplayMetrics().density * 4);
+        int pad = Math.round(density * 4);
         textWeatherHint.setPadding(0, pad, 0, pad);
         containerFields.addView(textWeatherHint);
 
@@ -403,7 +430,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
 
         textMusicHint = new TextView(this);
         textMusicHint.setTextSize(12f);
-        int musicPad = Math.round(getResources().getDisplayMetrics().density * 4);
+        int musicPad = Math.round(density * 4);
         textMusicHint.setPadding(0, musicPad, 0, musicPad);
         textMusicHint.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -413,18 +440,57 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         });
         containerFields.addView(textMusicHint);
         refreshMusicHint();
-        refreshGroupSummaries();
     }
 
-    private void refreshGroupSummaries() {
-        if (settings == null || groupSummaries.isEmpty()) return;
-        Set<ReportField> enabled = settings.getEnabledFields();
-        for (FieldGroup group : FieldGroup.values()) {
-            TextView summary = groupSummaries.get(group);
-            if (summary == null) continue;
-            summary.setText(getString(R.string.field_group_selected,
-                    group.selectedCount(enabled), group.fieldCount()));
-        }
+    /** 「上报型号类型」下拉：挂在设备型号下面，比子选项再缩进一级 */
+    private void addModelModeRow(float density) {
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setPadding(Math.round(density * 44), Math.round(density * 2),
+                0, Math.round(density * 6));
+
+        TextView label = new TextView(this);
+        label.setText(R.string.label_model_mode);
+        label.setTextSize(11f);
+        label.setTextColor(getColor(R.color.text_secondary));
+        wrap.addView(label);
+
+        spinnerModelMode = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{ModelDisplayMode.REAL_MODEL.label(this),
+                        ModelDisplayMode.PRODUCT_NAME.label(this)});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerModelMode.setAdapter(adapter);
+        spinnerModelMode.setContentDescription(getString(R.string.label_model_mode));
+        spinnerModelMode.setSelection(
+                settings.getModelDisplayMode() == ModelDisplayMode.REAL_MODEL ? 0 : 1);
+        spinnerModelMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (applyingSettings) return;
+                settings.setModelDisplayMode(position == 0
+                        ? ModelDisplayMode.REAL_MODEL
+                        : ModelDisplayMode.PRODUCT_NAME);
+                refreshPreview();
+                ReporterService.wake();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // 无需处理
+            }
+        });
+        wrap.addView(spinnerModelMode, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        containerFields.addView(wrap);
+    }
+
+    private void applyModelModeToSpinner() {
+        if (spinnerModelMode == null) return;
+        spinnerModelMode.setSelection(
+                settings.getModelDisplayMode() == ModelDisplayMode.REAL_MODEL ? 0 : 1);
     }
 
     /** 音乐字段下方的权限提示：未授权时高亮，点按跳系统设置 */
@@ -479,6 +545,11 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             checkSendImmediately.setChecked(settings.isSendImmediately());
             checkNotificationSound.setChecked(settings.isNotificationSound());
 
+            Set<ReportField> enabled = settings.getEnabledFields();
+            for (CheckBox box : fieldBoxes) {
+                box.setChecked(enabled.contains(box.getTag()));
+            }
+            applyModelModeToSpinner();
             if (textWeatherHint != null) {
                 String weatherCity = settings.getWeatherCityLabel();
                 textWeatherHint.setText(weatherCity.isEmpty()
@@ -491,7 +562,6 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         } finally {
             applyingSettings = false;
         }
-        refreshGroupSummaries();
         updateIpModeUi();
         refreshLaunchArg();
     }

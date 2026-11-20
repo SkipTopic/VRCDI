@@ -22,7 +22,8 @@ public enum FieldGroup {
             ReportField.PRESSURE, ReportField.WIND, ReportField.UV, ReportField.SUNSET),
     MUSIC("music", R.string.group_music,
             ReportField.MUSIC_TITLE, ReportField.MUSIC_ARTIST,
-            ReportField.MUSIC_ALBUM, ReportField.MUSIC_LYRIC),
+            ReportField.MUSIC_ALBUM, ReportField.MUSIC_PROGRESS,
+            ReportField.MUSIC_LYRIC),
     OTHER("other", R.string.group_other,
             ReportField.FOREGROUND_APP, ReportField.VRCHAT_FPS);
 

@@ -37,7 +37,6 @@
     <string name="group_weather">天気</string>
     <string name="group_music">音楽再生</string>
     <string name="group_other">その他</string>
-    <string name="field_group_selected">%1$d/%2$d 選択</string>
     <string name="card_preview">Chatbox プレビュー</string>
     <string name="card_log">送信ログ</string>
 
@@ -493,6 +492,7 @@
     <string name="field_music_title">曲名</string>
     <string name="field_music_artist">アーティスト</string>
     <string name="field_music_album">アルバム</string>
+    <string name="field_music_progress">再生位置</string>
     <string name="field_music_lyric">再生中の歌詞</string>
     <string name="music_access_hint">音楽情報には「通知へのアクセス」が必要です：ここをタップしてシステム設定を開きます</string>
     <string name="music_access_granted_hint">通知へのアクセスは有効です（メディア情報のみ読み取ります）</string>

@@ -126,7 +126,8 @@ public final class NowPlayingRepository {
         Track track = read(context);
         if (track == null) return null;
         String lyric = LyricRepository.currentLine(track);
-        return new MusicInfo(track.title, track.artist, track.album, lyric);
+        return new MusicInfo(track.title, track.artist, track.album, lyric,
+                track.positionMs, track.durationMs);
     }
 
     private static String text(MediaMetadata metadata, String key) {
