@@ -38,6 +38,8 @@ import com.vrcdevicecheck.osc.device.DeviceInfoRepository;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.device.ForegroundApp;
 import com.vrcdevicecheck.osc.device.VrSupport;
+import com.vrcdevicecheck.osc.media.MusicInfo;
+import com.vrcdevicecheck.osc.media.NowPlayingRepository;
 import com.vrcdevicecheck.osc.net.LanScanner;
 import com.vrcdevicecheck.osc.osc.ReportBuilder;
 import com.vrcdevicecheck.osc.priv.PrivilegeController;
@@ -96,6 +98,10 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         @Override
         public void run() {
             refreshForegroundApp();
+            // 界面可见时顺带刷新音乐预览，能看到歌词一行行走
+            if (ReportBuilder.hasMusicFields(settings.getEnabledFields())) {
+                refreshPreview();
+            }
             // 界面已经不可见时不再续命，避免退到后台还在轮询
             if (foregroundTicking) main.postDelayed(this, 2000L);
         }
@@ -126,6 +132,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     private TextView textIpModeHint;
     private TextView textForegroundApp;
     private TextView textWeatherHint;
+    private TextView textMusicHint;
 
     private DeviceSnapshot localSnapshot;
     private final List<CheckBox> fieldBoxes = new ArrayList<>();
@@ -360,8 +367,13 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                     else current.remove(field);
                     settings.setEnabledFields(current);
                     refreshPreview();
+                    refreshMusicHint();
+                    ReporterService.wake();
                     if (isChecked && field.isWeather() && settings.getWeatherCity().isEmpty()) {
                         promptWeatherCity();
+                    }
+                    if (isChecked && field.isMusic() && !NowPlayingRepository.hasAccess(MainActivity.this)) {
+                        promptMusicAccess();
                     }
                 }
             });
@@ -394,6 +406,60 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             }
         });
         containerFields.addView(checkHideUnavailable);
+
+        textMusicHint = new TextView(this);
+        textMusicHint.setTextSize(12f);
+        int musicPad = Math.round(getResources().getDisplayMetrics().density * 4);
+        textMusicHint.setPadding(0, musicPad, 0, musicPad);
+        textMusicHint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNotificationAccess();
+            }
+        });
+        containerFields.addView(textMusicHint);
+        refreshMusicHint();
+    }
+
+    /** 音乐字段下方的权限提示：未授权时高亮，点按跳系统设置 */
+    private void refreshMusicHint() {
+        if (textMusicHint == null || settings == null) return;
+        boolean enabled = ReportBuilder.hasMusicFields(settings.getEnabledFields());
+        textMusicHint.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        if (!enabled) return;
+        boolean granted = NowPlayingRepository.hasAccess(this);
+        textMusicHint.setText(granted
+                ? R.string.music_access_granted_hint
+                : R.string.music_access_hint);
+        textMusicHint.setTextColor(getColor(granted ? R.color.text_secondary : R.color.warn));
+    }
+
+    private void promptMusicAccess() {
+        if (isFinishing()) return;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.music_access_dialog_title)
+                .setMessage(R.string.music_access_dialog_message)
+                .setPositiveButton(R.string.music_access_go, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openNotificationAccess();
+                    }
+                })
+                .setNegativeButton(R.string.common_later, null)
+                .show();
+    }
+
+    private void openNotificationAccess() {
+        if (NowPlayingRepository.hasAccess(this)) {
+            toast(getString(R.string.music_access_granted_hint));
+            refreshMusicHint();
+            return;
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        } catch (Throwable t) {
+            toast(getString(R.string.music_access_failed));
+        }
     }
 
     /** 「设备型号」勾选框 + 右侧「上报型号类型」下拉菜单 */
@@ -601,6 +667,11 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 settings.setEnabledFields(EnumSet.allOf(ReportField.class));
                 applySettingsToViews();
                 refreshPreview();
+                refreshMusicHint();
+                ReporterService.wake();
+                if (!NowPlayingRepository.hasAccess(MainActivity.this)) {
+                    promptMusicAccess();
+                }
             }
         });
 
@@ -610,6 +681,8 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 settings.setEnabledFields(EnumSet.noneOf(ReportField.class));
                 applySettingsToViews();
                 refreshPreview();
+                refreshMusicHint();
+                ReporterService.wake();
             }
         });
 
@@ -991,26 +1064,30 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             textPreviewHint.setVisibility(View.GONE);
             return;
         }
+        Set<ReportField> enabledFields = settings.getEnabledFields();
         WeatherInfo cachedWeather = WeatherRepository.getCached(this);
+        MusicInfo music = ReportBuilder.hasMusicFields(enabledFields)
+                ? NowPlayingRepository.snapshot(this) : null;
         ReportBuilder.Report report = ReportBuilder.build(
                 snapshot,
-                settings.getEnabledFields(),
+                enabledFields,
                 settings.isAsciiOnly(),
                 settings.getModelDisplayMode() == ModelDisplayMode.PRODUCT_NAME,
                 cachedWeather,
                 settings.isHideUnavailable(),
-                LocaleHelper.getLanguage(this));
+                LocaleHelper.getLanguage(this),
+                music);
         textPreview.setText(report.text);
         textPreviewCount.setText(getString(R.string.preview_count,
                 report.charCount(), ReportBuilder.CHATBOX_LIMIT));
         String hint = report.limitHint(this);
-        if (settings.getEnabledFields().contains(ReportField.VRCHAT_FPS)
+        if (enabledFields.contains(ReportField.VRCHAT_FPS)
                 && report.text.contains("FPS: 不可用")) {
             String extra = getString(R.string.hint_fps_need_foreground);
             hint = hint == null ? extra : hint + "\n" + extra;
         }
         boolean weatherEnabled = false;
-        for (ReportField field : settings.getEnabledFields()) {
+        for (ReportField field : enabledFields) {
             if (field.isWeather()) weatherEnabled = true;
         }
         if (weatherEnabled && settings.getWeatherCity().isEmpty()) {
@@ -1020,11 +1097,19 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             String extra = getString(R.string.hint_weather_no_data);
             hint = hint == null ? extra : hint + "\n" + extra;
         }
+        boolean musicEnabled = ReportBuilder.hasMusicFields(enabledFields);
+        if (musicEnabled && !NowPlayingRepository.hasAccess(this)) {
+            String extra = getString(R.string.hint_music_need_access);
+            hint = hint == null ? extra : hint + "\n" + extra;
+        } else if (musicEnabled && music == null) {
+            String extra = getString(R.string.hint_music_not_playing);
+            hint = hint == null ? extra : hint + "\n" + extra;
+        }
         if (settings.isHideUnavailable() && !report.hidden.isEmpty()) {
             String extra = getString(R.string.hint_hidden_count, report.hidden.size());
             hint = hint == null ? extra : hint + "\n" + extra;
         }
-        if (report.text.isEmpty() && !settings.getEnabledFields().isEmpty()) {
+        if (report.text.isEmpty() && !enabledFields.isEmpty()) {
             hint = getString(R.string.hint_all_hidden);
         }
         if (hint == null) {
@@ -1248,6 +1333,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         refreshPrivilegeTexts();
         refreshFromService();
         refreshForegroundApp();
+        refreshMusicHint();
         foregroundTicking = true;
         main.removeCallbacks(foregroundTick);
         main.postDelayed(foregroundTick, 2000L);

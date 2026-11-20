@@ -34,6 +34,10 @@ public enum ReportField {
     WIND("wind", R.string.field_wind),
     UV("uv", R.string.field_uv),
     SUNSET("sunset", R.string.field_sunset),
+    MUSIC_TITLE("music_title", R.string.field_music_title),
+    MUSIC_ARTIST("music_artist", R.string.field_music_artist),
+    MUSIC_ALBUM("music_album", R.string.field_music_album),
+    MUSIC_LYRIC("music_lyric", R.string.field_music_lyric),
     FOREGROUND_APP("foreground_app", R.string.field_foreground_app),
     VRCHAT_FPS("vrchat_fps", R.string.field_vrchat_fps);
 
@@ -62,5 +66,11 @@ public enum ReportField {
     public boolean isWeather() {
         return this == WEATHER || this == TEMPERATURE || this == HUMIDITY
                 || this == PRESSURE || this == WIND || this == UV || this == SUNSET;
+    }
+
+    /** 音乐类字段需要「通知使用权」，且共用歌曲行 / 歌词行 */
+    public boolean isMusic() {
+        return this == MUSIC_TITLE || this == MUSIC_ARTIST
+                || this == MUSIC_ALBUM || this == MUSIC_LYRIC;
     }
 }

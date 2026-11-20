@@ -5,6 +5,7 @@ import android.content.Context;
 import com.vrcdevicecheck.osc.R;
 import com.vrcdevicecheck.osc.data.ReportField;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
+import com.vrcdevicecheck.osc.media.MusicInfo;
 import com.vrcdevicecheck.osc.weather.WeatherInfo;
 
 import java.util.ArrayList;
@@ -245,6 +246,16 @@ public final class ReportBuilder {
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
                                boolean useProductName, WeatherInfo weather, boolean hideUnavailable,
                                String lang) {
+        return build(snapshot, fields, asciiOnly, useProductName, weather, hideUnavailable,
+                lang, null);
+    }
+
+    /**
+     * @param music 当前正在播放的音乐；为 null 时音乐字段按「不可用」处理
+     */
+    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
+                               boolean useProductName, WeatherInfo weather, boolean hideUnavailable,
+                               String lang, MusicInfo music) {
         List<ReportField> ordered = new ArrayList<>();
         for (ReportField field : ReportField.values()) {
             if (fields != null && fields.contains(field)) ordered.add(field);
@@ -258,7 +269,7 @@ public final class ReportBuilder {
 
         Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
         List<Line> lines = buildLines(snapshot, ordered, reportLang, words, useProductName,
-                weather, hideUnavailable, hidden);
+                weather, hideUnavailable, asciiOnly, music, hidden);
         while (lineText(lines).length() > CHATBOX_LIMIT && lines.size() > 1) {
             lines.remove(lines.size() - 1);
         }
@@ -306,12 +317,22 @@ public final class ReportBuilder {
         Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
         String reportLang = asciiOnly ? "en" : (lang == null ? "zh" : lang);
         return lineText(buildLines(snapshot, fields, reportLang, wordsFor(reportLang),
-                useProductName, null, false, hidden));
+                useProductName, null, false, asciiOnly, null, hidden));
+    }
+
+    /** 是否勾选了任意音乐字段 */
+    public static boolean hasMusicFields(Set<ReportField> fields) {
+        if (fields == null) return false;
+        for (ReportField field : fields) {
+            if (field.isMusic()) return true;
+        }
+        return false;
     }
 
     private static List<Line> buildLines(DeviceSnapshot snapshot, List<ReportField> fields,
                                          String lang, Words words, boolean useProductName,
                                          WeatherInfo weather, boolean hideUnavailable,
+                                         boolean asciiOnly, MusicInfo music,
                                          Set<ReportField> hidden) {
         List<Line> lines = new ArrayList<>(7);
 
@@ -494,6 +515,56 @@ public final class ReportBuilder {
             }
         }
 
+        // 音乐行：歌名 - 歌手 (专辑)
+        boolean musicTrackSelected = fields.contains(ReportField.MUSIC_TITLE)
+                || fields.contains(ReportField.MUSIC_ARTIST)
+                || fields.contains(ReportField.MUSIC_ALBUM);
+        if (musicTrackSelected) {
+            List<ReportField> selected = new ArrayList<>(3);
+            if (fields.contains(ReportField.MUSIC_TITLE)) selected.add(ReportField.MUSIC_TITLE);
+            if (fields.contains(ReportField.MUSIC_ARTIST)) selected.add(ReportField.MUSIC_ARTIST);
+            if (fields.contains(ReportField.MUSIC_ALBUM)) selected.add(ReportField.MUSIC_ALBUM);
+
+            StringBuilder trackText = new StringBuilder();
+            List<ReportField> used = new ArrayList<>(3);
+            if (music != null) {
+                if (fields.contains(ReportField.MUSIC_TITLE) && music.hasTitle()) {
+                    trackText.append(music.title.trim());
+                    used.add(ReportField.MUSIC_TITLE);
+                }
+                if (fields.contains(ReportField.MUSIC_ARTIST) && music.hasArtist()) {
+                    if (trackText.length() > 0) trackText.append(" - ");
+                    trackText.append(music.artist.trim());
+                    used.add(ReportField.MUSIC_ARTIST);
+                }
+                if (fields.contains(ReportField.MUSIC_ALBUM) && music.hasAlbum()) {
+                    if (trackText.length() > 0) {
+                        trackText.append(" (").append(music.album.trim()).append(')');
+                    } else {
+                        trackText.append(music.album.trim());
+                    }
+                    used.add(ReportField.MUSIC_ALBUM);
+                }
+            }
+            if (trackText.length() > 0) {
+                lines.add(new Line(musicPrefix(asciiOnly) + trackText, used));
+            } else if (hideUnavailable) {
+                hidden.addAll(selected);
+            } else {
+                lines.add(new Line(musicPrefix(asciiOnly) + words.na, selected));
+            }
+        }
+
+        // 当前播放到的歌词行
+        if (fields.contains(ReportField.MUSIC_LYRIC)) {
+            LineBuilder lyric = new LineBuilder(hidden, hideUnavailable, words);
+            lyric.add(ReportField.MUSIC_LYRIC,
+                    music != null && music.hasLyric() ? music.lyricLine.trim() : NA);
+            if (!lyric.isEmpty()) {
+                lines.add(new Line(lyricPrefix(asciiOnly) + lyric.text, lyric.fields));
+            }
+        }
+
         // 前台应用行
         if (fields.contains(ReportField.FOREGROUND_APP)) {
             LineBuilder app = new LineBuilder(hidden, hideUnavailable, words);
@@ -516,6 +587,15 @@ public final class ReportBuilder {
         }
 
         return lines;
+    }
+
+    /** 非 ASCII 模式下用音符前缀；「仅发送 ASCII」时退回纯英文标签 */
+    private static String musicPrefix(boolean asciiOnly) {
+        return asciiOnly ? "Music: " : "♪ ";
+    }
+
+    private static String lyricPrefix(boolean asciiOnly) {
+        return asciiOnly ? "Lyric: " : "♪ ";
     }
 
     private static String lineText(List<Line> lines) {
