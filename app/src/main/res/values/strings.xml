@@ -34,6 +34,11 @@
     <string name="card_connection">连接设置</string>
     <string name="card_privilege">权限通道</string>
     <string name="card_fields">上报字段</string>
+    <string name="group_hardware">手机与硬件</string>
+    <string name="group_weather">天气</string>
+    <string name="group_music">音乐播放</string>
+    <string name="group_other">其它</string>
+    <string name="field_group_selected">已选 %1$d/%2$d</string>
     <string name="card_preview">Chatbox 预览</string>
     <string name="card_log">发送日志</string>
 

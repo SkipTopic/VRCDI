@@ -34,6 +34,11 @@
     <string name="card_connection">Connection</string>
     <string name="card_privilege">Privilege channel</string>
     <string name="card_fields">Reported fields</string>
+    <string name="group_hardware">Phone &amp; hardware</string>
+    <string name="group_weather">Weather</string>
+    <string name="group_music">Music</string>
+    <string name="group_other">Other</string>
+    <string name="field_group_selected">%1$d/%2$d selected</string>
     <string name="card_preview">Chatbox preview</string>
     <string name="card_log">Send log</string>
 

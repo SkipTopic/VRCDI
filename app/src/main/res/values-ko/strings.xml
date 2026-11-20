@@ -35,6 +35,11 @@
     <string name="card_connection">연결 설정</string>
     <string name="card_privilege">권한 채널</string>
     <string name="card_fields">보고 항목</string>
+    <string name="group_hardware">기기 및 하드웨어</string>
+    <string name="group_weather">날씨</string>
+    <string name="group_music">음악 재생</string>
+    <string name="group_other">기타</string>
+    <string name="field_group_selected">%1$d/%2$d 선택</string>
     <string name="card_preview">채팅창 미리보기</string>
     <string name="card_log">전송 로그</string>
 

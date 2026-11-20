@@ -33,6 +33,11 @@
     <string name="card_connection">Подключение</string>
     <string name="card_privilege">Канал прав</string>
     <string name="card_fields">Поля отчёта</string>
+    <string name="group_hardware">Устройство и железо</string>
+    <string name="group_weather">Погода</string>
+    <string name="group_music">Музыка</string>
+    <string name="group_other">Другое</string>
+    <string name="field_group_selected">Выбрано %1$d/%2$d</string>
     <string name="card_preview">Предпросмотр Chatbox</string>
     <string name="card_log">Журнал отправки</string>
 
