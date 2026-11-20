@@ -12,8 +12,8 @@ import java.util.Locale;
 /**
  * 一次天气查询的结果。字段可为 null，表示该 provider 没返回这项数据。
  *
- * 天气描述存了四种语言：发往 Chatbox 的文本按界面语言取一条（见 ReportBuilder），
- * 中文和英文是原有文案，日文、俄文是后加的。
+ * 天气描述存了五种语言：发往 Chatbox 的文本按界面语言取一条（见 ReportBuilder），
+ * 中文和英文是原有文案，日文、俄文、韩文是后加的。
  */
 public final class WeatherInfo {
 
@@ -24,6 +24,7 @@ public final class WeatherInfo {
     public final String conditionEn;
     public final String conditionJa;
     public final String conditionRu;
+    public final String conditionKo;
     public final long fetchedAtMs;
     /** 数据来源：Open-Meteo / wttr.in / 和风天气 */
     public final String provider;
@@ -38,7 +39,7 @@ public final class WeatherInfo {
 
     public WeatherInfo(String cityLabel, Float temperatureC, Integer humidityPct,
                        String conditionZh, String conditionEn, String conditionJa, String conditionRu,
-                       long fetchedAtMs, String provider,
+                       String conditionKo, long fetchedAtMs, String provider,
                        Float pressureHpa, Integer windDirectionDeg, Float windSpeedMs,
                        Integer uvIndex, String sunset) {
         this.cityLabel = cityLabel;
@@ -48,6 +49,7 @@ public final class WeatherInfo {
         this.conditionEn = conditionEn == null ? "Unknown" : conditionEn;
         this.conditionJa = conditionJa == null ? "" : conditionJa;
         this.conditionRu = conditionRu == null ? "" : conditionRu;
+        this.conditionKo = conditionKo == null ? "" : conditionKo;
         this.fetchedAtMs = fetchedAtMs;
         this.provider = provider == null ? "" : provider;
         this.pressureHpa = pressureHpa;
@@ -57,11 +59,12 @@ public final class WeatherInfo {
         this.sunset = sunset;
     }
 
-    /** 按语言取天气描述：zh / en / ja / ru，缺日俄时退回英文 */
+    /** 按语言取天气描述：zh / en / ja / ru / ko，缺日俄韩时退回英文 */
     public String condition(String lang) {
         if ("en".equals(lang)) return conditionEn;
         if ("ja".equals(lang)) return conditionJa.isEmpty() ? conditionEn : conditionJa;
         if ("ru".equals(lang)) return conditionRu.isEmpty() ? conditionEn : conditionRu;
+        if ("ko".equals(lang)) return conditionKo.isEmpty() ? conditionEn : conditionKo;
         return conditionZh;
     }
 
@@ -77,7 +80,7 @@ public final class WeatherInfo {
         if (condition != null && !condition.isEmpty()) sb.append(condition);
         if (temperatureC != null) {
             if (sb.length() > 0) sb.append(' ');
-            if ("ja".equals(lang) || "zh".equals(lang)) {
+            if ("ja".equals(lang) || "zh".equals(lang) || "ko".equals(lang)) {
                 sb.append(String.format(Locale.US, "%.1f℃", temperatureC));
             } else {
                 sb.append(String.format(Locale.US, "%.1f°C", temperatureC));

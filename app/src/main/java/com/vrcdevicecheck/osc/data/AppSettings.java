@@ -46,6 +46,8 @@ public class AppSettings {
     private static final String KEY_UPDATE_SOURCE = "update_source";
     private static final String KEY_AUTO_UPDATE = "auto_update_check";
     private static final String KEY_BATTERY_HINT = "battery_hint_shown";
+    /** 首次启动引导（选语言 + OSC 教学）是否已经走过 */
+    private static final String KEY_ONBOARDED = "onboarded";
 
     private final SharedPreferences sp;
 
@@ -395,5 +397,27 @@ public class AppSettings {
 
     public void setBatteryHintShown(boolean value) {
         sp.edit().putBoolean(KEY_BATTERY_HINT, value).apply();
+    }
+
+    // ---------------- 首次启动引导 ----------------
+
+    /**
+     * 是否需要弹首次启动引导（选语言 → OSC 教学）。
+     *
+     * 老版本升级上来的用户不该被强行塞一遍引导：只要配置里已经有值，
+     * 就当作「用过了」，顺手补上标记。真正的新装（一个配置都没有）才返回 true。
+     */
+    public boolean needsOnboarding() {
+        if (sp.getBoolean(KEY_ONBOARDED, false)) return false;
+        if (sp.contains(KEY_INTERVAL) || sp.contains(KEY_FIELDS)
+                || sp.contains(KEY_MODE) || sp.contains(KEY_PORT)) {
+            sp.edit().putBoolean(KEY_ONBOARDED, true).apply();
+            return false;
+        }
+        return true;
+    }
+
+    public void setOnboarded() {
+        sp.edit().putBoolean(KEY_ONBOARDED, true).apply();
     }
 }

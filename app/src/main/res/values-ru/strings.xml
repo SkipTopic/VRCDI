@@ -162,6 +162,7 @@
     <string name="about_version_label">Версия</string>
     <string name="about_author_label">Авторы: </string>
     <string name="about_author">WanliuStudio, Qwen 3.8 Pro, DeepSeek-V4.1-Flash</string>
+    <string name="about_links_label">Ссылки проекта: </string>
     <string name="about_device_label">Ваше устройство:</string>
     <string name="about_brand">Бренд: %1$s</string>
     <string name="about_model">Модель: %1$s</string>
@@ -181,7 +182,7 @@
     <string name="settings_app_table">Таблицы приложений</string>
     <string name="settings_cpu_map">Таблицы CPU</string>
     <string name="settings_theme">Тема</string>
-    <string name="settings_language">Язык / English</string>
+    <string name="settings_language">Язык / Language</string>
     <string name="settings_update">Обновление</string>
     <string name="settings_about">О VRCDI</string>
     <string name="settings_exit">Выход</string>
@@ -193,7 +194,23 @@
     <string name="language_en">English</string>
     <string name="language_ja">日本語</string>
     <string name="language_ru">Русский</string>
+    <string name="language_ko">한국어</string>
     <string name="language_restarting">Язык изменён, приложение перезапускается…</string>
+
+    <!-- ==================== Первый запуск ==================== -->
+    <string name="onboarding_language_subtitle">选择语言 · Choose your language\n言語を選択 · Выберите язык · 언어를 선택하세요</string>
+    <string name="onboarding_language_hint">Позже язык можно сменить в «Настройки → Язык».</string>
+    <string name="settings_tutorial">Настройка OSC</string>
+    <string name="guide_title">Первый запуск: включите OSC</string>
+    <string name="guide_intro">VRCDI отправляет данные устройства в чатбокс VRChat по OSC, поэтому сначала нужно включить OSC в самом VRChat. Достаточно один раз пройти 5 шагов ниже.</string>
+    <string name="guide_step_label">Шаг %1$d / %2$d</string>
+    <string name="guide_step1">Зайдите в любой мир и нажмите кнопку меню в правом нижнем углу экрана, чтобы открыть быстрое меню.</string>
+    <string name="guide_step2">В быстром меню нажмите шестерёнку справа внизу, чтобы открыть «Настройки».</string>
+    <string name="guide_step3">Нажмите значок «открыть в окне» справа вверху, чтобы развернуть настройки на весь экран.</string>
+    <string name="guide_step4">В списке слева выберите «Аватары» и прокрутите до раздела OSC.</string>
+    <string name="guide_step5">Включите оба переключателя — «OSC» и «Отладочная панель OSC» — и возвращайтесь в VRCDI.</string>
+    <string name="guide_pc_note">Скриншоты сделаны в автономной/мобильной версии VRChat. В PC-версии переключатель находится там же (Настройки → Аватары → OSC), но дополнительно нужен параметр запуска, показанный на главном экране.</string>
+    <string name="guide_start">Понятно, начать</string>
 
     <!-- Интервал отправки -->
     <string name="interval_title">Интервал отправки</string>

@@ -37,6 +37,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VRCDI">
 
+        <!-- 首次启动引导：选语言 + OSC 图文教程；也可以在设置里当教程打开 -->
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.VRCDI.Onboarding" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
