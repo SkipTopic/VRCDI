@@ -181,7 +181,7 @@
     <string name="settings_app_table">アプリテーブル</string>
     <string name="settings_cpu_map">CPU マップテーブル</string>
     <string name="settings_theme">テーマ</string>
-    <string name="settings_language">言語 / English</string>
+    <string name="settings_language">言語 / Language</string>
     <string name="settings_update">ソフトウェア更新</string>
     <string name="settings_about">VRCDI について</string>
     <string name="settings_exit">終了</string>
@@ -193,7 +193,23 @@
     <string name="language_en">English</string>
     <string name="language_ja">日本語</string>
     <string name="language_ru">Русский</string>
+    <string name="language_ko">한국어</string>
     <string name="language_restarting">言語を切り替えました。アプリを再起動します…</string>
+
+    <!-- ==================== 初回起動ガイド ==================== -->
+    <string name="onboarding_language_subtitle">选择语言 · Choose your language\n言語を選択 · Выберите язык · 언어를 선택하세요</string>
+    <string name="onboarding_language_hint">あとから「設定 → 言語」で変更できます。</string>
+    <string name="settings_tutorial">OSC 設定ガイド</string>
+    <string name="guide_title">初めての方へ：まず OSC をオン</string>
+    <string name="guide_intro">VRCDI は OSC 経由で VRChat のチャットボックスにデバイス情報を送ります。そのため、先に VRChat 側で OSC を有効にする必要があります。次の 5 ステップを一度だけ行えば OK です。</string>
+    <string name="guide_step_label">ステップ %1$d / %2$d</string>
+    <string name="guide_step1">ワールドに入ったら、画面右下のメニューボタンを押してクイックメニューを開きます。</string>
+    <string name="guide_step2">クイックメニュー右下の歯車を押して「設定」を開きます。</string>
+    <string name="guide_step3">右上の「ウィンドウで開く」アイコンを押して、設定を全画面表示にします。</string>
+    <string name="guide_step4">左の一覧から「アバター」を選び、OSC の項目までスクロールします。</string>
+    <string name="guide_step5">「OSC」と「OSC デバッグパネル」の両方をオンにして、VRCDI に戻ります。</string>
+    <string name="guide_pc_note">スクリーンショットは VRChat 単体版／モバイル版のものです。PC 版も同じ場所（設定 → アバター → OSC）でオンにできますが、別途メイン画面に表示される起動オプションが必要です。</string>
+    <string name="guide_start">わかりました、はじめる</string>
 
     <!-- 送信間隔 -->
     <string name="interval_title">送信間隔</string>

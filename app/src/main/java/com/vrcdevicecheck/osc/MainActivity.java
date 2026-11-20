@@ -131,6 +131,14 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 新装第一次打开：先选语言，再看一遍怎么在 VRChat 里打开 OSC（老用户升级不会被打扰）
+        if (new AppSettings(this).needsOnboarding()) {
+            startActivity(WelcomeActivity.intentForOnboarding(this));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         settings = new AppSettings(this);

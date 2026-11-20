@@ -105,7 +105,7 @@ public class ReportBuilderTest {
 
     private WeatherInfo weather() {
         return new WeatherInfo("江西省 上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность", "구름 조금",
                 0L, "Open-Meteo", null, null, null, null, null);
     }
 
@@ -142,7 +142,7 @@ public class ReportBuilderTest {
 
     private WeatherInfo weatherWithDetails() {
         return new WeatherInfo("江西省 上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность", "구름 조금",
                 0L, "Open-Meteo",
                 1018f, 225, 3.2f, 5, "17:14");
     }
@@ -168,7 +168,7 @@ public class ReportBuilderTest {
     @Test
     public void windWithoutDirectionStillShowsSpeed() {
         WeatherInfo weather = new WeatherInfo("上饶市", 17.3f, 86,
-                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность",
+                "多云", "Partly cloudy", "晴れ時々曇り", "Переменная облачность", "구름 조금",
                 0L, "Open-Meteo",
                 null, null, 3.2f, null, null);
         String text = ReportBuilder.build(TestSnapshots.full(),
@@ -220,6 +220,8 @@ public class ReportBuilderTest {
                 EnumSet.of(ReportField.BATTERY), false, true, null, false, "ja").text);
         assertEquals("Батарея: 78% Заряжается", ReportBuilder.build(TestSnapshots.full(),
                 EnumSet.of(ReportField.BATTERY), false, true, null, false, "ru").text);
+        assertEquals("배터리: 78% 충전 중", ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.BATTERY), false, true, null, false, "ko").text);
         assertEquals("电量: 78% 充电中", ReportBuilder.build(TestSnapshots.full(),
                 EnumSet.of(ReportField.BATTERY), false, true, null, false, "zh").text);
     }
@@ -240,6 +242,10 @@ public class ReportBuilderTest {
                 ReportBuilder.build(TestSnapshots.full(),
                         EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
                         false, true, weather(), false, "ru").text);
+        assertEquals("날씨: 구름 조금 17.3℃ 습도 86%",
+                ReportBuilder.build(TestSnapshots.full(),
+                        EnumSet.of(ReportField.WEATHER, ReportField.TEMPERATURE, ReportField.HUMIDITY),
+                        false, true, weather(), false, "ko").text);
     }
 
     @Test

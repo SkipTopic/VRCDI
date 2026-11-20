@@ -187,7 +187,7 @@
     <string name="settings_app_table">应用表设置</string>
     <string name="settings_cpu_map">CPU 映射表设置</string>
     <string name="settings_theme">主题</string>
-    <string name="settings_language">语言 / English</string>
+    <string name="settings_language">语言 / Language</string>
     <string name="settings_update">软件更新设置</string>
     <string name="settings_about">关于VRCDI</string>
     <string name="settings_exit">退出</string>
@@ -200,7 +200,23 @@
     <string name="language_en">English</string>
     <string name="language_ja">日本語</string>
     <string name="language_ru">Русский</string>
+    <string name="language_ko">한국어</string>
     <string name="language_restarting">已切换语言，正在重启应用…</string>
+
+    <!-- ==================== 首次启动引导 ==================== -->
+    <string name="onboarding_language_subtitle">选择语言 · Choose your language\n言語を選択 · Выберите язык · 언어를 선택하세요</string>
+    <string name="onboarding_language_hint">进去以后也可以在「设置 → 语言」里改。</string>
+    <string name="settings_tutorial">OSC 设置教程</string>
+    <string name="guide_title">第一次使用，先打开 OSC</string>
+    <string name="guide_intro">VRCDI 把设备信息通过 OSC 发到 VRChat 的 Chatbox，所以要先在 VRChat 里把 OSC 打开。下面 5 步做完一次就行，以后不用再设。</string>
+    <string name="guide_step_label">第 %1$d / %2$d 步</string>
+    <string name="guide_step1">进入任意世界后，点画面右下角的「菜单」按钮，打开快捷菜单。</string>
+    <string name="guide_step2">在快捷菜单里点右下角的齿轮，进入「设置」。</string>
+    <string name="guide_step3">点右上角的「在窗口中打开」图标，把设置展开成完整页面。</string>
+    <string name="guide_step4">在左侧列表里选「虚拟形象 / Avatars」，再往下滚到 OSC 一栏。</string>
+    <string name="guide_step5">把「OSC」和「OSC 调试面板」两个开关都打开，然后就可以回到 VRCDI 了。</string>
+    <string name="guide_pc_note">以上截图是 VRChat 一体机 / 手机版。PC 版在同一个位置（设置 → 虚拟形象 → OSC）打开即可，另外还要在主界面按提示给 VRChat 加上启动参数。</string>
+    <string name="guide_start">我知道了，开始使用</string>
 
     <!-- ==================== 上报时间设置 ==================== -->
     <string name="interval_title">上报时间设置</string>
