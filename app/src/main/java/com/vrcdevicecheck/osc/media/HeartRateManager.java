@@ -52,6 +52,10 @@ public final class HeartRateManager {
     private static final long CONNECT_TIMEOUT_MS = 15000L;
     private static final long FRESH_MS = 60000L;
 
+    /** 上游 compileSdk 30 没有这个常量，用字符串；API 31+ 运行时才检查 */
+    private static final String PERMISSION_BLUETOOTH_CONNECT =
+            "android.permission.BLUETOOTH_CONNECT";
+
     private static final String PREFS = "vrcdi_heart_rate";
     private static final String KEY_NAME = "device_name";
     private static final String KEY_ADDRESS = "device_address";
@@ -219,7 +223,7 @@ public final class HeartRateManager {
             return;
         }
         if (Build.VERSION.SDK_INT >= 31 && context.checkSelfPermission(
-                android.Manifest.permission.BLUETOOTH_CONNECT)
+                PERMISSION_BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED) {
             fail(STATE_PERMISSION, 0);
             return;
@@ -359,13 +363,10 @@ public final class HeartRateManager {
                             setState(STATE_WAITING, 0);
                             return;
                         }
-                        if (Build.VERSION.SDK_INT >= 33) {
-                            gatt.writeDescriptor(descriptor,
-                                    BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        } else {
-                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
-                        }
+                        // 只使用 compileSdk 30 就有的旧接口；
+                        // targetSdk 30 在 Android 13+ 仍会走旧版回调
+                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                        gatt.writeDescriptor(descriptor);
                     } catch (Throwable t) {
                         fail(STATE_ERROR, 0);
                         closeGatt();
@@ -393,12 +394,6 @@ public final class HeartRateManager {
             handleMeasurement(characteristic.getValue());
         }
 
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt,
-                                            BluetoothGattCharacteristic characteristic,
-                                            byte[] value) {
-            handleMeasurement(value);
-        }
     };
 
     private void handleMeasurement(byte[] value) {

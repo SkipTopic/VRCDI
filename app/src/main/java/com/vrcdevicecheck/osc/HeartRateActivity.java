@@ -40,6 +40,11 @@ public class HeartRateActivity extends BaseActivity {
     private static final int REQUEST_PERMISSIONS = 41;
     private static final long SCAN_MS = 10000L;
     private static final int MAX_DEVICES = 20;
+    /** compileSdk 30 里没有这两个常量，用字符串声明，运行时由系统判断 */
+    private static final String PERMISSION_BLUETOOTH_SCAN =
+            "android.permission.BLUETOOTH_SCAN";
+    private static final String PERMISSION_BLUETOOTH_CONNECT =
+            "android.permission.BLUETOOTH_CONNECT";
 
     private TextView statusView;
     private TextView selectedView;
@@ -194,8 +199,8 @@ public class HeartRateActivity extends BaseActivity {
     private boolean ensurePermissions() {
         List<String> missing = new ArrayList<>();
         if (Build.VERSION.SDK_INT >= 31) {
-            addIfMissing(missing, Manifest.permission.BLUETOOTH_SCAN);
-            addIfMissing(missing, Manifest.permission.BLUETOOTH_CONNECT);
+            addIfMissing(missing, PERMISSION_BLUETOOTH_SCAN);
+            addIfMissing(missing, PERMISSION_BLUETOOTH_CONNECT);
         }
         addIfMissing(missing, Manifest.permission.ACCESS_FINE_LOCATION);
         if (missing.isEmpty()) return true;
@@ -238,7 +243,7 @@ public class HeartRateActivity extends BaseActivity {
             return;
         }
         if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(
-                Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                PERMISSION_BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
             statusView.setText(R.string.heart_rate_status_permission);
             return;
         }
