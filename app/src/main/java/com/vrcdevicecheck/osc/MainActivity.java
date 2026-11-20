@@ -170,8 +170,35 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         // 放在所有控件都创建完之后，动态生成的勾选框也能一起套上主题
         ThemeManager.apply(this);
 
-        // 启动时静默检查更新（默认关闭，在「软件更新设置」里开）
-        checkUpdateOnLaunch();
+        // 第一次安装时问一次要不要自动检查更新，之后每次启动按开关来
+        if (!settings.hasAskedAutoUpdate()) {
+            maybeAskAutoUpdate();
+        } else {
+            checkUpdateOnLaunch();
+        }
+    }
+
+    /** 首次安装询问自动检查更新（只问一次） */
+    private void maybeAskAutoUpdate() {
+        settings.markAutoUpdateAsked();
+        new AlertDialog.Builder(this)
+                .setTitle("自动检查更新")
+                .setMessage("是否开启自动检查更新？\n开启后每次打开应用都会静默检查新版本，"
+                        + "发现更新时才会弹窗提示。")
+                .setPositiveButton("开启", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        settings.setAutoUpdateCheck(true);
+                        checkUpdateOnLaunch();
+                    }
+                })
+                .setNegativeButton("暂不", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        settings.setAutoUpdateCheck(false);
+                    }
+                })
+                .show();
     }
 
     /**
@@ -191,7 +218,8 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             public void run() {
                 UpdateChecker.Release release;
                 try {
-                    release = UpdateChecker.fetchLatest(MainActivity.this, source);
+                    release = UpdateChecker.fetchLatest(MainActivity.this, source,
+                            settings.isBetaChannel());
                 } catch (Throwable t) {
                     return;
                 }
@@ -215,14 +243,10 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         String message = body.isEmpty()
                 ? getString(R.string.update_dialog_body, release.tag)
                 : body;
-        String current = currentVersionName().toLowerCase(java.util.Locale.US);
-        int major = UpdateChecker.majorVersion(current);
-        boolean legacyDebug = major >= 0 && major < 4;
-        boolean beta = current.contains("beta");
-        if (!release.prerelease && (legacyDebug || beta)) {
+        if (!BuildConfig.RELEASE_SIGNED) {
             message = message + "\n\n———\n"
-                    + "正式版使用发布私钥签名，与当前版本不一致。安装前需要先卸载 VRCDI，"
-                    + "否则会提示安装失败；卸载会清除已导入的表与主题。";
+                    + "当前安装包使用测试签名，后续 Beta 与正式版统一使用发布私钥签名。"
+                    + "安装新版本前需要先卸载 VRCDI，否则会提示安装失败；卸载会清除已导入的表与主题。";
         }
 
         new AlertDialog.Builder(this)
@@ -231,7 +255,9 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 .setPositiveButton(R.string.update_go, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(MainActivity.this, UpdateSettingsActivity.class));
+                        Intent intent = new Intent(MainActivity.this, UpdateSettingsActivity.class);
+                        intent.putExtra(UpdateSettingsActivity.EXTRA_AUTO_UPDATE, true);
+                        startActivity(intent);
                     }
                 })
                 .setNegativeButton(R.string.update_later, null)
@@ -242,7 +268,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Throwable t) {
-            return "4.4.4 Beta";
+            return "4.9.0 Release";
         }
     }
 
@@ -765,7 +791,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
-        String versionName = "4.4.4 Beta";
+        String versionName = "4.9.0 Release";
         int versionCode = 0;
         try {
             android.content.pm.PackageInfo info =

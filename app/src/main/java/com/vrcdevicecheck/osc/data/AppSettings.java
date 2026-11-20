@@ -45,6 +45,8 @@ public class AppSettings {
     private static final String KEY_MODEL_MODE = "model_display_mode";
     private static final String KEY_UPDATE_SOURCE = "update_source";
     private static final String KEY_AUTO_UPDATE = "auto_update_check";
+    private static final String KEY_AUTO_UPDATE_ASKED = "auto_update_asked";
+    private static final String KEY_UPDATE_CHANNEL = "update_channel";
     private static final String KEY_BATTERY_HINT = "battery_hint_shown";
     /** 首次启动引导（选语言 + OSC 教学）是否已经走过 */
     private static final String KEY_ONBOARDED = "onboarded";
@@ -333,6 +335,30 @@ public class AppSettings {
 
     public void setAutoUpdateCheck(boolean enabled) {
         sp.edit().putBoolean(KEY_AUTO_UPDATE, enabled).apply();
+    }
+
+    /** 第一次安装时问过「要不要开自动更新」没有 */
+    public boolean hasAskedAutoUpdate() {
+        return sp.getBoolean(KEY_AUTO_UPDATE_ASKED, false);
+    }
+
+    public void markAutoUpdateAsked() {
+        sp.edit().putBoolean(KEY_AUTO_UPDATE_ASKED, true).apply();
+    }
+
+    /** 更新频道：stable（正式版）/ beta（测试版，含预发布） */
+    public String getUpdateChannel() {
+        String value = sp.getString(KEY_UPDATE_CHANNEL, "stable");
+        return "beta".equalsIgnoreCase(value) ? "beta" : "stable";
+    }
+
+    public void setUpdateChannel(String channel) {
+        sp.edit().putString(KEY_UPDATE_CHANNEL,
+                "beta".equalsIgnoreCase(channel) ? "beta" : "stable").apply();
+    }
+
+    public boolean isBetaChannel() {
+        return "beta".equals(getUpdateChannel());
     }
 
     /**

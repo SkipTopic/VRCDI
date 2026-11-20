@@ -76,6 +76,11 @@
             android:label="@string/search_title" />
 
         <activity
+            android:name=".WorldCityActivity"
+            android:exported="false"
+            android:label="@string/world_title" />
+
+        <activity
             android:name=".QWeatherSettingsActivity"
             android:exported="false"
             android:label="@string/qweather_title" />

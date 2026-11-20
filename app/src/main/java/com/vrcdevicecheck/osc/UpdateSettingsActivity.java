@@ -35,6 +35,9 @@ import java.io.File;
  */
 public class UpdateSettingsActivity extends BaseActivity {
 
+    /** 从「发现新版本 → 去更新」进来时带上，自动检查并直接下载安装 */
+    public static final String EXTRA_AUTO_UPDATE = "auto_update";
+
     private AppSettings settings;
     private TextView statusView;
     private TextView detailView;
@@ -44,6 +47,8 @@ public class UpdateSettingsActivity extends BaseActivity {
 
     private UpdateChecker.Release latest;
     private boolean busy;
+    /** 已经下载好的 APK，等用户授予安装权限后直接安装，避免重新下载 */
+    private File pendingApk;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +80,31 @@ public class UpdateSettingsActivity extends BaseActivity {
             }
         });
         root.addView(autoCheck);
+
+        TextView channelLabel = new TextView(this);
+        channelLabel.setText("更新频道");
+        channelLabel.setTextSize(14f);
+        channelLabel.setPadding(0, dp(18), 0, dp(6));
+        root.addView(channelLabel);
+
+        RadioGroup channelGroup = new RadioGroup(this);
+        channelGroup.setOrientation(RadioGroup.VERTICAL);
+        RadioButton stableChannel = new RadioButton(this);
+        stableChannel.setText("正式版（只接收稳定版本）");
+        stableChannel.setId(2001);
+        RadioButton betaChannel = new RadioButton(this);
+        betaChannel.setText("测试版（包含预发布版本）");
+        betaChannel.setId(2002);
+        channelGroup.addView(stableChannel);
+        channelGroup.addView(betaChannel);
+        channelGroup.check(settings.isBetaChannel() ? 2002 : 2001);
+        channelGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                settings.setUpdateChannel(checkedId == 2002 ? "beta" : "stable");
+            }
+        });
+        root.addView(channelGroup);
 
         TextView sourceLabel = new TextView(this);
         sourceLabel.setText(R.string.update_source_label);
@@ -140,6 +170,17 @@ public class UpdateSettingsActivity extends BaseActivity {
         root.addView(installButton, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        Button joinButton = new Button(this);
+        joinButton.setText("加入我们");
+        joinButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                com.vrcdevicecheck.osc.util.JoinUs.show(UpdateSettingsActivity.this);
+            }
+        });
+        root.addView(joinButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
         TextView note = new TextView(this);
         note.setTextSize(12f);
         note.setPadding(0, dp(16), 0, 0);
@@ -148,9 +189,32 @@ public class UpdateSettingsActivity extends BaseActivity {
 
         setContentView(scroll);
         ThemeManager.apply(this);
+
+        // 从「去更新」直接进来：自动检查，发现新版本后直接下载安装
+        if (getIntent().getBooleanExtra(EXTRA_AUTO_UPDATE, false)) {
+            checkButton.post(new Runnable() {
+                @Override
+                public void run() {
+                    checkForUpdate(true);
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 用户从「允许安装未知应用」设置页返回：直接安装已下载的包，不再重新检查/下载
+        if (pendingApk != null && UpdateManager.canInstall(this)) {
+            installPending();
+        }
     }
 
     private void checkForUpdate() {
+        checkForUpdate(false);
+    }
+
+    private void checkForUpdate(final boolean autoDownload) {
         if (busy) return;
         busy = true;
         checkButton.setEnabled(false);
@@ -166,7 +230,7 @@ public class UpdateSettingsActivity extends BaseActivity {
                 String error = null;
                 try {
                     release = UpdateChecker.fetchLatest(
-                            getApplicationContext(), source);
+                            getApplicationContext(), source, settings.isBetaChannel());
                 } catch (Throwable t) {
                     error = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
                 }
@@ -182,20 +246,24 @@ public class UpdateSettingsActivity extends BaseActivity {
                             return;
                         }
                         latest = result;
-                        detailView.setText(result.name.isEmpty()
+                        String header = result.name.isEmpty()
                                 ? getString(R.string.update_latest_release, result.tag)
                                 : getString(R.string.update_latest_release_named,
-                                        result.tag, result.name));
+                                        result.tag, result.name);
                         if (UpdateChecker.isNewer(result.tag, versionName())) {
                             statusView.setText(getString(R.string.update_found, result.tag));
                             installButton.setEnabled(result.apkAsset() != null);
                             if (result.apkAsset() == null) {
                                 statusView.setText(R.string.update_found_no_apk);
                             }
-                            showReleaseNotes(result);
+                            showNotesInline(header, result);
+                            if (autoDownload && result.apkAsset() != null) {
+                                downloadAndInstall();
+                            }
                         } else {
                             statusView.setText(R.string.update_is_latest);
                             installButton.setEnabled(false);
+                            detailView.setText(header);
                         }
                     }
                 });
@@ -203,40 +271,28 @@ public class UpdateSettingsActivity extends BaseActivity {
         }, "vrcdi-update-check").start();
     }
 
-    private void showReleaseNotes(UpdateChecker.Release release) {
-        if (release.body.trim().isEmpty()) return;
-        String message = release.body;
-        if (needsSignatureMigration(release)) {
-            message = message + "\n\n———\n"
-                    + "注意：当前版本与目标版本的签名不一致（旧版为 debug 签名，或 Beta 与正式版签名不同）。"
-                    + "安装前需要先卸载 VRCDI，否则系统会提示安装失败。";
+    /** 更新日志直接显示在页面里（Markdown 纯文本），不再弹窗 */
+    private void showNotesInline(String header, UpdateChecker.Release release) {
+        StringBuilder sb = new StringBuilder(header);
+        String body = release.body == null ? "" : release.body.trim();
+        if (!body.isEmpty()) {
+            sb.append("\n\n").append(body);
         }
-        final String text = message;
-        new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.update_notes_title, release.tag))
-                .setMessage(text)
-                .setPositiveButton(R.string.update_got_it, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .show();
+        if (needsSignatureMigration(release)) {
+            sb.append("\n\n———\n")
+                    .append("注意：当前安装包使用测试签名，而后续 Beta 与正式版统一使用发布私钥签名。")
+                    .append("安装前需要先卸载 VRCDI，否则系统会提示安装失败。");
+        }
+        detailView.setText(sb.toString());
     }
 
     /**
-     * 需要卸载重装的情况：
-     *   - 目标正式版用发布私钥签名，而当前是 4.x 之前的 debug 签名包；
-     *   - 当前是 4.x Beta（debug 签名），目标是正式版（私钥签名）。
-     * 注意：2.x/3.x 装 4.x Beta 都是 debug 签名，可以直接覆盖，不需要卸载。
+     * 需要卸载重装的情况：当前安装包不是发布私钥签名。
+     * 4.4.x 正式版起，Beta 与正式版统一用发布私钥签名；旧 debug 包（含 4.4.4 Beta 及更早）
+     * 覆盖安装会签名冲突，必须先卸载。
      */
     private boolean needsSignatureMigration(UpdateChecker.Release release) {
-        if (release == null || release.prerelease) return false;
-        String current = versionName();
-        int major = UpdateChecker.majorVersion(current);
-        boolean legacyDebug = major >= 0 && major < 4;
-        boolean beta = current.toLowerCase(java.util.Locale.US).contains("beta");
-        return legacyDebug || beta;
+        return release != null && !BuildConfig.RELEASE_SIGNED;
     }
 
     private void downloadAndInstall() {
@@ -249,7 +305,8 @@ public class UpdateSettingsActivity extends BaseActivity {
         if (needsSignatureMigration(latest)) {
             new AlertDialog.Builder(this)
                     .setTitle("安装正式版前需要卸载")
-                    .setMessage("当前版本与目标版本的签名不一致，直接覆盖会安装失败。\n\n"
+                    .setMessage("当前安装包的签名与后续版本不一致（后续 Beta 与正式版统一使用发布私钥签名），"
+                            + "直接覆盖会安装失败。\n\n"
                             + "请先卸载 VRCDI，再安装新的 APK。\n"
                             + "卸载会清除应用数据：已导入的设备表 / 应用表 / CPU 映射表 / 主题需要重新导入。\n\n"
                             + "是否现在下载新的安装包？")
@@ -308,18 +365,36 @@ public class UpdateSettingsActivity extends BaseActivity {
                             return;
                         }
                         statusView.setText(R.string.update_downloaded);
-                        try {
-                            UpdateManager.install(UpdateSettingsActivity.this, file);
-                        } catch (Throwable t) {
-                            statusView.setText(getString(R.string.update_install_failed,
-                                    t.getMessage() == null
-                                            ? t.getClass().getSimpleName() : t.getMessage()));
-                            installButton.setEnabled(true);
-                        }
+                        pendingApk = file;
+                        attemptInstall();
                     }
                 });
             }
         }, "vrcdi-update-download").start();
+    }
+
+    /** 权限已授予就立刻安装；否则引导去授权，回来后在 onResume 里继续安装 */
+    private void attemptInstall() {
+        if (pendingApk == null) return;
+        if (!UpdateManager.canInstall(this)) {
+            statusView.setText("安装包已下载，请允许「安装未知应用」，返回后会自动安装");
+            UpdateManager.openInstallPermission(this);
+            return;
+        }
+        installPending();
+    }
+
+    private void installPending() {
+        final File apk = pendingApk;
+        if (apk == null) return;
+        pendingApk = null;
+        try {
+            UpdateManager.installNow(this, apk);
+        } catch (Throwable t) {
+            statusView.setText(getString(R.string.update_install_failed,
+                    t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
+            installButton.setEnabled(true);
+        }
     }
 
     private String versionName() {
@@ -327,7 +402,7 @@ public class UpdateSettingsActivity extends BaseActivity {
             PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
             return info.versionName;
         } catch (Throwable t) {
-            return "4.4.4 Beta";
+            return "4.9.0 Release";
         }
     }
 

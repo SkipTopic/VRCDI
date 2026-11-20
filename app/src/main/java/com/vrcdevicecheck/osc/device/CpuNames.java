@@ -153,7 +153,13 @@ public final class CpuNames {
             }
             return any;
         } catch (Throwable t) {
-            return false;
+            // JSON 实在坏了：退化成正则提取 "代号": "型号"
+            Map<String, String> pairs = JsonRepair.extractPairs(text);
+            for (Map.Entry<String, String> entry : pairs.entrySet()) {
+                if (entry.getKey().startsWith("_")) continue;
+                if (!entry.getValue().isEmpty()) target.put(entry.getKey(), entry.getValue());
+            }
+            return !target.isEmpty();
         }
     }
 

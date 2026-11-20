@@ -83,23 +83,40 @@ public final class UpdateChecker {
     }
 
     public static Release fetchLatest(Context context, String source) throws Exception {
+        return fetchLatest(context, source, false);
+    }
+
+    /**
+     * @param includePrerelease true 表示「测试版」频道：列表里最新的非草稿发行版（含预发布）；
+     *                          false 表示「正式版」频道：只接受正式发行版。
+     */
+    public static Release fetchLatest(Context context, String source,
+                                      boolean includePrerelease) throws Exception {
         String base = SOURCE_GITEE.equals(source) ? GITEE_API : GITHUB_API;
+        if (includePrerelease) {
+            // 测试版频道：直接看列表，最新的非草稿发行版就是目标
+            Release fromList = fetchFirstFromList(context, base, false);
+            if (fromList != null) return fromList;
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_no_release, "pre-release"));
+        }
         try {
-            // 正常路径：/releases/latest
+            // 正式版：/latest 本身就会跳过 pre-release
             return parse(httpGet(context, base + "/latest"));
         } catch (Exception latestError) {
-            // GitHub 的 /latest 会跳过 draft 和 pre-release：
-            // 如果最新版被勾了「Set as a pre-release」，这里就是 404。
-            // 退回列表接口，取第一个非 draft 的发行版（预发布也算）。
-            Release fromList = fetchFirstFromList(context, base);
+            // 没有正式版时退回列表，但同样只接受非预发布
+            Release fromList = fetchFirstFromList(context, base, true);
             if (fromList != null) return fromList;
             throw new Exception(LocaleHelper.str(context, R.string.update_err_no_release,
                     latestError.getMessage()));
         }
     }
 
-    /** GET /releases?per_page=10，取第一个非 draft 的发行版；失败返回 null */
-    private static Release fetchFirstFromList(Context context, String base) {
+    /**
+     * GET /releases?per_page=10，取第一个非 draft 的发行版；失败返回 null。
+     *
+     * @param skipPrerelease true 时跳过 pre-release（正式版频道）
+     */
+    private static Release fetchFirstFromList(Context context, String base, boolean skipPrerelease) {
         try {
             String json = httpGet(context, base + "?per_page=10");
             JSONArray array = new JSONArray(json);
@@ -107,6 +124,7 @@ public final class UpdateChecker {
                 JSONObject obj = array.optJSONObject(i);
                 if (obj == null) continue;
                 if (obj.optBoolean("draft", false)) continue;
+                if (skipPrerelease && obj.optBoolean("prerelease", false)) continue;
                 return parseObject(obj);
             }
         } catch (Throwable ignored) {

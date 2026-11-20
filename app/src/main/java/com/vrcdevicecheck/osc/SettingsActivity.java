@@ -303,7 +303,7 @@ public class SettingsActivity extends BaseActivity {
         sb.append(getString(R.string.about_api, Build.VERSION.SDK_INT));
         device.setText(sb.toString());
 
-        String versionName = "4.4.4 Beta";
+        String versionName = "4.9.0 Release";
         int versionCode = 0;
         try {
             android.content.pm.PackageInfo info =
@@ -319,6 +319,12 @@ public class SettingsActivity extends BaseActivity {
                 .setTitle(getString(R.string.about_title))
                 .setView(view)
                 .setPositiveButton(R.string.common_close, null)
+                .setNeutralButton("加入我们", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        com.vrcdevicecheck.osc.util.JoinUs.show(SettingsActivity.this);
+                    }
+                })
                 .show();
     }
 

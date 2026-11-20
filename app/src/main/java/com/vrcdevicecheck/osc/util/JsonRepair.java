@@ -26,9 +26,53 @@ public final class JsonRepair {
         value = stripComments(value);
         value = convertSingleQuotes(value);
         value = quoteBareKeys(value);
+        value = insertMissingCommas(value);
         // 去掉紧挨着 } 或 ] 之前的多余逗号
         value = value.replaceAll(",\\s*([}\\]])", "$1");
         return value;
+    }
+
+    /**
+     * 补上对象成员之间漏掉的逗号：
+     *   {"a": "b"
+     *    "c": "d"}  ->  {"a": "b","c": "d"}
+     */
+    private static String insertMissingCommas(String text) {
+        java.util.regex.Pattern valueBeforeKey = java.util.regex.Pattern.compile(
+                "(\"(?:\\\\.|[^\"\\\\])*\"|true|false|null|-?\\d+(?:\\.\\d+)?)"
+                        + "\\s*(?=\"(?:\\\\.|[^\"\\\\])*\"\\s*:)");
+        String fixed = replaceWithComma(text, valueBeforeKey);
+        // 嵌套对象/数组结束符后面直接跟下一个键，也补一个逗号
+        return fixed.replaceAll("([}\\]])[ \\t]*\\n[ \\t]*(?=\"[^\"\\n]*\"\\s*:)", "$1,\n");
+    }
+
+    private static String replaceWithComma(String text, java.util.regex.Pattern pattern) {
+        java.util.regex.Matcher matcher = pattern.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(buffer,
+                    java.util.regex.Matcher.quoteReplacement(matcher.group(1) + ","));
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    /**
+     * 最后兜底：直接提取 "key": "value" 对，供映射表在 JSON 实在解析不了时使用。
+     * 仅用于「包名 -> 名字」「代号 -> 型号」这类扁平映射。
+     */
+    public static java.util.Map<String, String> extractPairs(String text) {
+        java.util.Map<String, String> pairs = new java.util.LinkedHashMap<>();
+        if (text == null) return pairs;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("\"([^\"\\\\]+)\"\\s*:\\s*\"([^\"\\\\]*)\"")
+                .matcher(text);
+        while (matcher.find()) {
+            String key = matcher.group(1).trim();
+            String value = matcher.group(2).trim();
+            if (!key.isEmpty() && !value.isEmpty()) pairs.put(key, value);
+        }
+        return pairs;
     }
 
     /** 去掉字符串外部的 // 与 /* *\/ 注释 */

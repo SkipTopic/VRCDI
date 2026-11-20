@@ -15,12 +15,14 @@ if (localPropertiesFile.exists()) {
 //   storePassword=...
 //   keyAlias=vrcdi
 //   keyPassword=...
-// 只有 release 构建用它；debug（Beta 测试包）仍用 Android 默认 debug 签名。
+// 4.4.x 正式版之后，Beta 与正式版统一用发布私钥签名（便于 ADV 验证）。
+// 没有 keystore.properties 时 debug 回落到 Android 默认 debug 签名。
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { stream -> keystoreProperties.load(stream) }
 }
+def signedWithReleaseKey = keystorePropertiesFile.exists()
 
 android {
     // Android Studio 4.2 自带 SDK 30，这里不用更高的 compileSdk，避免 IDE 提示升级
@@ -32,12 +34,15 @@ android {
         // VRChat 移动端最低兼容 API 29（Android 10），本应用与之对齐
         minSdkVersion 29
         targetSdkVersion 30
-        versionCode 373
-        versionName "4.4.4 Beta"
+        versionCode 420
+        versionName "4.9.0 Release"
 
         // 空字符串表示没有内置凭据，运行时回落到设置页
         buildConfigField "String", "QWEATHER_HOST", "\"${localProperties.getProperty('qweather.host', '')}\""
         buildConfigField "String", "QWEATHER_KEY", "\"${localProperties.getProperty('qweather.key', '')}\""
+
+        // 本次构建是否用发布私钥签名；更新器据此判断是否需要卸载重装
+        buildConfigField "boolean", "RELEASE_SIGNED", signedWithReleaseKey ? "true" : "false"
     }
 
     buildFeatures {
@@ -59,14 +64,16 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // 只有正式版（assembleRelease）用发布私钥签名
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             }
         }
         debug {
-            // Beta / 测试包保持 Android 默认 debug 签名，方便反复安装调试
             minifyEnabled false
+            // 从 4.4.x 正式版起，Beta 也用发布私钥签名（需要 keystore.properties）
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

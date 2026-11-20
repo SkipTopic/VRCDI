@@ -159,7 +159,14 @@ public final class AppNames {
             }
             return any;
         } catch (Throwable t) {
-            return false;
+            // JSON 实在坏了：退化成正则提取 "包名": "名字"，能救多少算多少
+            Map<String, String> pairs = JsonRepair.extractPairs(text);
+            for (Map.Entry<String, String> entry : pairs.entrySet()) {
+                String pkg = entry.getKey();
+                if (pkg.startsWith("_") || !pkg.contains(".")) continue;
+                if (!entry.getValue().isEmpty()) target.put(pkg, entry.getValue());
+            }
+            return !target.isEmpty();
         }
     }
 

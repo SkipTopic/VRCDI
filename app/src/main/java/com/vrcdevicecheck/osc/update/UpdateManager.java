@@ -103,25 +103,50 @@ public final class UpdateManager {
         return target;
     }
 
-    public static void install(Context context, File apk) throws Exception {
+    public static boolean canInstall(Context context) {
+        if (context == null) return false;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true;
+        try {
+            return context.getPackageManager().canRequestPackageInstalls();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 打开「允许安装未知应用」设置页 */
+    public static void openInstallPermission(Context context) {
+        if (context == null) return;
+        Intent settings = new Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + context.getPackageName()));
+        settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(settings);
+        } catch (Throwable ignored) {
+            // 个别机型没有这个页面，忽略
+        }
+    }
+
+    /** 直接调起安装器（调用方已经确认有安装权限） */
+    public static void installNow(Context context, File apk) throws Exception {
         if (apk == null || !apk.isFile()) {
             throw new Exception(LocaleHelper.str(context, R.string.update_err_no_apk_file));
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && !context.getPackageManager().canRequestPackageInstalls()) {
-            Intent settings = new Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + context.getPackageName()));
-            settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(settings);
-            throw new Exception(LocaleHelper.str(context, R.string.update_err_unknown_sources));
-        }
-
         Uri uri = ApkProvider.uriFor(context, apk);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, "application/vnd.android.package-archive");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    public static void install(Context context, File apk) throws Exception {
+        if (apk == null || !apk.isFile()) {
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_no_apk_file));
+        }
+        if (!canInstall(context)) {
+            openInstallPermission(context);
+            throw new Exception(LocaleHelper.str(context, R.string.update_err_unknown_sources));
+        }
+        installNow(context, apk);
     }
 }
