@@ -24,6 +24,8 @@ public enum FieldGroup {
             ReportField.MUSIC_TITLE, ReportField.MUSIC_ARTIST,
             ReportField.MUSIC_ALBUM, ReportField.MUSIC_PROGRESS,
             ReportField.MUSIC_LYRIC),
+    HEALTH("health", R.string.group_health,
+            ReportField.HEART_RATE),
     OTHER("other", R.string.group_other,
             ReportField.FOREGROUND_APP, ReportField.VRCHAT_FPS);
 

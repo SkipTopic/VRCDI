@@ -98,6 +98,7 @@ public final class ReportBuilder {
     private static final class Words {
         final String na;
         final String battery;
+        final String heartRate;
         final String weather;
         final String pressure;
         final String wind;
@@ -109,11 +110,12 @@ public final class ReportBuilder {
         final String tempFormat;
         final String[] directions;
 
-        Words(String na, String battery, String weather, String pressure, String wind,
-              String uv, String sunset, String speedOnly, String charging, String humidityFormat,
-              String tempFormat, String[] directions) {
+        Words(String na, String battery, String heartRate, String weather, String pressure,
+              String wind, String uv, String sunset, String speedOnly, String charging,
+              String humidityFormat, String tempFormat, String[] directions) {
             this.na = na;
             this.battery = battery;
+            this.heartRate = heartRate;
             this.weather = weather;
             this.pressure = pressure;
             this.wind = wind;
@@ -128,32 +130,30 @@ public final class ReportBuilder {
     }
 
     private static final Words WORDS_ZH = new Words(
-            "不可用", "电量: ", "天气: ", "气压 ", "风向风速 ", "紫外线 ", "日落 ", "风速 ", "充电中",
-            "湿度 %d%%", "%.1f℃",
+            "不可用", "电量: ", "心率: ", "天气: ", "气压 ", "风向风速 ", "紫外线 ", "日落 ",
+            "风速 ", "充电中", "湿度 %d%%", "%.1f℃",
             new String[]{"北风", "东北风", "东风", "东南风", "南风", "西南风", "西风", "西北风"});
 
     private static final Words WORDS_EN = new Words(
-            "N/A", "Battery: ", "Weather: ", "Pressure ", "Wind ", "UV ", "Sunset ",
-            "Wind ", "Charging",
-            "Humidity %d%%", "%.1fC",
+            "N/A", "Battery: ", "Heart rate: ", "Weather: ", "Pressure ", "Wind ",
+            "UV ", "Sunset ", "Wind ", "Charging", "Humidity %d%%", "%.1fC",
             new String[]{"N wind", "NE wind", "E wind", "SE wind",
                     "S wind", "SW wind", "W wind", "NW wind"});
 
     private static final Words WORDS_JA = new Words(
-            "利用不可", "バッテリー: ", "天気: ", "気圧 ", "風 ", "紫外線 ", "日の入り ",
-            "風速 ", "充電中",
-            "湿度 %d%%", "%.1f℃",
+            "利用不可", "バッテリー: ", "心拍数: ", "天気: ", "気圧 ", "風 ", "紫外線 ",
+            "日の入り ", "風速 ", "充電中", "湿度 %d%%", "%.1f℃",
             new String[]{"北の風", "北東の風", "東の風", "南東の風",
                     "南の風", "南西の風", "西の風", "北西の風"});
 
     private static final Words WORDS_RU = new Words(
-            "Недоступно", "Батарея: ", "Погода: ", "Давление ", "Ветер ", "УФ ", "Закат ",
-            "Скорость ", "Заряжается", "Влажность %d%%", "%.1f°C",
+            "Недоступно", "Батарея: ", "Пульс: ", "Погода: ", "Давление ", "Ветер ",
+            "УФ ", "Закат ", "Скорость ", "Заряжается", "Влажность %d%%", "%.1f°C",
             new String[]{"С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"});
 
     private static final Words WORDS_KO = new Words(
-            "사용 불가", "배터리: ", "날씨: ", "기압 ", "바람 ", "자외선 ", "일몰 ",
-            "풍속 ", "충전 중", "습도 %d%%", "%.1f℃",
+            "사용 불가", "배터리: ", "심박수: ", "날씨: ", "기압 ", "바람 ", "자외선 ",
+            "일몰 ", "풍속 ", "충전 중", "습도 %d%%", "%.1f℃",
             new String[]{"북풍", "북동풍", "동풍", "남동풍",
                     "남풍", "남서풍", "서풍", "북서풍"});
 
@@ -256,6 +256,16 @@ public final class ReportBuilder {
     public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
                                boolean useProductName, WeatherInfo weather, boolean hideUnavailable,
                                String lang, MusicInfo music) {
+        return build(snapshot, fields, asciiOnly, useProductName, weather, hideUnavailable,
+                lang, music, null);
+    }
+
+    /**
+     * @param heartRateBpm 最近一次读到的静息/实时心率；没有数据时传 null
+     */
+    public static Report build(DeviceSnapshot snapshot, Set<ReportField> fields, boolean asciiOnly,
+                               boolean useProductName, WeatherInfo weather, boolean hideUnavailable,
+                               String lang, MusicInfo music, Integer heartRateBpm) {
         List<ReportField> ordered = new ArrayList<>();
         for (ReportField field : ReportField.values()) {
             if (fields != null && fields.contains(field)) ordered.add(field);
@@ -269,7 +279,7 @@ public final class ReportBuilder {
 
         Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
         List<Line> lines = buildLines(snapshot, ordered, reportLang, words, useProductName,
-                weather, hideUnavailable, asciiOnly, music, hidden);
+                weather, hideUnavailable, asciiOnly, music, heartRateBpm, hidden);
         while (lineText(lines).length() > CHATBOX_LIMIT && lines.size() > 1) {
             lines.remove(lines.size() - 1);
         }
@@ -317,7 +327,7 @@ public final class ReportBuilder {
         Set<ReportField> hidden = EnumSet.noneOf(ReportField.class);
         String reportLang = asciiOnly ? "en" : (lang == null ? "zh" : lang);
         return lineText(buildLines(snapshot, fields, reportLang, wordsFor(reportLang),
-                useProductName, null, false, asciiOnly, null, hidden));
+                useProductName, null, false, asciiOnly, null, null, hidden));
     }
 
     /** 是否勾选了任意音乐字段 */
@@ -333,7 +343,7 @@ public final class ReportBuilder {
                                          String lang, Words words, boolean useProductName,
                                          WeatherInfo weather, boolean hideUnavailable,
                                          boolean asciiOnly, MusicInfo music,
-                                         Set<ReportField> hidden) {
+                                         Integer heartRateBpm, Set<ReportField> hidden) {
         List<Line> lines = new ArrayList<>(7);
 
         // 第一行：品牌 + 型号（真实型号或产品名称）
@@ -411,6 +421,16 @@ public final class ReportBuilder {
             }
             if (!battery.isEmpty()) {
                 lines.add(new Line(words.battery + battery.text, battery.fields));
+            }
+        }
+
+        // 心率行（手环近 60 秒内有数据才显示）
+        if (fields.contains(ReportField.HEART_RATE)) {
+            LineBuilder heart = new LineBuilder(hidden, hideUnavailable, words);
+            heart.add(ReportField.HEART_RATE,
+                    heartRateBpm == null || heartRateBpm <= 0 ? NA : heartRateBpm + "bpm");
+            if (!heart.isEmpty()) {
+                lines.add(new Line(words.heartRate + heart.text, heart.fields));
             }
         }
 

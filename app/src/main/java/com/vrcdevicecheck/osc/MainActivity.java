@@ -40,6 +40,7 @@ import com.vrcdevicecheck.osc.device.DeviceInfoRepository;
 import com.vrcdevicecheck.osc.device.DeviceSnapshot;
 import com.vrcdevicecheck.osc.device.ForegroundApp;
 import com.vrcdevicecheck.osc.device.VrSupport;
+import com.vrcdevicecheck.osc.media.HeartRateManager;
 import com.vrcdevicecheck.osc.media.MusicInfo;
 import com.vrcdevicecheck.osc.media.NowPlayingRepository;
 import com.vrcdevicecheck.osc.net.LanScanner;
@@ -100,10 +101,13 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         @Override
         public void run() {
             refreshForegroundApp();
-            // 界面可见时顺带刷新音乐预览，能看到歌词一行行走
-            if (ReportBuilder.hasMusicFields(settings.getEnabledFields())) {
+            // 界面可见时顺带刷新音乐/心率预览
+            Set<ReportField> enabled = settings.getEnabledFields();
+            if (ReportBuilder.hasMusicFields(enabled)
+                    || enabled.contains(ReportField.HEART_RATE)) {
                 refreshPreview();
             }
+            refreshHeartRateHint();
             // 界面已经不可见时不再续命，避免退到后台还在轮询
             if (foregroundTicking) main.postDelayed(this, 2000L);
         }
@@ -135,6 +139,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
     private TextView textForegroundApp;
     private TextView textWeatherHint;
     private TextView textMusicHint;
+    private TextView textHeartRateHint;
 
     private DeviceSnapshot localSnapshot;
     private final List<CheckBox> fieldBoxes = new ArrayList<>();
@@ -397,6 +402,11 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                                 && !NowPlayingRepository.hasAccess(MainActivity.this)) {
                             promptMusicAccess();
                         }
+                        if (isChecked && field == ReportField.HEART_RATE
+                                && !HeartRateManager.hasSelectedDevice(MainActivity.this)) {
+                            promptHeartRate();
+                        }
+                        refreshHeartRateHint();
                     }
                 });
                 fieldBoxes.add(box);
@@ -439,7 +449,45 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             }
         });
         containerFields.addView(textMusicHint);
+
+        textHeartRateHint = new TextView(this);
+        textHeartRateHint.setTextSize(12f);
+        int heartPad = Math.round(density * 4);
+        textHeartRateHint.setPadding(0, heartPad, 0, heartPad);
+        textHeartRateHint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, HeartRateActivity.class));
+            }
+        });
+        containerFields.addView(textHeartRateHint);
+
         refreshMusicHint();
+        refreshHeartRateHint();
+    }
+
+    private void refreshHeartRateHint() {
+        if (textHeartRateHint == null || settings == null) return;
+        boolean enabled = settings.getEnabledFields().contains(ReportField.HEART_RATE);
+        textHeartRateHint.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        if (!enabled) return;
+
+        String name = HeartRateManager.getSelectedName(this);
+        if (name.isEmpty()) {
+            textHeartRateHint.setText(R.string.hint_heart_rate_no_device);
+            textHeartRateHint.setTextColor(getColor(R.color.warn));
+            return;
+        }
+        int bpm = HeartRateManager.getFreshBpm();
+        if (bpm > 0) {
+            textHeartRateHint.setText(
+                    getString(R.string.heart_rate_status_connected, name, bpm));
+            textHeartRateHint.setTextColor(getColor(R.color.text_secondary));
+        } else {
+            textHeartRateHint.setText(
+                    getString(R.string.heart_rate_status_idle, name));
+            textHeartRateHint.setTextColor(getColor(R.color.warn));
+        }
     }
 
     /** 「上报型号类型」下拉：挂在设备型号下面，比子选项再缩进一级 */
@@ -517,6 +565,23 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                         openNotificationAccess();
                     }
                 })
+                .setNegativeButton(R.string.common_later, null)
+                .show();
+    }
+
+    private void promptHeartRate() {
+        if (isFinishing()) return;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.heart_rate_prompt_title)
+                .setMessage(R.string.heart_rate_prompt_message)
+                .setPositiveButton(R.string.heart_rate_prompt_go,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivity(new Intent(MainActivity.this,
+                                        HeartRateActivity.class));
+                            }
+                        })
                 .setNegativeButton(R.string.common_later, null)
                 .show();
     }
@@ -680,6 +745,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 applySettingsToViews();
                 refreshPreview();
                 refreshMusicHint();
+                refreshHeartRateHint();
                 ReporterService.wake();
                 if (!NowPlayingRepository.hasAccess(MainActivity.this)) {
                     promptMusicAccess();
@@ -694,6 +760,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 applySettingsToViews();
                 refreshPreview();
                 refreshMusicHint();
+                refreshHeartRateHint();
                 ReporterService.wake();
             }
         });
@@ -1080,6 +1147,9 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         WeatherInfo cachedWeather = WeatherRepository.getCached(this);
         MusicInfo music = ReportBuilder.hasMusicFields(enabledFields)
                 ? NowPlayingRepository.snapshot(this) : null;
+        int bpm = enabledFields.contains(ReportField.HEART_RATE)
+                ? HeartRateManager.getFreshBpm() : 0;
+        Integer heartRate = bpm > 0 ? bpm : null;
         ReportBuilder.Report report = ReportBuilder.build(
                 snapshot,
                 enabledFields,
@@ -1088,7 +1158,8 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
                 cachedWeather,
                 settings.isHideUnavailable(),
                 LocaleHelper.getLanguage(this),
-                music);
+                music,
+                heartRate);
         textPreview.setText(report.text);
         textPreviewCount.setText(getString(R.string.preview_count,
                 report.charCount(), ReportBuilder.CHATBOX_LIMIT));
@@ -1115,6 +1186,12 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
             hint = hint == null ? extra : hint + "\n" + extra;
         } else if (musicEnabled && music == null) {
             String extra = getString(R.string.hint_music_not_playing);
+            hint = hint == null ? extra : hint + "\n" + extra;
+        }
+        if (enabledFields.contains(ReportField.HEART_RATE) && heartRate == null) {
+            String extra = HeartRateManager.hasSelectedDevice(this)
+                    ? getString(R.string.hint_heart_rate_no_data)
+                    : getString(R.string.hint_heart_rate_no_device);
             hint = hint == null ? extra : hint + "\n" + extra;
         }
         if (settings.isHideUnavailable() && !report.hidden.isEmpty()) {
@@ -1346,6 +1423,7 @@ public class MainActivity extends BaseActivity implements ReporterService.Listen
         refreshFromService();
         refreshForegroundApp();
         refreshMusicHint();
+        refreshHeartRateHint();
         foregroundTicking = true;
         main.removeCallbacks(foregroundTick);
         main.postDelayed(foregroundTick, 2000L);

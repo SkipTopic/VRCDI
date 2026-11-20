@@ -118,6 +118,23 @@ public class ReportBuilderTest {
     }
 
     @Test
+    public void heartRateLineRendersBpm() {
+        String text = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.HEART_RATE),
+                false, true, null, false, "en", null, 78).text;
+        assertEquals("Heart rate: 78bpm", text);
+    }
+
+    @Test
+    public void heartRateWithoutDataIsHidden() {
+        ReportBuilder.Report report = ReportBuilder.build(TestSnapshots.full(),
+                EnumSet.of(ReportField.HEART_RATE),
+                false, true, null, true, "zh", null, null);
+        assertEquals("", report.text);
+        assertTrue(report.hidden.contains(ReportField.HEART_RATE));
+    }
+
+    @Test
     public void musicLineShowsPlaybackProgress() {
         MusicInfo music = new MusicInfo("夜曲", "周杰伦", "十一月的萧邦", "一群嗜血的蚂蚁",
                 80000L, 260000L);

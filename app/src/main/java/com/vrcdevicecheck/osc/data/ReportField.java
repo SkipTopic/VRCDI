@@ -27,6 +27,7 @@ public enum ReportField {
     GPU_USAGE("gpu_usage", R.string.field_gpu_usage),
     RAM("ram", R.string.field_ram),
     BATTERY("battery", R.string.field_battery),
+    HEART_RATE("heart_rate", R.string.field_heart_rate),
     WEATHER("weather", R.string.field_weather),
     TEMPERATURE("temperature", R.string.field_temperature),
     HUMIDITY("humidity", R.string.field_humidity),
@@ -74,5 +75,10 @@ public enum ReportField {
         return this == MUSIC_TITLE || this == MUSIC_ARTIST
                 || this == MUSIC_ALBUM || this == MUSIC_PROGRESS
                 || this == MUSIC_LYRIC;
+    }
+
+    /** 健康类字段需要额外权限 / 外部设备，默认不勾选 */
+    public boolean isHealth() {
+        return this == HEART_RATE;
     }
 }
