@@ -18,7 +18,8 @@ import java.util.Locale;
  *
  * 约定：
  * - 默认中文（不管系统语言是什么）；
- * - 只影响界面文案，不影响发往 VRChat 的 Chatbox 文本（那由「仅发送 ASCII」决定）。
+ * - 只影响界面文案；发往 VRChat 的 Chatbox 文本另由 ReportBuilder 按同一语言取词表
+ *   （打开「仅发送 ASCII」时强制英文）。
  */
 public final class LocaleHelper {
 
@@ -26,6 +27,10 @@ public final class LocaleHelper {
     public static final String LANG_EN = "en";
     public static final String LANG_JA = "ja";
     public static final String LANG_RU = "ru";
+    public static final String LANG_KO = "ko";
+
+    /** 全部支持的语言，顺序即设置页与首次引导里的展示顺序 */
+    public static final String[] ALL = {LANG_ZH, LANG_EN, LANG_JA, LANG_RU, LANG_KO};
 
     private static final String PREFS = "vrcdi_locale";
     private static final String KEY_LANGUAGE = "language";
@@ -58,16 +63,17 @@ public final class LocaleHelper {
         return LANG_EN.equals(getLanguage(context));
     }
 
-    /** 中文界面才用中文数据（地名、天气文案）；日文/俄文界面统一用英文数据 */
+    /** 中文界面才用中文数据（地名、天气文案）；日文/俄文/韩文界面统一用英文数据 */
     public static boolean isChinese(Context context) {
         return LANG_ZH.equals(getLanguage(context));
     }
 
-    /** 只接受已知的四种语言，其余一律回到中文 */
+    /** 只接受已知的五种语言，其余一律回到中文 */
     private static String normalize(String language) {
         if (LANG_EN.equals(language)) return LANG_EN;
         if (LANG_JA.equals(language)) return LANG_JA;
         if (LANG_RU.equals(language)) return LANG_RU;
+        if (LANG_KO.equals(language)) return LANG_KO;
         return LANG_ZH;
     }
 
@@ -85,6 +91,7 @@ public final class LocaleHelper {
         if (LANG_EN.equals(language)) return Locale.US;
         if (LANG_JA.equals(language)) return Locale.JAPAN;
         if (LANG_RU.equals(language)) return Locale.forLanguageTag("ru-RU");
+        if (LANG_KO.equals(language)) return Locale.KOREA;
         return Locale.SIMPLIFIED_CHINESE;
     }
 

@@ -66,8 +66,8 @@ public final class WeatherRepository {
 
     private static final String PREFS = "vrcdi_weather";
 
-    /** 缓存结构版本：v3 起多了日文/俄文天气描述，旧缓存直接丢弃重取 */
-    private static final int SCHEMA_VERSION = 3;
+    /** 缓存结构版本：v2 起多了日文/俄文天气描述，v4 起多了韩文，旧缓存直接丢弃重取 */
+    private static final int SCHEMA_VERSION = 4;
     private static final String KEY_SCHEMA = "schema";
 
     private static final String KEY_LAST_SUCCESS = "last_success";
@@ -79,6 +79,7 @@ public final class WeatherRepository {
     private static final String KEY_COND_EN = "cond_en";
     private static final String KEY_COND_JA = "cond_ja";
     private static final String KEY_COND_RU = "cond_ru";
+    private static final String KEY_COND_KO = "cond_ko";
     private static final String KEY_PROVIDER = "provider";
     private static final String KEY_PRESSURE = "pressure_hpa";
     private static final String KEY_WIND_DIR = "wind_dir_deg";
@@ -682,6 +683,7 @@ public final class WeatherRepository {
             return new WeatherInfo(label, temp, humidity,
                     WeatherCodes.forWmo(code, "zh"), WeatherCodes.forWmo(code, "en"),
                     WeatherCodes.forWmo(code, "ja"), WeatherCodes.forWmo(code, "ru"),
+                    WeatherCodes.forWmo(code, "ko"),
                     System.currentTimeMillis(), "Open-Meteo",
                     pressure, windDir, windSpeed, uv, sunset);
         } catch (Exception e) {
@@ -737,6 +739,7 @@ public final class WeatherRepository {
             return new WeatherInfo(label, temp, humidity,
                     WeatherCodes.forWwo(code, "zh", desc), WeatherCodes.forWwo(code, "en", desc),
                     WeatherCodes.forWwo(code, "ja", desc), WeatherCodes.forWwo(code, "ru", desc),
+                    WeatherCodes.forWwo(code, "ko", desc),
                     System.currentTimeMillis(), "wttr.in",
                     pressure == null ? null : pressure.floatValue(),
                     windDir, windSpeed, uv, sunset);
@@ -830,6 +833,7 @@ public final class WeatherRepository {
                     WeatherCodes.forQWeather(icon, "en"),
                     WeatherCodes.forQWeather(icon, "ja"),
                     WeatherCodes.forQWeather(icon, "ru"),
+                    WeatherCodes.forQWeather(icon, "ko"),
                     System.currentTimeMillis(), PROVIDER_QWEATHER,
                     pressure, windDir, windMs, uv, null);
         } catch (Exception e) {
@@ -963,6 +967,7 @@ public final class WeatherRepository {
                 .putString(KEY_COND_EN, info.conditionEn)
                 .putString(KEY_COND_JA, info.conditionJa)
                 .putString(KEY_COND_RU, info.conditionRu)
+                .putString(KEY_COND_KO, info.conditionKo)
                 .putString(KEY_PROVIDER, info.provider);
         if (info.temperatureC != null) editor.putFloat(KEY_TEMP, info.temperatureC);
         else editor.remove(KEY_TEMP);
@@ -996,6 +1001,7 @@ public final class WeatherRepository {
                 sp.getString(KEY_COND_EN, "Unknown"),
                 sp.getString(KEY_COND_JA, ""),
                 sp.getString(KEY_COND_RU, ""),
+                sp.getString(KEY_COND_KO, ""),
                 time, sp.getString(KEY_PROVIDER, ""),
                 pressure, windDir, windSpeed, uv, sp.getString(KEY_SUNSET, null));
     }
